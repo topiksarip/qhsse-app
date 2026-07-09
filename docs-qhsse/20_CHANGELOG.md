@@ -22,3 +22,7 @@
 - Added Phase 0 Task 0.14 Search, Filter, Pagination, Export Base: shared list query service, CSV exporter, site/department filtered exports, export permission, UI filter updates, tests, and handoff.
 - Added Phase 0 Task 0.15 Dashboard Shell: dashboard controller, KPI cards, chart placeholders, date/site/department filters, role-aware navigation, shared auth permissions, tests, and handoff.
 - Completed Phase 0 Task 0.16 Core UAT: final UAT checklist, route/migration/seed verification, full tests/build, Phase 0 final handoff, and seeder cache refresh hardening.
+- Initialized git repository; pushed Phase 0 codebase (478 files, 41.498 insertions) ke https://github.com/topiksarip/qhsse-app (branch: main + develop).
+- Added GitHub MCP server ke Hermes (26 GitHub tools aktif: push, PR, issue, merge, dll).
+- Added GitHub Actions CI workflow: auto-test PHP 8.3 + Node 22 + SQLite in-memory setiap push/PR.
+- Added Makefile dan scripts/git-push.sh untuk otomasi developer workflow.
