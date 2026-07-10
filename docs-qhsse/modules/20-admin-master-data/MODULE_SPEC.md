@@ -1,167 +1,133 @@
-# Module Spec — Admin & Master Data
+# Module Spec — Admin & Master Data Hardening
+
+> Module 20 — Final polish for admin master data. Tidak membuat tabel baru, melainkan melengkapi admin UI untuk semua core master data yang sudah ada di Phase 0.
 
 ## 1. Tujuan Modul
 
-Modul Admin & Master Data mengelola proses QHSSE terkait `Admin & Master Data` secara end-to-end, terintegrasi dengan Core Foundation: user, role, permission, master data, file upload, notification, numbering, workflow, audit trail, comments, dashboard, dan reporting.
+Memberikan UI admin lengkap untuk mengelola semua master data QHSSE: sites, areas, departments, positions, companies, employees, users, roles, permissions, severities, priorities, statuses, categories, risk matrix levels, numbering formats, workflow definitions, notification templates. Juga menyediakan system settings, import/export bulk, dan audit log viewer.
 
 ## 2. Dependency
 
-Core Foundation, semua modul
+Core Foundation (Phase 0). Tidak ada modul bisnis baru.
 
-## 3. User Role yang Terlibat
+## 3. User Roles
 
-- Employee/Reporter
-- Supervisor
-- QHSSE Officer
-- QHSSE Manager
-- Department Head
-- Contractor jika relevan
-- Auditor jika relevan
-- Admin
-- Top Management untuk dashboard/report
+| Role | Akses |
+|---|---|
+| Admin / Super Admin | Full CRUD semua master data |
+| QHSSE Manager | View semua master data, limited update (severities, priorities, categories) |
+| Lainnya | Tidak ada akses admin |
 
 ## 4. Fitur
 
-- User admin
-- Role admin
-- Permission admin
-- Site/area/department
-- Employee
-- Contractor
-- Severity
-- Risk matrix
-- Category
-- Template
-- System logs
+1. Dashboard admin (statistik: total users, employees, sites, dll)
+2. Bulk import CSV untuk employees, sites, departments
+3. Bulk export CSV semua master data
+4. Role & permission manager (assign/revoke)
+5. Numbering format viewer (lihat format aktif + sample)
+6. Workflow definition viewer (lihat states + transitions)
+7. Notification template manager (CRUD templates)
+8. Audit log viewer (filter by module, user, date, event)
+9. System settings (app name, locale, timezone, maintenance mode)
+10. User activation/deactivation bulk
 
-## 5. Workflow Umum
+## 5. Permission Keys
 
-```text
-Draft -> Submitted -> Under Review -> In Progress/Approved -> Waiting Verification -> Closed
-                         |-> Rejected
-                         |-> Cancelled
-```
+Tidak ada permission baru — semua menggunakan `core.*` permissions yang sudah ada:
+- `core.sites.{view,create,update,deactivate}`
+- `core.areas.{view,create,update,deactivate}`
+- `core.departments.{view,create,update,deactivate}`
+- `core.positions.{view,create,update,deactivate}`
+- `core.companies.{view,create,update,deactivate}`
+- `core.employees.{view,create,update,deactivate}`
+- `core.users.{view,create,update,deactivate}`
+- `core.severities.{view,create,update,deactivate}`
+- `core.priorities.{view,create,update,deactivate}`
+- `core.statuses.{view,create,update,deactivate}`
+- `core.categories.{view,create,update,deactivate}`
+- `core.risk-matrix.{view,create,update,deactivate}`
+- `core.numbering.{view,create,update,generate}`
+- `core.workflow.{view,manage}`
+- `core.audit.view`
+- `core.notifications.{view,manage}`
+- `core.roles.manage`
+- `core.export.csv`
 
-Workflow final dapat disesuaikan per modul, tetapi tetap memakai Workflow Core.
+## 6. Business Rules
 
-## 6. Data Field Umum
+1. Hanya Admin/Super Admin yang bisa CRUD master data
+2. Deactivate (soft delete) tidak hapus permanen — data tetap untuk audit
+3. Bulk import wajib validasi semua row sebelum commit
+4. Role assignment mencatat audit trail
+5. System settings perlu restart queue worker untuk apply changes
 
-- generated_number
-- title/name
-- description
-- site_id
-- area_id
-- department_id
-- company_id/contractor_id optional
-- owner/reporter/requester
-- assigned_to/PIC optional
-- reviewer/approver/verifier optional
-- category/type
-- severity/priority/risk optional
-- event/date/due_date optional
-- status
-- attachments
-- comments
-- activity logs
-- audit trail
+## 7. UI Pages
 
-## 7. Business Rules
+### Admin Dashboard
+- Card: Total Users, Active Users, Total Employees, Total Sites, Total Companies
+- Recent activity log (last 10 audit entries)
+- Quick links ke setiap master data section
 
-- Record resmi memakai numbering otomatis.
-- Draft belum wajib punya nomor kecuali modul menentukan lain.
-- Submit wajib validasi field mandatory.
-- Reject wajib alasan.
-- Close wajib memenuhi syarat evidence/action jika relevan.
-- Semua perubahan status dicatat di workflow history.
-- Semua perubahan penting masuk audit trail.
-- Data visibility mengikuti role scope: own, department, site, company, all.
+### Existing Pages (already in Phase 0)
+- Sites Index/Form — `core.sites.*`
+- Areas Index/Form — `core.areas.*`
+- Departments Index/Form — `core.departments.*`
+- Positions Index/Form — `core.positions.*`
+- Companies Index/Form — `core.companies.*`
+- Employees Index/Form — `core.employees.*`
+- Users Index/Form — `core.users.*`
+- Severities Index/Form — `core.severities.*`
+- Priorities Index/Form — `core.priorities.*`
+- Statuses Index/Form — `core.statuses.*`
+- Categories Index/Form — `core.categories.*`
+- Risk Matrix Index/Form — `core.risk-matrix.*`
+- Numbering Index — `core.numbering.view`
+- Workflow Index — `core.workflow.view`
+- Audit Logs Index — `core.audit.view`
+- Notifications Index — `core.notifications.view`
 
-## 8. Notification Rules
+### New Pages (Module 20 additions)
+- Admin Dashboard — `GET /admin`
+- Bulk Import — `GET /admin/import` (upload CSV)
+- System Settings — `GET /admin/settings`
+- Role Manager — `GET /admin/roles` (assign permissions to roles)
 
-- Submit: notify reviewer/approver.
-- Assignment: notify PIC.
-- Due soon: notify PIC sebelum due date.
-- Overdue: notify PIC dan atasan/escalation role.
-- Rejected: notify requester/PIC.
-- Closed: notify relevant owner/stakeholder.
+## 8. API
 
-## 9. File Attachment Rules
+| Method | URI | Permission | Description |
+|---|---|---|---|
+| GET | `/admin` | `core.sites.view` | Admin dashboard |
+| GET | `/admin/import` | `core.employees.create` | Bulk import page |
+| POST | `/admin/import/employees` | `core.employees.create` | Import employees CSV |
+| POST | `/admin/import/sites` | `core.sites.create` | Import sites CSV |
+| GET | `/admin/settings` | `core.roles.manage` | System settings |
+| PUT | `/admin/settings` | `core.roles.manage` | Update settings |
+| GET | `/admin/roles` | `core.roles.manage` | Role manager |
+| PUT | `/admin/roles/{role}` | `core.roles.manage` | Update role permissions |
 
-- Attachment memakai File Service core.
-- File sensitif mengikuti permission record.
-- Evidence tidak boleh dihapus setelah record closed kecuali admin berwenang.
+## 9. Dashboard Metrics
 
-## 10. Permission Keys
+- Total users by role (pie chart)
+- Active vs inactive users
+- Employees by site
+- Master data completeness (which sites have areas, departments, positions)
 
-- `admin-master-data.view`
-- `admin-master-data.create`
-- `admin-master-data.update`
-- `admin-master-data.submit`
-- `admin-master-data.review`
-- `admin-master-data.approve`
-- `admin-master-data.reject`
-- `admin-master-data.verify`
-- `admin-master-data.close`
-- `admin-master-data.reopen`
-- `admin-master-data.export`
+## 10. Export Specification
 
-## 11. UI Pages
+CSV export for each master data type with appropriate columns.
 
-- List page dengan search/filter/pagination/export.
-- Create/edit form.
-- Detail page.
-- Review/approval panel.
-- Attachment panel.
-- Comment/activity timeline.
-- Report/export page jika relevan.
-- Dashboard widget jika relevan.
+## 11. Acceptance Criteria
 
-## 12. API Requirement
+1. Admin dashboard shows correct counts
+2. Bulk import validates before commit
+3. Role manager can assign/revoke permissions
+4. System settings page works
+5. All existing master data pages still functional
+6. Audit log viewer filters work
+7. Permission enforced on all admin routes
 
-- GET list
-- POST create
-- GET detail
-- PUT update
-- DELETE/cancel sesuai permission
-- POST submit
-- POST approve/reject
-- POST verify/close/reopen jika relevan
-- GET/POST comments
-- GET/POST files
-- GET export/report
+## 12. Open Questions
 
-## 13. Dashboard Metrics
-
-- Total records.
-- Open/in progress count.
-- Closed count.
-- Overdue count jika ada due date.
-- Trend by month.
-- Breakdown by site/department/category/status.
-
-## 14. Report / Export
-
-- Export list Excel/CSV.
-- PDF detail/report untuk record resmi bila dibutuhkan.
-- Filter export mengikuti filter list.
-
-## 15. Acceptance Criteria
-
-1. User dengan permission benar dapat membuat record.
-2. User tanpa permission ditolak.
-3. Submit memvalidasi field mandatory.
-4. Workflow status berjalan sesuai rule.
-5. Attachment bisa upload/download sesuai permission.
-6. Comment dan activity log tampil.
-7. Audit trail tercatat.
-8. Notification terkirim ke penerima tepat.
-9. List dapat search/filter/pagination.
-10. Export menghasilkan data sesuai filter dan permission.
-
-## 16. Open Questions
-
-- Field mandatory final per perusahaan/site.
-- Approval path final.
-- Template report final.
-- SLA/due date default.
-- Data sensitif yang perlu pembatasan tambahan.
+- Should non-admin roles have view-only access to some admin pages? → Default: QHSSE Manager can view all
+- Bulk import limit? → Default: 1000 rows per import
+- Should settings be in DB or config file? → Default: DB (key-value table)

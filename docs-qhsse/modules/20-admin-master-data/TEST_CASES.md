@@ -1,35 +1,62 @@
-# Test Cases — Admin & Master Data
+# Test Cases — Admin & Master Data Hardening
 
 ## Functional
 
-1. Create valid record succeeds.
-2. Create with missing required field fails.
-3. Draft can be saved if allowed.
-4. Submit changes status and creates number if needed.
-5. Review/approve/reject follows permission.
-6. Reject requires reason.
-7. Close requires required evidence/action if configured.
-8. Reopen works only for authorized role.
+1. Admin can view admin dashboard
+2. Non-admin user gets 403 on dashboard
+3. Admin can view role manager
+4. Admin can assign permissions to role
+5. Admin can revoke permissions from role
+6. Bulk import employees with valid CSV succeeds
+7. Bulk import employees with invalid CSV shows errors
+8. Bulk import sites succeeds
 
 ## Permission
 
-1. User without view cannot access list/detail.
-2. User own scope only sees own data.
-3. Department scope only sees department data.
-4. Contractor only sees company data.
-5. Export follows permission.
+1. Non-admin cannot access import page
+2. Non-admin cannot access settings
+3. Non-admin cannot access role manager
+4. QHSSE Manager can view but not edit settings
 
 ## Integration
 
-1. File upload/download respects permission.
-2. Notification created for expected recipient.
-3. Audit trail created for create/update/status change.
-4. Comment appears in timeline.
-5. Dashboard metric updates.
-6. Export contains filtered data.
+1. Role permission change reflects in user access immediately
+2. Audit log records role permission change
+3. Imported employees appear in employee list
+4. Dashboard stats are correct
 
 ## Negative
 
-1. Invalid status transition rejected.
-2. Unauthorized file download rejected.
-3. Duplicate number cannot occur.
+1. Invalid CSV format rejected
+2. Duplicate email in import rejected
+3. Non-existent company_code in import fails
+
+```php
+test('admin can view admin dashboard', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+    $this->actingAs($admin);
+    $response = $this->get(route('admin.dashboard'));
+    $response->assertStatus(200);
+});
+
+test('non-admin gets 403 on dashboard', function () {
+    $reporter = User::factory()->create();
+    $reporter->assignRole('Employee / Reporter');
+    $this->actingAs($reporter);
+    $response = $this->get(route('admin.dashboard'));
+    $response->assertForbidden();
+});
+
+test('admin can assign permissions to role', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+    $this->actingAs($admin);
+    $role = Role::findByName('Employee / Reporter');
+    $response = $this->put(route('admin.roles.update', $role), [
+        'permissions' => ['core.sites.view', 'incident.reports.view'],
+    ]);
+    $response->assertRedirect();
+    expect($role->hasPermissionTo('incident.reports.view'))->toBeTrue();
+});
+```
