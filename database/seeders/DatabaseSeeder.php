@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             NumberingFormatSeeder::class,
             WorkflowSeeder::class,
             NotificationTemplateSeeder::class,
+            IncidentReportingSeeder::class,
         ]);
 
         // User::factory(10)->create();

@@ -37,6 +37,12 @@ const menuGroups: { label: string; items: MenuItem[] }[] = [
         ],
     },
     {
+        label: 'Modul QHSSE',
+        items: [
+            { label: 'Laporan Insiden', routeName: 'incident.reports.index', active: 'incident.reports.*', permission: 'incident.reports.view' },
+        ],
+    },
+    {
         label: 'Admin',
         items: [
             { label: 'Companies', routeName: 'core.companies.index', active: 'core.companies.*', permission: 'core.companies.view' },
