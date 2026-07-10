@@ -1,0 +1,47 @@
+# QHSSE App CI Pipeline — Woodpecker CI
+# Runs on every push to develop/main
+# Build frontend first, then run tests (fixes Vite manifest issue)
+
+when:
+  - event: [push, pull_request]
+    branch: [develop, main]
+
+steps:
+  # Step 1: Install PHP dependencies
+  install-php:
+    image: composer:2.10
+    commands:
+      - composer install --no-interaction --prefer-dist --optimize-autoloader
+
+  # Step 2: Install Node dependencies
+  install-node:
+    image: node:22-alpine
+    commands:
+      - npm ci
+
+  # Step 3: Build frontend (MUST be before tests to generate Vite manifest)
+  build:
+    image: node:22-alpine
+    commands:
+      - npm run build
+
+  # Step 4: Run migrations + seed (using SQLite for CI test isolation)
+  migrate:
+    image: php:8.5-cli
+    commands:
+      - php artisan config:clear
+      - php artisan migrate:fresh --seed --force --env=testing
+
+  # Step 5: Run tests
+  test:
+    image: php:8.5-cli
+    commands:
+      - php artisan test --env=testing
+
+  # Step 6: Notify on failure
+  notify-failure:
+    image: curlimages/curl
+    when:
+      - status: [failure]
+    commands:
+      - echo "QHSSE CI FAILED — check Woodpecker logs"
