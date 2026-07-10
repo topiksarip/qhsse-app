@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -27,7 +28,10 @@ class DatabaseSeeder extends Seeder
 
         $user = User::query()->firstOrCreate(
             ['email' => 'test@example.com'],
-            User::factory()->make(['name' => 'Test User'])->toArray(),
+            array_merge(
+                User::factory()->make(['name' => 'Test User'])->toArray(),
+                ['password' => Hash::make('password')],
+            ),
         );
 
         $user->assignRole('Super Admin');
