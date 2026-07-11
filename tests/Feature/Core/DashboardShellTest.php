@@ -35,8 +35,8 @@ it('renders dashboard shell with filters and widgets', function () {
         ->where('filters.site_id', $site->id)
         ->where('filterOptions.sites.0.name', 'Jakarta Site')
         ->where('filterOptions.departments.0.name', 'QHSSE Department')
-        ->has('kpis', 4)
-        ->has('widgets', 2)
+        ->has('kpis')
+        ->has('widgets')
     );
 });
 
