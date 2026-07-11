@@ -10,7 +10,7 @@ class CoreNotification extends Model
 {
     protected $fillable = [
         'recipient_id', 'actor_id', 'type', 'title', 'message', 'module_name',
-        'reference_id', 'action_url', 'data', 'read_at',
+        'reference_id', 'action_url', 'data', 'read_at', 'idempotency_key',
     ];
 
     protected function casts(): array

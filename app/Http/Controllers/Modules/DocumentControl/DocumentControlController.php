@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Modules\DocumentControl;
 
 use App\Core\Activity\ActivityService;
+use App\Core\Audit\AuditService;
 use App\Core\Comments\CommentService;
 use App\Core\Export\CsvExporter;
 use App\Core\Files\FileReference;
@@ -18,6 +19,7 @@ use App\Models\Core\Activity\ActivityLog;
 use App\Models\Core\Comments\Comment;
 use App\Models\Core\Files\ManagedFile;
 use App\Models\Core\MasterData\Department;
+use App\Models\Core\Users\Employee;
 use App\Models\Core\Workflow\WorkflowHistory;
 use App\Models\Core\Workflow\WorkflowInstance;
 use App\Models\Modules\DocumentControl\ControlledDocument;
@@ -28,6 +30,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -54,6 +57,7 @@ class DocumentControlController extends Controller
         private readonly ManagedFileService $files,
         private readonly NotificationService $notifications,
         private readonly ActivityService $activity,
+        private readonly AuditService $audit,
     ) {}
 
     public function index(Request $request, ListQuery $listQuery): Response
@@ -89,17 +93,18 @@ class DocumentControlController extends Controller
         $action = $validated['action'] ?? 'draft';
 
         abort_if($action === 'submit_review' && ! $actor->can('document.control.submit_review'), 403);
+        $this->ensureAssignmentWithinScope($actor, $validated);
 
         if ($action === 'submit_review' && ! $request->hasFile('file')) {
             throw ValidationException::withMessages(['file' => 'File dokumen wajib diunggah sebelum submit review.']);
         }
 
         $document = DB::transaction(function () use ($request, $validated, $actor): ControlledDocument {
-            $document = ControlledDocument::query()->create([
+            $document = ControlledDocument::withoutEvents(fn () => ControlledDocument::query()->create([
                 ...$this->documentPayload($validated, $actor),
                 'document_number' => 'TEMP-'.uniqid(),
                 'status' => 'draft',
-            ]);
+            ]));
 
             $generated = $this->numbering->generate(
                 moduleName: 'document',
@@ -107,15 +112,17 @@ class DocumentControlController extends Controller
                 referenceType: ControlledDocument::class,
                 referenceId: $document->id,
             );
-            $document->update(['document_number' => $generated->number]);
+            ControlledDocument::withoutEvents(fn () => $document->update(['document_number' => $generated->number]));
+            $this->audit->log('document.created', $document, [], $document->fresh()->getAttributes(), $actor, 'document', $document->id);
             $this->workflow->start('document', $document->id, $actor);
 
             if ($request->hasFile('file')) {
-                $this->files->store(
+                $file = $this->files->store(
                     $request->file('file'),
                     new FileReference('document', $document->id, 'document_file'),
                     $actor,
                 );
+                $this->auditFile('document.file.uploaded', $document, $file, $actor);
             }
 
             $this->activity->log('document', $document->id, 'document.created', 'Dokumen terkontrol dibuat', $actor);
@@ -126,6 +133,10 @@ class DocumentControlController extends Controller
 
             return $document;
         });
+
+        if ($action === 'submit_review') {
+            $this->notifyManagers($document, 'document.submitted', $actor);
+        }
 
         return redirect()->route('document.control.show', $document)->with('success', 'Dokumen berhasil dibuat.');
     }
@@ -160,6 +171,7 @@ class DocumentControlController extends Controller
 
     public function edit(Request $request, ControlledDocument $controlledDocument): Response
     {
+        $this->ensureMutable($request->user(), $controlledDocument);
         abort_unless(in_array($controlledDocument->status, ['draft', 'rejected'], true), 403);
 
         return Inertia::render('Modules/DocumentControl/Form', $this->formProps($controlledDocument));
@@ -167,17 +179,22 @@ class DocumentControlController extends Controller
 
     public function update(UpdateDocumentRequest $request, ControlledDocument $controlledDocument): RedirectResponse
     {
+        $this->ensureMutable($request->user(), $controlledDocument);
         abort_unless(in_array($controlledDocument->status, ['draft', 'rejected'], true), 403);
         $actor = $request->user();
         $validated = $request->validated();
+        $this->ensureAssignmentWithinScope($actor, $validated, $controlledDocument);
         DB::transaction(function () use ($request, $controlledDocument, $validated, $actor): void {
+            $oldValues = $controlledDocument->getOriginal();
             $controlledDocument->update($this->documentPayload($validated, $actor, $controlledDocument));
+            $this->audit->log('document.updated', $controlledDocument, $oldValues, $controlledDocument->getChanges(), $actor, 'document', $controlledDocument->id);
             if ($request->hasFile('file')) {
-                $this->files->store(
+                $file = $this->files->store(
                     $request->file('file'),
                     new FileReference('document', $controlledDocument->id, 'document_file'),
                     $actor,
                 );
+                $this->auditFile('document.file.uploaded', $controlledDocument, $file, $actor);
             }
             $this->activity->log('document', $controlledDocument->id, 'document.updated', 'Dokumen diperbarui', $actor);
         });
@@ -187,8 +204,17 @@ class DocumentControlController extends Controller
 
     public function submitReview(Request $request, ControlledDocument $controlledDocument): RedirectResponse
     {
+        $this->ensureMutable($request->user(), $controlledDocument);
         $request->validate(['review_notes' => ['nullable', 'string', 'max:2000']]);
         abort_unless(in_array($controlledDocument->status, ['draft'], true), 422);
+
+        validator($controlledDocument->only(['title', 'type', 'version', 'effective_date', 'owner_id']), [
+            'title' => ['required', 'string', 'max:255'],
+            'type' => ['required', Rule::in(array_keys(self::TYPES))],
+            'version' => ['required', 'string', 'max:20'],
+            'effective_date' => ['required', 'date'],
+            'owner_id' => ['required', 'exists:users,id'],
+        ])->validate();
 
         if (! $this->hasDocumentFile($controlledDocument)) {
             return back()->withErrors(['file' => 'File dokumen wajib diunggah sebelum submit review.']);
@@ -196,6 +222,7 @@ class DocumentControlController extends Controller
 
         try {
             DB::transaction(fn () => $this->submitForReview($controlledDocument, $request->user(), $request->string('review_notes')->toString() ?: null));
+            $this->notifyManagers($controlledDocument->fresh(), 'document.submitted', $request->user());
         } catch (\RuntimeException $exception) {
             return back()->withErrors(['workflow' => $exception->getMessage()]);
         }
@@ -205,8 +232,9 @@ class DocumentControlController extends Controller
 
     public function approve(Request $request, ControlledDocument $controlledDocument): RedirectResponse
     {
-        $validated = $request->validate(['review_notes' => ['nullable', 'string', 'max:2000']]);
         $actor = $request->user();
+        $this->ensureMutable($actor, $controlledDocument);
+        $validated = $request->validate(['review_notes' => ['nullable', 'string', 'max:2000']]);
 
         try {
             DB::transaction(function () use ($controlledDocument, $actor, $validated): void {
@@ -219,9 +247,10 @@ class DocumentControlController extends Controller
                     'decision' => 'approve',
                 ]);
                 $controlledDocument->update(['status' => 'approved', 'approver_id' => $actor->id]);
+                $this->auditTransition('document.approved', $controlledDocument, 'review', 'approved', $actor);
                 $this->activity->log('document', $controlledDocument->id, 'document.approved', 'Dokumen disetujui', $actor);
-                $this->notifyOwner($controlledDocument, 'document.approved', $actor);
             });
+            $this->notifyOwner($controlledDocument->fresh(), 'document.approved', $actor);
         } catch (\RuntimeException $exception) {
             return back()->withErrors(['workflow' => $exception->getMessage()]);
         }
@@ -231,8 +260,9 @@ class DocumentControlController extends Controller
 
     public function makeEffective(Request $request, ControlledDocument $controlledDocument): RedirectResponse
     {
-        $validated = $request->validate(['effective_date' => ['nullable', 'date']]);
         $actor = $request->user();
+        $this->ensureMutable($actor, $controlledDocument);
+        $validated = $request->validate(['effective_date' => ['nullable', 'date']]);
 
         try {
             DB::transaction(function () use ($controlledDocument, $actor, $validated): void {
@@ -241,9 +271,12 @@ class DocumentControlController extends Controller
                     'status' => 'effective',
                     'effective_date' => $validated['effective_date'] ?? today(),
                 ]);
+                $this->auditTransition('document.effective', $controlledDocument, 'approved', 'effective', $actor, [
+                    'effective_date' => $controlledDocument->effective_date?->toDateString(),
+                ]);
                 $this->activity->log('document', $controlledDocument->id, 'document.effective', 'Dokumen mulai berlaku efektif', $actor);
-                $this->notifyOwner($controlledDocument, 'document.effective', $actor);
             });
+            $this->notifyStakeholders($controlledDocument->fresh(), 'document.effective', $actor);
         } catch (\RuntimeException $exception) {
             return back()->withErrors(['workflow' => $exception->getMessage()]);
         }
@@ -260,8 +293,9 @@ class DocumentControlController extends Controller
 
     public function reject(Request $request, ControlledDocument $controlledDocument): RedirectResponse
     {
-        $validated = $request->validate(['reason' => ['required', 'string', 'min:10', 'max:2000']]);
         $actor = $request->user();
+        $this->ensureMutable($actor, $controlledDocument);
+        $validated = $request->validate(['reason' => ['required', 'string', 'min:10', 'max:2000']]);
 
         try {
             DB::transaction(function () use ($controlledDocument, $actor, $validated): void {
@@ -273,9 +307,10 @@ class DocumentControlController extends Controller
                     'decision' => 'reject',
                 ]);
                 $controlledDocument->update(['status' => 'rejected']);
+                $this->auditTransition('document.rejected', $controlledDocument, 'review', 'rejected', $actor, ['reason' => $validated['reason']]);
                 $this->activity->log('document', $controlledDocument->id, 'document.rejected', 'Dokumen ditolak', $actor, ['reason' => $validated['reason']]);
-                $this->notifyOwner($controlledDocument, 'document.rejected', $actor, $validated['reason']);
             });
+            $this->notifyOwner($controlledDocument->fresh(), 'document.rejected', $actor, $validated['reason']);
         } catch (\RuntimeException $exception) {
             return back()->withErrors(['workflow' => $exception->getMessage()]);
         }
@@ -286,11 +321,13 @@ class DocumentControlController extends Controller
     public function revise(Request $request, ControlledDocument $controlledDocument): RedirectResponse
     {
         $actor = $request->user();
+        $this->ensureMutable($actor, $controlledDocument);
 
         try {
             DB::transaction(function () use ($controlledDocument, $actor): void {
                 $this->workflow->transition('document', $controlledDocument->id, 'revise', $actor);
                 $controlledDocument->update(['status' => 'draft']);
+                $this->auditTransition('document.revised', $controlledDocument, 'rejected', 'draft', $actor);
                 $this->activity->log('document', $controlledDocument->id, 'document.revised', 'Dokumen dikembalikan ke draft untuk revisi', $actor);
             });
         } catch (\RuntimeException $exception) {
@@ -317,6 +354,7 @@ class DocumentControlController extends Controller
 
         abort_unless(Storage::disk($file->disk)->exists($file->path), 404);
         $this->activity->log('document', $controlledDocument->id, 'document.downloaded', 'File dokumen diunduh', $request->user(), ['file_id' => $file->id]);
+        $this->auditFile('document.file.downloaded', $controlledDocument, $file, $request->user());
 
         return Storage::disk($file->disk)->download($file->path, $file->original_name);
     }
@@ -336,6 +374,9 @@ class DocumentControlController extends Controller
         $query = $this->visibleQuery($request->user())->with(['department', 'owner', 'approver']);
         $this->applyFilters($query, $request);
         $listQuery->apply($query, ['document_number', 'title'], ['created_at', 'effective_date', 'document_number', 'title'], 'created_at');
+        $this->audit->log('document.exported', actor: $request->user(), moduleName: 'document', metadata: [
+            'filters' => $request->only(['search', 'type', 'status', 'department_id']),
+        ]);
 
         return $exporter->stream($query, [
             'Nomor' => 'document_number',
@@ -362,29 +403,23 @@ class DocumentControlController extends Controller
             'review_notes' => $notes,
             'decision' => 'pending',
         ]);
+        $this->auditTransition('document.submitted', $document, 'draft', 'review', $actor, ['review_notes' => $notes]);
         $this->activity->log('document', $document->id, 'document.submitted', 'Dokumen dikirim untuk review', $actor);
-
-        $context = $this->notificationContext($document, $actor);
-        $this->notifications->notifyMany(
-            $this->usersWithRole('QHSSE Manager'),
-            'document.submitted',
-            $context,
-            $actor,
-            'document',
-            $document->id,
-            route('document.control.show', $document, false),
-        );
     }
 
     private function reasonedTransition(ControlledDocument $document, User $actor, string $action, string $status, string $reason, string $message): RedirectResponse
     {
+        $this->ensureMutable($actor, $document);
+
         try {
             DB::transaction(function () use ($document, $actor, $action, $status, $reason): void {
+                $oldStatus = $document->status;
                 $this->workflow->transition('document', $document->id, $action, $actor, $reason);
                 $document->update(['status' => $status]);
+                $this->auditTransition("document.{$action}", $document, $oldStatus, $status, $actor, ['reason' => $reason]);
                 $this->activity->log('document', $document->id, "document.{$action}", "Dokumen {$status}", $actor, ['reason' => $reason]);
-                $this->notifyOwner($document, "document.{$action}", $actor, $reason);
             });
+            $this->notifyStakeholders($document->fresh(), "document.{$action}", $actor, $reason, includeOfficers: $action === 'obsolete');
         } catch (\RuntimeException $exception) {
             return back()->withErrors(['workflow' => $exception->getMessage()]);
         }
@@ -420,6 +455,71 @@ class DocumentControlController extends Controller
         );
     }
 
+    private function notifyManagers(ControlledDocument $document, string $type, User $actor): void
+    {
+        $this->notifications->notifyMany(
+            $this->usersWithRole('QHSSE Manager'),
+            $type,
+            $this->notificationContext($document, $actor),
+            $actor,
+            'document',
+            $document->id,
+            route('document.control.show', $document, false),
+        );
+    }
+
+    private function notifyStakeholders(ControlledDocument $document, string $type, User $actor, ?string $reason = null, bool $includeOfficers = false): void
+    {
+        $recipients = collect([$document->owner()->first()])->filter();
+
+        if ($document->department_id !== null) {
+            $employeeIds = Employee::query()->where('department_id', $document->department_id)->pluck('id');
+            $recipients = $recipients->merge(User::query()->where('is_active', true)->whereIn('employee_id', $employeeIds)->get());
+        }
+
+        if ($includeOfficers) {
+            $recipients = $recipients->merge($this->usersWithRole('QHSSE Officer'));
+        }
+
+        $this->notifications->notifyMany(
+            $recipients->unique('id')->values(),
+            $type,
+            $this->notificationContext($document, $actor) + ['reason' => $reason],
+            $actor,
+            'document',
+            $document->id,
+            route('document.control.show', $document, false),
+        );
+    }
+
+    private function auditTransition(string $event, ControlledDocument $document, string $oldStatus, string $newStatus, User $actor, array $metadata = []): void
+    {
+        $this->audit->log(
+            $event,
+            $document,
+            ['status' => $oldStatus],
+            ['status' => $newStatus] + $metadata,
+            $actor,
+            'document',
+            $document->id,
+            $metadata,
+        );
+    }
+
+    private function auditFile(string $event, ControlledDocument $document, ManagedFile $file, User $actor): void
+    {
+        $this->audit->log(
+            $event,
+            $file,
+            [],
+            $file->getAttributes(),
+            $actor,
+            'document',
+            $document->id,
+            ['file_id' => $file->id],
+        );
+    }
+
     private function notificationContext(ControlledDocument $document, User $actor): array
     {
         return [
@@ -439,16 +539,16 @@ class DocumentControlController extends Controller
     private function documentPayload(array $validated, User $actor, ?ControlledDocument $document = null): array
     {
         return [
-            'title' => $validated['title'],
-            'type' => $validated['type'],
-            'version' => $validated['version'],
-            'revision_notes' => $validated['revision_notes'] ?? null,
-            'effective_date' => $validated['effective_date'] ?? null,
-            'review_date' => $validated['review_date'] ?? null,
-            'expiry_date' => $validated['expiry_date'] ?? null,
-            'department_id' => $validated['department_id'] ?? null,
+            'title' => $validated['title'] ?? $document?->title,
+            'type' => $validated['type'] ?? $document?->type,
+            'version' => $validated['version'] ?? $document?->version,
+            'revision_notes' => $validated['revision_notes'] ?? $document?->revision_notes,
+            'effective_date' => $validated['effective_date'] ?? $document?->effective_date,
+            'review_date' => $validated['review_date'] ?? $document?->review_date,
+            'expiry_date' => $validated['expiry_date'] ?? $document?->expiry_date,
+            'department_id' => $validated['department_id'] ?? $document?->department_id,
             'owner_id' => $validated['owner_id'] ?? $document?->owner_id ?? $actor->id,
-            'is_confidential' => $validated['is_confidential'] ?? false,
+            'is_confidential' => $validated['is_confidential'] ?? $document?->is_confidential ?? false,
         ];
     }
 
@@ -470,24 +570,88 @@ class DocumentControlController extends Controller
     private function visibleQuery(User $user): Builder
     {
         $query = ControlledDocument::query();
-        if (! $this->canSeeNonEffective($user)) {
-            $query->where('status', 'effective');
+        if ($user->can('core.scope.all')) {
+            return $query;
         }
+
+        $employee = $user->employee;
+        $canSeeOwnNonEffective = $user->can('core.scope.own')
+            || $user->can('document.control.create')
+            || $user->can('document.control.update')
+            || $user->can('document.control.submit_review');
+
+        $query->where(function (Builder $builder) use ($user, $employee, $canSeeOwnNonEffective): void {
+            $builder->where('status', 'effective');
+
+            if ($canSeeOwnNonEffective) {
+                $builder->orWhere('owner_id', $user->id);
+            }
+
+            if ($user->can('core.scope.department') && $employee?->department_id) {
+                $builder->orWhere('department_id', $employee->department_id);
+            }
+
+            if ($user->can('core.scope.site') && $employee?->site_id) {
+                $builder->orWhereHas('department', fn (Builder $department) => $department->where('site_id', $employee->site_id));
+            }
+        });
 
         return $query;
     }
 
     private function ensureVisible(User $user, ControlledDocument $document): void
     {
-        abort_if(! $this->canSeeNonEffective($user) && $document->status !== 'effective', 403);
+        abort_unless($this->visibleQuery($user)->whereKey($document->id)->exists(), 403);
     }
 
-    private function canSeeNonEffective(User $user): bool
+    private function ensureMutable(User $user, ControlledDocument $document): void
     {
-        return $user->can('document.control.create')
-            || $user->can('document.control.update')
-            || $user->can('document.control.approve')
-            || $user->can('document.control.export');
+        if ($user->can('core.scope.all') || $document->owner_id === $user->id) {
+            return;
+        }
+
+        $employee = $user->employee;
+        $allowed = ($user->can('core.scope.department') && $employee?->department_id === $document->department_id)
+            || ($user->can('core.scope.site') && $employee?->site_id !== null
+                && $document->department()->where('site_id', $employee->site_id)->exists());
+
+        abort_unless($allowed, 403);
+    }
+
+    private function ensureAssignmentWithinScope(User $user, array $validated, ?ControlledDocument $document = null): void
+    {
+        if ($user->can('core.scope.all')) {
+            return;
+        }
+
+        $employee = $user->employee;
+        $departmentId = $validated['department_id'] ?? $document?->department_id;
+        $ownerId = (int) ($validated['owner_id'] ?? $document?->owner_id ?? $user->id);
+
+        if ($ownerId !== $user->id) {
+            $owner = User::query()->with('employee')->find($ownerId);
+            abort_unless($owner, 403);
+
+            if ($user->can('core.scope.department')) {
+                abort_unless($employee?->department_id && $owner->employee?->department_id === $employee->department_id, 403);
+            } elseif ($user->can('core.scope.site')) {
+                abort_unless($employee?->site_id && $owner->employee?->site_id === $employee->site_id, 403);
+            } else {
+                abort(403);
+            }
+        }
+
+        if ($departmentId === null) {
+            return;
+        }
+
+        if ($user->can('core.scope.department')) {
+            abort_unless($employee?->department_id === (int) $departmentId, 403);
+        } elseif ($user->can('core.scope.site')) {
+            abort_unless($employee?->site_id && Department::query()->whereKey($departmentId)->where('site_id', $employee->site_id)->exists(), 403);
+        } else {
+            abort(403);
+        }
     }
 
     private function canDownloadConfidential(User $user, ControlledDocument $document): bool

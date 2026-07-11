@@ -10,9 +10,9 @@ type TypeOption = { value: string; label: string };
 type DocumentItem = {
     id: number;
     document_number: string;
-    title: string;
-    type: string;
-    version: string;
+    title: string | null;
+    type: string | null;
+    version: string | null;
     status: string;
     effective_date: string | null;
     review_date: string | null;
@@ -69,8 +69,8 @@ export default function Index({ items, filters, departments, documentTypes, auth
                             {items.data.length === 0 ? <tr><td colSpan={6} className="px-4 py-14 text-center text-sm text-slate-500">Belum ada dokumen terkontrol.</td></tr> : items.data.map((item) => (
                                 <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-gray-700/60">
                                     <td className="whitespace-nowrap px-4 py-3 text-sm"><Link href={route('document.control.show', item.id)} className="font-semibold text-indigo-600 hover:text-indigo-800">{item.document_number}</Link>{item.is_confidential && <span className="ml-2" title="Rahasia">🔒</span>}</td>
-                                    <td className="max-w-md px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-100">{item.title}<div className="mt-1 text-xs font-normal text-slate-400">{item.department?.name ?? 'Lintas department'}</div></td>
-                                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300"><span className="font-semibold uppercase">{item.type}</span> · v{item.version}</td>
+                                    <td className="max-w-md px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-100">{item.title || 'Belum diberi judul'}<div className="mt-1 text-xs font-normal text-slate-400">{item.department?.name ?? 'Lintas department'}</div></td>
+                                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300"><span className="font-semibold uppercase">{item.type || '-'}</span> · v{item.version || '-'}</td>
                                     <td className="whitespace-nowrap px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyle[item.status] ?? 'bg-slate-100 text-slate-700'}`}>{statusLabel[item.status] ?? item.status}</span></td>
                                     <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-500">{item.owner?.name ?? '-'}</td>
                                     <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-500">{item.review_date ? new Date(item.review_date).toLocaleDateString('id-ID') : '-'}</td>

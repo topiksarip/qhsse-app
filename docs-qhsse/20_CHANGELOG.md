@@ -27,3 +27,4 @@
 - Added GitHub Actions CI workflow: auto-test PHP 8.3 + Node 22 + SQLite in-memory setiap push/PR.
 - Added Makefile dan scripts/git-push.sh untuk otomasi developer workflow.
 - Completed Phase 6 Document Control: controlled document register, private files, confidential download authorization, review/approval/effective/obsolete workflow, review history, module-aware audit context, comments/activity, notifications, expiry reminders, CSV export, role-aware UI, and feature tests.
+- Hardened Phase 6 after independent review: blocked Document Control files from generic core download paths, enforced department/site/own scopes on reads and mutations, aligned draft/submit validation and the 50 MB PPT/PPTX file contract, completed the role matrix and database invariants, added atomic multi-recipient H-30/H-7/H-1 reminders at 08:00, and emitted explicit business audit events.

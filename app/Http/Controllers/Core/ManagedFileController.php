@@ -18,6 +18,7 @@ class ManagedFileController extends Controller
     public function index(Request $request): Response
     {
         $files = ManagedFile::query()
+            ->where('module_name', '!=', 'document')
             ->with('uploader:id,name,email')
             ->when($request->string('search')->toString(), function ($query, string $search): void {
                 $query->where(function ($query) use ($search): void {
@@ -46,6 +47,8 @@ class ManagedFileController extends Controller
 
     public function store(ManagedFileUploadRequest $request, ManagedFileService $service): RedirectResponse
     {
+        abort_if($request->validated('module_name') === 'document', 403);
+
         $service->store(
             $request->file('file'),
             $request->reference(),
@@ -58,6 +61,7 @@ class ManagedFileController extends Controller
 
     public function download(ManagedFile $file): StreamedResponse
     {
+        abort_if($file->module_name === 'document', 404);
         abort_if($file->deleted_at !== null, 404);
         abort_unless(Storage::disk($file->disk)->exists($file->path), 404);
 
@@ -66,6 +70,7 @@ class ManagedFileController extends Controller
 
     public function destroy(ManagedFile $file, ManagedFileService $service, Request $request): RedirectResponse
     {
+        abort_if($file->module_name === 'document', 404);
         abort_if($file->deleted_at !== null, 404);
 
         $service->markDeleted($file, $request->user());

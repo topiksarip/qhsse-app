@@ -3,9 +3,11 @@
 ## 1. Status
 
 - Phase: 6 — Document Control
-- Status: Complete and verified
+- Status: Complete, reviewer findings remediated, and verified
 - Date: 2026-07-11
 - Branch: `develop`
+- Base implementation commit: `4206421`
+- Reviewer verdict before remediation: `REQUEST_CHANGES`
 
 ## 2. Scope yang Diimplementasikan
 
@@ -15,20 +17,51 @@ Vertical slice Document Control dari database hingga UI:
 - Jenis dokumen: SOP, WI, JSA, HIRADC, MSDS, policy, form, manual, dan other.
 - Atomic document numbering melalui shared `NumberingService` (`DOC-YYYY-#####`).
 - Private controlled-file upload melalui shared `ManagedFileService`.
-- Endpoint download khusus dokumen yang memverifikasi module/reference/collection/deleted state.
+- Upload contract khusus Document Control: PDF, Word, Excel, PowerPoint (`ppt`/`pptx`), maksimal 50 MB.
+- Endpoint download khusus dokumen memverifikasi module/reference/collection/deleted state dan policy confidential.
+- Generic core file CRUD/download mengecualikan `module_name=document`, sehingga tidak dapat dipakai sebagai alternate authorization path.
 - Confidential document download hanya untuk owner, approver, Admin/Super Admin, dan QHSSE Manager.
 - Workflow: `draft → review → approved → effective → obsolete`, termasuk reject/revise loop.
+- Draft boleh incomplete; seluruh metadata wajib, tanggal efektif, owner, dan controlled file divalidasi saat submit review.
 - Review cycle history pada `document_reviews`.
 - Shared workflow history, audit trail, activity log, comments, dan notification core.
 - Reminder tanggal review/expiry pada H-30, H-7, H-1 melalui scheduled command idempotent.
 - Role-aware navigation dan UI Bahasa Indonesia.
 
-## 3. Database dan Model
+## 3. Security Remediation
+
+Independent review setelah commit awal menemukan dua blocker security. Keduanya telah ditutup:
+
+1. **Alternate confidential file download path**
+   - `ManagedFileController` tidak lagi menampilkan, mengunduh, atau menghapus file Document Control.
+   - File Document Control hanya dapat diakses melalui endpoint modul yang menjalankan visibility dan confidential authorization.
+
+2. **Organization-scope backend authorization**
+   - Semua read dan mutation Document Control memakai scope yang sama.
+   - `core.scope.all`: semua dokumen.
+   - `core.scope.site`: dokumen dalam site employee, diturunkan lewat `controlled_documents.department_id → departments.site_id`.
+   - `core.scope.department`: dokumen dalam department employee.
+   - `core.scope.own`: dokumen yang dimiliki user.
+   - Dokumen effective tetap dapat dibaca role view-only sesuai BR-10.
+   - Assignment department/owner pada create/update juga divalidasi terhadap scope actor.
+
+Tidak ditambahkan `site_id` duplikat pada `controlled_documents`.
+
+## 4. Database dan Model
 
 Migration:
 
 - `controlled_documents`
 - `document_reviews`
+- Penambahan nullable unique `idempotency_key` pada `core_notifications`
+
+Database invariants:
+
+- Unique document number.
+- Enum/check untuk document type, document status, dan review decision.
+- Index untuk status/type/department/owner/review/expiry access paths.
+- Metadata draft nullable sesuai BR-02, tetapi wajib lengkap pada submit sesuai BR-03.
+- Unique notification idempotency key mencegah duplicate reminder antar-worker/node.
 
 Models/factories:
 
@@ -39,9 +72,9 @@ Models/factories:
 
 Tidak dibuat tabel file, workflow, audit, comment, activity, atau notification per module; semuanya memakai shared Phase 0 core.
 
-## 4. Permission Matrix
+## 5. Permission Matrix
 
-Permission baru:
+Permission modul:
 
 - `document.control.view`
 - `document.control.create`
@@ -52,28 +85,42 @@ Permission baru:
 - `document.control.obsolete`
 - `document.control.export`
 
-Backend route middleware dan action-level checks diterapkan. Crafted `action=submit_review` pada create tidak dapat melewati permission submit-review.
+Perbaikan role matrix:
 
-## 5. Audit dan Traceability
+- Department Head: view + submit review dalam department scope.
+- Contractor: view-only effective documents.
+- QHSSE Officer: create/update/submit dalam site scope.
+- QHSSE Manager: full Document Control dalam all scope.
+- Supervisor: create/update/submit dalam department scope.
 
-`ControlledDocument` mengimplementasikan `ProvidesAuditContext`, sehingga shared `Auditable` trait mencatat create/update/delete tepat satu kali dengan:
+Backend route middleware, action-level permissions, document visibility, mutation scope, dan assignment scope diterapkan. Crafted `action=submit_review` tidak dapat melewati permission submit-review.
+
+## 6. Audit dan Traceability
+
+`ControlledDocument` mengimplementasikan `ProvidesAuditContext` untuk generic field-change history dengan:
 
 - `module_name = document`
 - `reference_id = controlled_documents.id`
 
-Keputusan reusable ini dicatat sebagai ADR-011. Workflow transition tetap menghasilkan workflow audit/history melalui core service.
+Business audit events eksplisit:
 
-## 6. UI
+- `document.created`
+- `document.updated`
+- `document.file.uploaded`
+- `document.submitted`
+- `document.approved`
+- `document.effective`
+- `document.rejected`
+- `document.revised`
+- `document.obsolete`
+- `document.file.downloaded`
+- `document.exported`
 
-Pages:
+Initial temporary numbering insert tidak menghasilkan audit snapshot `TEMP-*`; `document.created` menyimpan nomor final.
 
-- `Modules/DocumentControl/Index.tsx`
-- `Modules/DocumentControl/Form.tsx`
-- `Modules/DocumentControl/Show.tsx`
+Keputusan reusable dicatat di Decision Log: module authorization mengalahkan generic file access, scope organisasi diturunkan dari relasi employee, dan scheduler idempotency dijamin database.
 
-Fitur UI mencakup status badge, confidential indicator, controlled-file download, action buttons berbasis permission/status, review history, workflow timeline, comments, dan activity log.
-
-## 7. Scheduler
+## 7. Notifications dan Scheduler
 
 Command:
 
@@ -84,49 +131,82 @@ php artisan documents:check-expiry
 Schedule:
 
 ```text
-Daily 07:00, without overlapping
+Daily 08:00, without overlapping
 ```
 
-Reminder dibuat idempotent per dokumen/recipient/hari.
+Behavior:
 
-## 8. Tests
+- Threshold H-30, H-7, H-1 untuk `review_date` dan `expiry_date`.
+- Recipient reminder: owner + seluruh QHSSE Manager aktif.
+- Effective notification: owner + user department terkait.
+- Obsolete notification: owner + user department terkait + QHSSE Officer.
+- Business notifications dikirim setelah transaction closure berhasil.
+- Reminder key mencakup recipient, document, due field, due date, dan threshold.
+- Unique DB key + `createOrFirst` membuat idempotency aman dari race antar-worker.
+
+## 8. UI
+
+Pages:
+
+- `Modules/DocumentControl/Index.tsx`
+- `Modules/DocumentControl/Form.tsx`
+- `Modules/DocumentControl/Show.tsx`
+
+Fitur UI mencakup status badge, confidential indicator, controlled-file download, action buttons berbasis permission/status, review history, workflow timeline, comments, dan activity log. Draft incomplete dirender aman dengan fallback label; form upload menjelaskan contract 50 MB dan PPT/PPTX.
+
+## 9. Tests
 
 Feature suite: `tests/Feature/Modules/DocumentControl/DocumentControlTest.php`
 
-Cakupan:
+Cakupan 30 skenario:
 
 - Permission allow/deny dan crafted permission bypass.
-- Validation dan date rules.
-- Atomic numbering.
-- Private upload dan audit context.
+- Generic managed-file endpoint bypass regression.
+- Department/site/own visibility dan mutation scope.
+- Cross-organization assignment scope.
+- Draft incomplete dan mandatory submit validation.
+- Upload contract PPT/PPTX maksimal 50 MB.
+- Database lifecycle invariants.
+- Atomic numbering dan no temporary-number audit snapshot.
 - Full workflow happy path serta reject/revise cycle.
-- Submit tanpa file.
-- Edit status lock.
-- Employee effective-only visibility.
+- Role matrix Department Head, Contractor, Officer, Manager, Supervisor.
 - Confidential download authorization dan reference mismatch.
 - Filters dan CSV export.
-- Shared comments return path.
-- Expiry reminder threshold dan idempotency.
+- Shared comments authorization.
+- Multi-recipient H-30/H-7/H-1 reminders dan atomic idempotency.
+- Effective/obsolete stakeholder notifications.
+- Explicit business audit events.
 
-## 9. Verification
+## 10. Verification
 
-Fresh verification setelah perubahan kode terakhir:
+Fresh verification setelah perubahan source terakhir:
 
 ```bash
-php artisan test --filter=DocumentControlTest --compact
-# PASS — 21 tests, 98 assertions
+vendor/bin/pint --test <touched PHP files>
+# PASS — 11 touched PHP files
 
 php artisan migrate:fresh --seed --force
-# PASS — seluruh migration dan seeder termasuk DocumentControlSeeder
+# PASS — seluruh migration dan seeder, termasuk idempotency migration
+
+php artisan test --filter=DocumentControlTest --compact
+# PASS — 31 tests, 142 assertions
 
 npm run build
-# PASS — 1.063 modules transformed, built in 4,74 detik
+# PASS — 1.063 modules transformed, built in 5,16 detik
 
 php artisan test
-# PASS — 181 tests, 670 assertions
+# PASS — 191 tests, 714 assertions, 158,96 detik
+
+php artisan route:list --name=document.control
+# PASS — 15 routes
+
+php artisan schedule:list
+# PASS — documents:check-expiry terdaftar pada 0 8 * * *
 ```
 
-Browser smoke test pada `http://127.0.0.1:8080`:
+Static diff security scan: `CLEAN`.
+
+Browser smoke test sebelumnya pada commit Phase 6 awal:
 
 - Seeded Super Admin dapat login.
 - Document Register dan form Buat Dokumen dapat dirender.
@@ -134,8 +214,12 @@ Browser smoke test pada `http://127.0.0.1:8080`:
 - Tidak ada runtime error pada browser console.
 - Visual inspection tidak menemukan overlap atau elemen terpotong.
 
-Setelah test, local SQLite dikembalikan ke state fresh-seeded dan akun UAT deterministik diverifikasi aktif dengan role Super Admin.
+## 11. Known Constraints
 
-## 10. Next Phase
+- Full-repo Pint masih memiliki baseline style debt pada file lama; gate format sengaja dibatasi ke touched PHP files agar tidak membuat legacy churn.
+- Schema Document Control tetap dua tabel sesuai spec; tidak ada tabel version-history tambahan.
+- Email/WhatsApp delivery tetap di luar scope; notification core saat ini in-app.
 
-Lanjut sesuai roadmap aktif setelah user menentukan prioritas phase berikutnya. Jangan mengembangkan project lama `/home/ubuntu/qhsse-app-v2`.
+## 12. Next Phase
+
+Phase default berikutnya adalah Audit Management sesuai roadmap aktif, setelah user memberi instruksi lanjut. Jangan mengembangkan project lama `/home/ubuntu/qhsse-app-v2`.

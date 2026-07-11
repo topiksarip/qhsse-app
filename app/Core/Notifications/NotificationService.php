@@ -38,13 +38,14 @@ class NotificationService
         ?int $referenceId = null,
         ?string $actionUrl = null,
         array $data = [],
+        ?string $idempotencyKey = null,
     ): CoreNotification {
         $template = NotificationTemplate::query()->where('type', $type)->where('is_active', true)->first();
 
         $title = $this->render($template?->title_template ?? $context['title'] ?? $type, $context);
         $message = $this->render($template?->message_template ?? $context['message'] ?? null, $context);
 
-        return CoreNotification::create([
+        $attributes = [
             'recipient_id' => $recipient->id,
             'actor_id' => $actor?->id,
             'type' => $type,
@@ -54,7 +55,12 @@ class NotificationService
             'reference_id' => $referenceId,
             'action_url' => $actionUrl,
             'data' => $data + ['context' => $context, 'channels' => $template?->channels ?? ['in_app']],
-        ]);
+            'idempotency_key' => $idempotencyKey,
+        ];
+
+        return $idempotencyKey === null
+            ? CoreNotification::create($attributes)
+            : CoreNotification::query()->createOrFirst(['idempotency_key' => $idempotencyKey], $attributes);
     }
 
     public function markRead(CoreNotification $notification): void
