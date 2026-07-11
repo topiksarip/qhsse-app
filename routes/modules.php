@@ -193,3 +193,6 @@ require __DIR__.'/modules/permit.php';
 
 // Phase 10: Environmental Management
 require __DIR__.'/modules/environment.php';
+
+// Phase 11: Security Management
+require __DIR__.'/modules/security.php';
