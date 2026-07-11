@@ -26,3 +26,4 @@
 - Added GitHub MCP server ke Hermes (26 GitHub tools aktif: push, PR, issue, merge, dll).
 - Added GitHub Actions CI workflow: auto-test PHP 8.3 + Node 22 + SQLite in-memory setiap push/PR.
 - Added Makefile dan scripts/git-push.sh untuk otomasi developer workflow.
+- Completed Phase 6 Document Control: controlled document register, private files, confidential download authorization, review/approval/effective/obsolete workflow, review history, module-aware audit context, comments/activity, notifications, expiry reminders, CSV export, role-aware UI, and feature tests.

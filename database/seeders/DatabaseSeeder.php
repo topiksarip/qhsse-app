@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             InvestigationSeeder::class,
             CapaSeeder::class,
             InspectionSeeder::class,
+            DocumentControlSeeder::class,
         ]);
 
         // User::factory(10)->create();
@@ -33,7 +34,7 @@ class DatabaseSeeder extends Seeder
         $user = User::query()->firstOrCreate(
             ['email' => 'test@example.com'],
             array_merge(
-                User::factory()->make(['name' => 'Test User'])->toArray(),
+                User::factory()->make(['name' => 'Test User', 'email' => 'test@example.com'])->toArray(),
                 ['password' => Hash::make('password')],
             ),
         );

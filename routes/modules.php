@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Modules\DocumentControl\DocumentControlController;
 use App\Http\Controllers\Modules\Incident\IncidentReportController;
 use Illuminate\Support\Facades\Route;
 
@@ -138,4 +139,26 @@ Route::middleware(['auth', 'verified'])
         Route::put('/{inspection}', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'update'])->name('update')->middleware('permission:inspection.checklists.execute');
         Route::post('/{inspection}/start', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'start'])->name('start')->middleware('permission:inspection.checklists.execute');
         Route::post('/{inspection}/complete', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'complete'])->name('complete')->middleware('permission:inspection.checklists.execute');
+    });
+
+// Document Control Module
+Route::middleware(['auth', 'verified'])
+    ->prefix('documents')
+    ->name('document.control.')
+    ->group(function (): void {
+        Route::get('/', [DocumentControlController::class, 'index'])->name('index')->middleware('permission:document.control.view');
+        Route::get('/create', [DocumentControlController::class, 'create'])->name('create')->middleware('permission:document.control.create');
+        Route::post('/', [DocumentControlController::class, 'store'])->name('store')->middleware('permission:document.control.create');
+        Route::get('/export', [DocumentControlController::class, 'export'])->name('export')->middleware('permission:document.control.export');
+        Route::get('/{controlledDocument}', [DocumentControlController::class, 'show'])->name('show')->middleware('permission:document.control.view');
+        Route::get('/{controlledDocument}/edit', [DocumentControlController::class, 'edit'])->name('edit')->middleware('permission:document.control.update');
+        Route::put('/{controlledDocument}', [DocumentControlController::class, 'update'])->name('update')->middleware('permission:document.control.update');
+        Route::post('/{controlledDocument}/submit-review', [DocumentControlController::class, 'submitReview'])->name('submitReview')->middleware('permission:document.control.submit_review');
+        Route::post('/{controlledDocument}/approve', [DocumentControlController::class, 'approve'])->name('approve')->middleware('permission:document.control.approve');
+        Route::post('/{controlledDocument}/make-effective', [DocumentControlController::class, 'makeEffective'])->name('makeEffective')->middleware('permission:document.control.make_effective');
+        Route::post('/{controlledDocument}/obsolete', [DocumentControlController::class, 'obsolete'])->name('obsolete')->middleware('permission:document.control.obsolete');
+        Route::post('/{controlledDocument}/reject', [DocumentControlController::class, 'reject'])->name('reject')->middleware('permission:document.control.approve');
+        Route::post('/{controlledDocument}/revise', [DocumentControlController::class, 'revise'])->name('revise')->middleware('permission:document.control.update');
+        Route::post('/{controlledDocument}/comments', [DocumentControlController::class, 'comment'])->name('comments.store')->middleware('permission:document.control.view');
+        Route::get('/{controlledDocument}/files/{file}/download', [DocumentControlController::class, 'download'])->name('files.download')->middleware('permission:document.control.view');
     });

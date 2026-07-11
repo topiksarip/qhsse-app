@@ -44,6 +44,7 @@ const menuGroups: { label: string; items: MenuItem[] }[] = [
             { label: 'CAPA / Action', routeName: 'capa.actions.index', active: 'capa.actions.*', permission: 'capa.actions.view' },
             { label: 'Inspeksi', routeName: 'inspection.checklists.index', active: 'inspection.checklists.*', permission: 'inspection.checklists.view' },
             { label: 'Template Inspeksi', routeName: 'inspection.templates.index', active: 'inspection.templates.*', permission: 'inspection.checklists.view' },
+            { label: 'Document Control', routeName: 'document.control.index', active: 'document.control.*', permission: 'document.control.view' },
         ],
     },
     {
