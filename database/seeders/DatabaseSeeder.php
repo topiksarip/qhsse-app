@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             IncidentReportingSeeder::class,
             InvestigationSeeder::class,
             CapaSeeder::class,
+            InspectionSeeder::class,
         ]);
 
         // User::factory(10)->create();

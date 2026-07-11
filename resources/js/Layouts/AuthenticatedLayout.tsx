@@ -42,6 +42,8 @@ const menuGroups: { label: string; items: MenuItem[] }[] = [
             { label: 'Laporan Insiden', routeName: 'incident.reports.index', active: 'incident.reports.*', permission: 'incident.reports.view' },
             { label: 'Investigasi & RCA', routeName: 'investigation.reports.index', active: 'investigation.reports.*', permission: 'investigation.reports.view' },
             { label: 'CAPA / Action', routeName: 'capa.actions.index', active: 'capa.actions.*', permission: 'capa.actions.view' },
+            { label: 'Inspeksi', routeName: 'inspection.checklists.index', active: 'inspection.checklists.*', permission: 'inspection.checklists.view' },
+            { label: 'Template Inspeksi', routeName: 'inspection.templates.index', active: 'inspection.templates.*', permission: 'inspection.checklists.view' },
         ],
     },
     {

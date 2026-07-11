@@ -110,3 +110,32 @@ Route::middleware(['auth', 'verified'])
         Route::post('/{capaAction}/reject', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'reject'])->name('reject')->middleware('permission:capa.actions.reject');
         Route::post('/{capaAction}/restart', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'restart'])->name('restart')->middleware('permission:capa.actions.update');
     });
+
+// Inspection Checklist Module — Templates
+Route::middleware(['auth', 'verified'])
+    ->prefix('inspection-templates')
+    ->name('inspection.templates.')
+    ->group(function (): void {
+        Route::get('/', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'templateIndex'])->name('index')->middleware('permission:inspection.checklists.view');
+        Route::get('/create', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'templateCreate'])->name('create')->middleware('permission:inspection.checklists.create');
+        Route::post('/', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'templateStore'])->name('store')->middleware('permission:inspection.checklists.create');
+        Route::get('/{template}', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'templateShow'])->name('show')->middleware('permission:inspection.checklists.view');
+        Route::get('/{template}/edit', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'templateEdit'])->name('edit')->middleware('permission:inspection.checklists.update');
+        Route::put('/{template}', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'templateUpdate'])->name('update')->middleware('permission:inspection.checklists.update');
+        Route::delete('/{template}', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'templateDestroy'])->name('destroy')->middleware('permission:inspection.checklists.update');
+    });
+
+// Inspection Checklist Module — Inspections
+Route::middleware(['auth', 'verified'])
+    ->prefix('inspections')
+    ->name('inspection.checklists.')
+    ->group(function (): void {
+        Route::get('/', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'index'])->name('index')->middleware('permission:inspection.checklists.view');
+        Route::get('/create', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'create'])->name('create')->middleware('permission:inspection.checklists.create');
+        Route::post('/', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'store'])->name('store')->middleware('permission:inspection.checklists.create');
+        Route::get('/export', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'export'])->name('export')->middleware('permission:inspection.checklists.export');
+        Route::get('/{inspection}', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'show'])->name('show')->middleware('permission:inspection.checklists.view');
+        Route::put('/{inspection}', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'update'])->name('update')->middleware('permission:inspection.checklists.execute');
+        Route::post('/{inspection}/start', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'start'])->name('start')->middleware('permission:inspection.checklists.execute');
+        Route::post('/{inspection}/complete', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'complete'])->name('complete')->middleware('permission:inspection.checklists.execute');
+    });
