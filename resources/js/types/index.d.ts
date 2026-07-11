@@ -110,3 +110,62 @@ export interface Comment {
     updated_at: string;
     user?: User;
 }
+
+export interface Employee {
+    id: number;
+    employee_number: string;
+    name: string;
+    site_id: number;
+    department_id: number;
+    position_id?: number;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+    site?: Site;
+}
+
+export interface Department {
+    id: number;
+    code: string;
+    name: string;
+    site_id: number;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface TrainingProgram {
+    id: number;
+    code: string;
+    name: string;
+    category: string;
+    duration_hours: number;
+    description?: string;
+    is_certification: boolean;
+    validity_months?: number;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface TrainingRecord {
+    id: number;
+    training_number: string;
+    employee_id: number;
+    training_program_id: number;
+    provider?: string;
+    start_date: string;
+    end_date?: string;
+    status: 'scheduled' | 'in_progress' | 'completed' | 'expired' | 'cancelled';
+    score?: number;
+    result?: 'pass' | 'fail' | 'pending';
+    certificate_number?: string;
+    certificate_file_id?: number;
+    expiry_date?: string;
+    notes?: string;
+    created_at: string;
+    updated_at: string;
+    employee?: Employee;
+    program?: TrainingProgram;
+    certificate_file?: ManagedFile;
+}
