@@ -71,7 +71,7 @@ class IncidentReportController extends Controller
             'areas' => Area::where('is_active', true)->orderBy('name')->get(['id', 'name', 'site_id']),
             'departments' => Department::where('is_active', true)->orderBy('name')->get(['id', 'name', 'site_id']),
             'severities' => Severity::where('is_active', true)->orderBy('level', 'desc')->get(['id', 'name', 'level', 'color']),
-            'priorities' => Priority::where('is_active', true)->orderBy('level', 'desc')->get(['id', 'name', 'level', 'color']),
+            'priorities' => Priority::where('is_active', true)->orderBy('sla_days', 'desc')->get(['id', 'name', 'sla_days', 'color']),
         ]);
     }
 
@@ -195,7 +195,7 @@ class IncidentReportController extends Controller
             'areas' => Area::where('is_active', true)->orderBy('name')->get(['id', 'name', 'site_id']),
             'departments' => Department::where('is_active', true)->orderBy('name')->get(['id', 'name', 'site_id']),
             'severities' => Severity::where('is_active', true)->orderBy('level', 'desc')->get(['id', 'name', 'level', 'color']),
-            'priorities' => Priority::where('is_active', true)->orderBy('level', 'desc')->get(['id', 'name', 'level', 'color']),
+            'priorities' => Priority::where('is_active', true)->orderBy('sla_days', 'desc')->get(['id', 'name', 'sla_days', 'color']),
         ]);
     }
 

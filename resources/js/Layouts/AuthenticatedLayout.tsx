@@ -78,7 +78,7 @@ export default function Authenticated({
 
     return (
         <div className="min-h-screen bg-slate-100 dark:bg-gray-950">
-            <nav className="border-b border-slate-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+            <nav className="relative z-50 border-b border-slate-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 justify-between">
                         <div className="flex min-w-0 items-center gap-6">
@@ -87,7 +87,7 @@ export default function Authenticated({
                                 <span className="hidden text-sm font-bold uppercase tracking-[0.24em] text-slate-700 dark:text-slate-200 lg:block">QHSSE</span>
                             </Link>
 
-                            <div className="hidden items-center gap-2 overflow-x-auto lg:flex">
+                            <div className="hidden items-center gap-2 overflow-visible lg:flex">
                                 {visibleGroups.map((group) => (
                                     <Dropdown key={group.label}>
                                         <Dropdown.Trigger>

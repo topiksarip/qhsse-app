@@ -59,7 +59,7 @@ class CapaActionController extends Controller
             'sites' => \App\Models\Core\MasterData\Site::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'departments' => \App\Models\Core\MasterData\Department::where('is_active', true)->orderBy('name')->get(['id', 'name', 'site_id']),
             'severities' => \App\Models\Core\MasterData\Severity::where('is_active', true)->orderBy('level', 'desc')->get(['id', 'name', 'level', 'color']),
-            'priorities' => \App\Models\Core\MasterData\Priority::where('is_active', true)->orderBy('level', 'desc')->get(['id', 'name', 'level', 'color']),
+            'priorities' => \App\Models\Core\MasterData\Priority::where('is_active', true)->orderBy('sla_days', 'desc')->get(['id', 'name', 'sla_days', 'color']),
             'users' => User::where('is_active', true)->orderBy('name')->get(['id', 'name']),
         ]);
     }
@@ -145,7 +145,7 @@ class CapaActionController extends Controller
             'sites' => \App\Models\Core\MasterData\Site::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'departments' => \App\Models\Core\MasterData\Department::where('is_active', true)->orderBy('name')->get(['id', 'name', 'site_id']),
             'severities' => \App\Models\Core\MasterData\Severity::where('is_active', true)->orderBy('level', 'desc')->get(['id', 'name', 'level', 'color']),
-            'priorities' => \App\Models\Core\MasterData\Priority::where('is_active', true)->orderBy('level', 'desc')->get(['id', 'name', 'level', 'color']),
+            'priorities' => \App\Models\Core\MasterData\Priority::where('is_active', true)->orderBy('sla_days', 'desc')->get(['id', 'name', 'sla_days', 'color']),
             'users' => User::where('is_active', true)->orderBy('name')->get(['id', 'name']),
         ]);
     }
