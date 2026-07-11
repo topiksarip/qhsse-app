@@ -184,3 +184,6 @@ Route::middleware(['auth', 'verified'])
         Route::post('/{audit}/findings/{finding}/close', [AuditController::class, 'closeFinding'])->name('findings.close')->middleware('permission:audit.findings.close');
         Route::post('/{audit}/comment', [AuditController::class, 'comment'])->name('comment')->middleware('permission:core.comments.create');
     });
+
+// Phase 8: Training & Competency Management
+require __DIR__.'/modules/training.php';

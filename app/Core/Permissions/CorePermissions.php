@@ -130,6 +130,14 @@ final class CorePermissions
             'audit.findings.create',
             'audit.findings.update',
             'audit.findings.close',
+            // Training & Competency
+            'training.programs.view',
+            'training.programs.create',
+            'training.programs.update',
+            'training.records.view',
+            'training.records.create',
+            'training.records.update',
+            'training.records.export',
         ];
     }
 
