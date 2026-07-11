@@ -203,3 +203,6 @@ require __DIR__.'/modules/quality.php';
 // Phase 13: Risk Management
 require __DIR__.'/modules/risk.php';
 require __DIR__ . '/modules/legal.php';
+
+// Phase 15: Emergency Preparedness
+require __DIR__ . '/modules/emergency.php';

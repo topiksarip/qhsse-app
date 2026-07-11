@@ -152,6 +152,19 @@ final class CorePermissions
             'legal.obligations.view',
             'legal.obligations.create',
             'legal.obligations.update',
+            // Emergency Preparedness
+            'emergency.plans.view',
+            'emergency.plans.create',
+            'emergency.plans.update',
+            'emergency.plans.export',
+            'emergency.drills.view',
+            'emergency.drills.create',
+            'emergency.drills.update',
+            'emergency.drills.execute',
+            'emergency.drills.export',
+            'emergency.contacts.view',
+            'emergency.contacts.create',
+            'emergency.contacts.update',
         ];
     }
 
@@ -262,17 +275,22 @@ final class CorePermissions
         $legalView = ['legal.register.view', 'legal.obligations.view'];
         $legalCreate = ['legal.register.view', 'legal.register.create', 'legal.register.update', 'legal.obligations.view'];
 
+        $emergencyFull = ['emergency.plans.view', 'emergency.plans.create', 'emergency.plans.update', 'emergency.plans.export', 'emergency.drills.view', 'emergency.drills.create', 'emergency.drills.update', 'emergency.drills.execute', 'emergency.drills.export', 'emergency.contacts.view', 'emergency.contacts.create', 'emergency.contacts.update'];
+        $emergencyViewExport = ['emergency.plans.view', 'emergency.plans.export', 'emergency.drills.view', 'emergency.drills.export', 'emergency.contacts.view'];
+        $emergencyView = ['emergency.plans.view', 'emergency.drills.view', 'emergency.contacts.view'];
+        $emergencyCreate = ['emergency.plans.view', 'emergency.plans.create', 'emergency.plans.update', 'emergency.drills.view', 'emergency.drills.create', 'emergency.drills.update', 'emergency.contacts.view', 'emergency.contacts.create', 'emergency.contacts.update'];
+
         return [
             'Super Admin' => self::all(),
             'Admin' => self::all(),
-            'QHSSE Manager' => [...$viewOnly, 'core.scope.all', ...$incidentFull, ...$investigationFull, ...$capaFull, ...$inspectionFull, ...$documentFull, ...$auditFull, ...$riskFull, ...$legalFull],
-            'QHSSE Officer' => [...$viewOnly, 'core.scope.site', ...$incidentFull, ...$investigationFull, ...$capaFull, ...$inspectionFull, ...$documentCreate, ...$auditExecute, ...$riskFull, ...$legalFull],
-            'Supervisor' => ['core.companies.view', 'core.employees.view', 'core.departments.view', 'core.positions.view', 'core.scope.department', ...$incidentSupervisor, ...$investigationView, ...$capaAssign, ...$inspectionView, ...$documentCreate, ...$auditView, ...$riskCreate, ...$legalView],
-            'Department Head' => ['core.companies.view', 'core.employees.view', 'core.departments.view', 'core.positions.view', 'core.scope.department', ...$incidentSupervisor, ...$investigationView, ...$capaView, ...$inspectionView, ...$documentView, 'core.workflow.transition', 'document.control.submit_review', ...$auditView, ...$riskView, ...$legalView],
-            'Employee / Reporter' => ['core.scope.own', ...$incidentBasic, ...$investigationView, ...$capaView, ...$inspectionView, ...$documentView, ...$auditView, ...$riskView, ...$legalView],
+            'QHSSE Manager' => [...$viewOnly, 'core.scope.all', ...$incidentFull, ...$investigationFull, ...$capaFull, ...$inspectionFull, ...$documentFull, ...$auditFull, ...$riskFull, ...$legalFull, ...$emergencyFull],
+            'QHSSE Officer' => [...$viewOnly, 'core.scope.site', ...$incidentFull, ...$investigationFull, ...$capaFull, ...$inspectionFull, ...$documentCreate, ...$auditExecute, ...$riskFull, ...$legalFull, ...$emergencyFull],
+            'Supervisor' => ['core.companies.view', 'core.employees.view', 'core.departments.view', 'core.positions.view', 'core.scope.department', ...$incidentSupervisor, ...$investigationView, ...$capaAssign, ...$inspectionView, ...$documentCreate, ...$auditView, ...$riskCreate, ...$legalView, ...$emergencyCreate],
+            'Department Head' => ['core.companies.view', 'core.employees.view', 'core.departments.view', 'core.positions.view', 'core.scope.department', ...$incidentSupervisor, ...$investigationView, ...$capaView, ...$inspectionView, ...$documentView, 'core.workflow.transition', 'document.control.submit_review', ...$auditView, ...$riskView, ...$legalView, ...$emergencyView],
+            'Employee / Reporter' => ['core.scope.own', ...$incidentBasic, ...$investigationView, ...$capaView, ...$inspectionView, ...$documentView, ...$auditView, ...$riskView, ...$legalView, ...$emergencyView],
             'Contractor' => ['core.scope.company', ...$incidentBasic, ...$documentView],
-            'Auditor' => [...$viewOnly, 'core.scope.all', ...$incidentViewExport, ...$investigationViewExport, ...$capaViewExport, ...$inspectionView, ...$documentViewExport, ...$auditViewExport, ...$riskViewExport, ...$legalViewExport],
-            'Top Management' => [...$viewOnly, 'core.scope.all', ...$incidentViewExport, ...$investigationViewExport, ...$capaViewExport, ...$inspectionView, ...$documentViewExport, ...$auditViewExport, ...$riskViewExport, ...$legalViewExport],
+            'Auditor' => [...$viewOnly, 'core.scope.all', ...$incidentViewExport, ...$investigationViewExport, ...$capaViewExport, ...$inspectionView, ...$documentViewExport, ...$auditViewExport, ...$riskViewExport, ...$legalViewExport, ...$emergencyViewExport],
+            'Top Management' => [...$viewOnly, 'core.scope.all', ...$incidentViewExport, ...$investigationViewExport, ...$capaViewExport, ...$inspectionView, ...$documentViewExport, ...$auditViewExport, ...$riskViewExport, ...$legalViewExport, ...$emergencyViewExport],
         ];
     }
 }
