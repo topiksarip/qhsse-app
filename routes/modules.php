@@ -187,3 +187,6 @@ Route::middleware(['auth', 'verified'])
 
 // Phase 8: Training & Competency Management
 require __DIR__.'/modules/training.php';
+
+// Phase 9: Permit to Work
+require __DIR__.'/modules/permit.php';
