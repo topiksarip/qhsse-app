@@ -208,11 +208,13 @@ class DocumentControlController extends Controller
         $request->validate(['review_notes' => ['nullable', 'string', 'max:2000']]);
         abort_unless(in_array($controlledDocument->status, ['draft'], true), 422);
 
-        validator($controlledDocument->only(['title', 'type', 'version', 'effective_date', 'owner_id']), [
+        validator($controlledDocument->only(['title', 'type', 'version', 'effective_date', 'review_date', 'expiry_date', 'owner_id']), [
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::in(array_keys(self::TYPES))],
             'version' => ['required', 'string', 'max:20'],
             'effective_date' => ['required', 'date'],
+            'review_date' => ['nullable', 'date', 'after_or_equal:today'],
+            'expiry_date' => ['nullable', 'date', 'after:review_date'],
             'owner_id' => ['required', 'exists:users,id'],
         ])->validate();
 
@@ -326,6 +328,7 @@ class DocumentControlController extends Controller
         try {
             DB::transaction(function () use ($controlledDocument, $actor): void {
                 $this->workflow->transition('document', $controlledDocument->id, 'revise', $actor);
+                $controlledDocument->reviews()->latest('id')->firstOrFail()->update(['decision' => 'revise']);
                 $controlledDocument->update(['status' => 'draft']);
                 $this->auditTransition('document.revised', $controlledDocument, 'rejected', 'draft', $actor);
                 $this->activity->log('document', $controlledDocument->id, 'document.revised', 'Dokumen dikembalikan ke draft untuk revisi', $actor);

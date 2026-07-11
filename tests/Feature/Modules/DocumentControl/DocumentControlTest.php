@@ -172,6 +172,33 @@ test('document cannot be submitted without controlled file', function () {
     expect($document->fresh()->status)->toBe('draft');
 });
 
+test('existing draft submit revalidates review and expiry dates', function () {
+    $document = ControlledDocument::factory()->create([
+        'status' => 'draft',
+        'owner_id' => $this->admin->id,
+        'effective_date' => today(),
+        'review_date' => today()->subDay(),
+        'expiry_date' => today()->addYear(),
+    ]);
+    documentWorkflowAt($document, $this->admin, 'draft');
+    documentFile($document, $this->admin);
+    actingAs($this->admin);
+
+    $this->post(route('document.control.submitReview', $document))
+        ->assertSessionHasErrors(['review_date']);
+
+    $document->update([
+        'review_date' => today()->addMonth(),
+        'expiry_date' => today()->addWeek(),
+    ]);
+
+    $this->post(route('document.control.submitReview', $document))
+        ->assertSessionHasErrors(['expiry_date']);
+
+    expect($document->fresh()->status)->toBe('draft')
+        ->and($document->reviews()->count())->toBe(0);
+});
+
 test('manager can approve and make document effective', function () {
     $manager = User::factory()->create();
     $manager->assignRole('QHSSE Manager');
@@ -215,6 +242,7 @@ test('manager can reject and owner can revise then resubmit as a new review cycl
 
     actingAs($owner);
     $this->post(route('document.control.revise', $document))->assertRedirect();
+    expect($document->reviews()->latest('id')->first()->decision)->toBe('revise');
     $this->post(route('document.control.submitReview', $document), ['review_notes' => 'Revisi sudah dilengkapi.'])->assertRedirect();
 
     expect($document->fresh()->status)->toBe('review')

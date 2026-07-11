@@ -158,13 +158,15 @@ Fitur UI mencakup status badge, confidential indicator, controlled-file download
 
 Feature suite: `tests/Feature/Modules/DocumentControl/DocumentControlTest.php`
 
-Cakupan 30 skenario:
+Cakupan 32 skenario:
 
 - Permission allow/deny dan crafted permission bypass.
 - Generic managed-file endpoint bypass regression.
 - Department/site/own visibility dan mutation scope.
 - Cross-organization assignment scope.
-- Draft incomplete dan mandatory submit validation.
+- Draft incomplete dan mandatory submit validation, termasuk revalidation tanggal pada submit draft existing.
+- Review cycle reject/revise memastikan historical decision berubah menjadi `revise` sebelum re-submit.
+- Upgrade-safe corrective migration dari released schema baseline pada PostgreSQL dan SQLite.
 - Upload contract PPT/PPTX maksimal 50 MB.
 - Database lifecycle invariants.
 - Atomic numbering dan no temporary-number audit snapshot.
@@ -186,16 +188,22 @@ vendor/bin/pint --test <touched PHP files>
 # PASS — 11 touched PHP files
 
 php artisan migrate:fresh --seed --force
-# PASS — seluruh migration dan seeder, termasuk idempotency migration
+# PASS — PostgreSQL fresh schema + seluruh seeder, termasuk corrective migration 000007
+
+php artisan migrate:rollback --step=1 --force && php artisan migrate --force
+# PASS — migration 000007 rollback/forward pada PostgreSQL aktif dan SQLite sementara
+
+# PostgreSQL upgrade simulation dari released migration 000005
+# PASS — baseline row preserved; title/type/version nullable; 3 CHECK constraints dan 5 indexes terpasang
 
 php artisan test --filter=DocumentControlTest --compact
-# PASS — 31 tests, 142 assertions
+# PASS — 32 tests, 149 assertions
 
 npm run build
-# PASS — 1.063 modules transformed, built in 5,16 detik
+# PASS — 1.063 modules transformed, built in 5,01 detik
 
 php artisan test
-# PASS — 191 tests, 714 assertions, 158,96 detik
+# PASS — 192 tests, 721 assertions, 161,91 detik
 
 php artisan route:list --name=document.control
 # PASS — 15 routes
