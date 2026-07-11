@@ -166,7 +166,6 @@ Cakupan 32 skenario:
 - Cross-organization assignment scope.
 - Draft incomplete dan mandatory submit validation, termasuk revalidation tanggal pada submit draft existing.
 - Review cycle reject/revise memastikan historical decision berubah menjadi `revise` sebelum re-submit.
-- Upgrade-safe corrective migration dari released schema baseline pada PostgreSQL dan SQLite.
 - Upload contract PPT/PPTX maksimal 50 MB.
 - Database lifecycle invariants.
 - Atomic numbering dan no temporary-number audit snapshot.
@@ -182,6 +181,8 @@ Cakupan 32 skenario:
 ## 10. Verification
 
 Fresh verification setelah perubahan source terakhir:
+
+Automated feature suite dan database migration verification dipisahkan secara eksplisit. Migration upgrade/rollback PostgreSQL dan SQLite di bawah ini adalah verifikasi operasional manual yang dijalankan melalui Artisan pada database disposable/empty; bukan bagian dari 32 Pest feature tests.
 
 ```bash
 vendor/bin/pint --test <touched PHP files>
@@ -226,6 +227,7 @@ Browser smoke test sebelumnya pada commit Phase 6 awal:
 
 - Full-repo Pint masih memiliki baseline style debt pada file lama; gate format sengaja dibatasi ke touched PHP files agar tidak membuat legacy churn.
 - Schema Document Control tetap dua tabel sesuai spec; tidak ada tabel version-history tambahan.
+- Rollback corrective migration `000007` harus memulihkan baseline `NOT NULL`; draft incomplete yang memiliki metadata `NULL` akan dinormalisasi menjadi `Untitled document`, `other`, dan `1.0`. Nilai fallback tersebut tetap tersimpan bila migration kemudian dijalankan maju kembali.
 - Email/WhatsApp delivery tetap di luar scope; notification core saat ini in-app.
 
 ## 12. Next Phase
