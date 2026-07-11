@@ -190,3 +190,6 @@ require __DIR__.'/modules/training.php';
 
 // Phase 9: Permit to Work
 require __DIR__.'/modules/permit.php';
+
+// Phase 10: Environmental Management
+require __DIR__.'/modules/environment.php';
