@@ -196,3 +196,6 @@ require __DIR__.'/modules/environment.php';
 
 // Phase 11: Security Management
 require __DIR__.'/modules/security.php';
+
+// Phase 12: Quality Management
+require __DIR__.'/modules/quality.php';
