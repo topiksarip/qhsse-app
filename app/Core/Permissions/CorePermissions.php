@@ -88,6 +88,14 @@ final class CorePermissions
             'incident.reports.review',
             'incident.reports.close',
             'incident.reports.export',
+            // Investigation & RCA
+            'investigation.reports.view',
+            'investigation.reports.create',
+            'investigation.reports.update',
+            'investigation.reports.submit',
+            'investigation.reports.review',
+            'investigation.reports.close',
+            'investigation.reports.export',
         ];
     }
 
@@ -144,17 +152,36 @@ final class CorePermissions
             'incident.reports.submit',
         ];
 
+        $investigationFull = [
+            'investigation.reports.view',
+            'investigation.reports.create',
+            'investigation.reports.update',
+            'investigation.reports.submit',
+            'investigation.reports.review',
+            'investigation.reports.close',
+            'investigation.reports.export',
+        ];
+
+        $investigationViewExport = [
+            'investigation.reports.view',
+            'investigation.reports.export',
+        ];
+
+        $investigationView = [
+            'investigation.reports.view',
+        ];
+
         return [
             'Super Admin' => self::all(),
             'Admin' => self::all(),
-            'QHSSE Manager' => [...$viewOnly, 'core.scope.all', ...$incidentFull],
-            'QHSSE Officer' => [...$viewOnly, 'core.scope.site', ...$incidentFull],
-            'Supervisor' => ['core.companies.view', 'core.employees.view', 'core.departments.view', 'core.positions.view', 'core.scope.department', ...$incidentSupervisor],
-            'Department Head' => ['core.companies.view', 'core.employees.view', 'core.departments.view', 'core.positions.view', 'core.scope.department', ...$incidentSupervisor],
-            'Employee / Reporter' => ['core.scope.own', ...$incidentBasic],
+            'QHSSE Manager' => [...$viewOnly, 'core.scope.all', ...$incidentFull, ...$investigationFull],
+            'QHSSE Officer' => [...$viewOnly, 'core.scope.site', ...$incidentFull, ...$investigationFull],
+            'Supervisor' => ['core.companies.view', 'core.employees.view', 'core.departments.view', 'core.positions.view', 'core.scope.department', ...$incidentSupervisor, ...$investigationView],
+            'Department Head' => ['core.companies.view', 'core.employees.view', 'core.departments.view', 'core.positions.view', 'core.scope.department', ...$incidentSupervisor, ...$investigationView],
+            'Employee / Reporter' => ['core.scope.own', ...$incidentBasic, ...$investigationView],
             'Contractor' => ['core.scope.company', ...$incidentBasic],
-            'Auditor' => [...$viewOnly, 'core.scope.all', ...$incidentViewExport],
-            'Top Management' => [...$viewOnly, 'core.scope.all', ...$incidentViewExport],
+            'Auditor' => [...$viewOnly, 'core.scope.all', ...$incidentViewExport, ...$investigationViewExport],
+            'Top Management' => [...$viewOnly, 'core.scope.all', ...$incidentViewExport, ...$investigationViewExport],
         ];
     }
 }
