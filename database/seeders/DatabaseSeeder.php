@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use Database\Seeders\AuditSeeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -27,6 +28,7 @@ class DatabaseSeeder extends Seeder
             CapaSeeder::class,
             InspectionSeeder::class,
             DocumentControlSeeder::class,
+            AuditSeeder::class,
         ]);
 
         // User::factory(10)->create();

@@ -1,0 +1,38 @@
+<?php
+
+namespace App\Http\Requests\Modules\Audit;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class StoreAuditRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return $this->user()->can('audit.management.create');
+    }
+
+    public function rules(): array
+    {
+        return [
+            'title' => ['required', 'string', 'max:255'],
+            'audit_type' => ['required', Rule::in(['internal', 'external', 'supplier', 'regulatory'])],
+            'scope' => ['required', 'string', 'min:10'],
+            'department_id' => ['required', 'exists:departments,id'],
+            'lead_auditor_id' => ['required', 'exists:users,id'],
+            'scheduled_date' => ['required', 'date', 'after_or_equal:today'],
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'title' => 'judul',
+            'audit_type' => 'jenis audit',
+            'scope' => 'ruang lingkup',
+            'department_id' => 'departemen',
+            'lead_auditor_id' => 'auditor utama',
+            'scheduled_date' => 'tanggal jadwal',
+        ];
+    }
+}

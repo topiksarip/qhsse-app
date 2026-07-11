@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Modules\Audit\AuditController;
 use App\Http\Controllers\Modules\DocumentControl\DocumentControlController;
 use App\Http\Controllers\Modules\Incident\IncidentReportController;
 use Illuminate\Support\Facades\Route;
@@ -161,4 +162,25 @@ Route::middleware(['auth', 'verified'])
         Route::post('/{controlledDocument}/revise', [DocumentControlController::class, 'revise'])->name('revise')->middleware('permission:document.control.update');
         Route::post('/{controlledDocument}/comments', [DocumentControlController::class, 'comment'])->name('comments.store')->middleware('permission:document.control.view');
         Route::get('/{controlledDocument}/files/{file}/download', [DocumentControlController::class, 'download'])->name('files.download')->middleware('permission:document.control.view');
+    });
+
+// Audit Management Module
+Route::middleware(['auth', 'verified'])
+    ->prefix('audits')
+    ->name('audits.')
+    ->group(function (): void {
+        Route::get('/', [AuditController::class, 'index'])->name('index')->middleware('permission:audit.management.view');
+        Route::get('/create', [AuditController::class, 'create'])->name('create')->middleware('permission:audit.management.create');
+        Route::post('/', [AuditController::class, 'store'])->name('store')->middleware('permission:audit.management.create');
+        Route::get('/export', [AuditController::class, 'export'])->name('export')->middleware('permission:audit.management.export');
+        Route::get('/{audit}', [AuditController::class, 'show'])->name('show')->middleware('permission:audit.management.view');
+        Route::get('/{audit}/edit', [AuditController::class, 'edit'])->name('edit')->middleware('permission:audit.management.update');
+        Route::put('/{audit}', [AuditController::class, 'update'])->name('update')->middleware('permission:audit.management.update');
+        Route::post('/{audit}/start', [AuditController::class, 'startAudit'])->name('start')->middleware('permission:audit.management.execute');
+        Route::post('/{audit}/generate-report', [AuditController::class, 'generateReport'])->name('generate-report')->middleware('permission:audit.management.execute');
+        Route::post('/{audit}/close', [AuditController::class, 'closeAudit'])->name('close')->middleware('permission:audit.management.close');
+        Route::post('/{audit}/findings', [AuditController::class, 'storeFinding'])->name('findings.store')->middleware('permission:audit.findings.create');
+        Route::put('/{audit}/findings/{finding}', [AuditController::class, 'updateFinding'])->name('findings.update')->middleware('permission:audit.findings.update');
+        Route::post('/{audit}/findings/{finding}/close', [AuditController::class, 'closeFinding'])->name('findings.close')->middleware('permission:audit.findings.close');
+        Route::post('/{audit}/comment', [AuditController::class, 'comment'])->name('comment')->middleware('permission:core.comments.create');
     });

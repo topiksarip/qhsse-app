@@ -76,6 +76,18 @@ class WorkflowSeeder extends Seeder
                     $this->transition('rejected', 'draft', 'revise', 'Revise', false, 'core.workflow.transition'),
                 ],
             ],
+            [
+                'module_name' => 'audit',
+                'code' => 'AUDIT_WORKFLOW',
+                'name' => 'Audit Workflow',
+                'initial_status' => 'planned',
+                'is_active' => true,
+                'transitions' => [
+                    $this->transition('planned', 'in_progress', 'start', 'Start Audit', false, 'core.workflow.transition'),
+                    $this->transition('in_progress', 'report_ready', 'generate_report', 'Generate Report', false, 'core.workflow.transition'),
+                    $this->transition('report_ready', 'closed', 'close', 'Close Audit', false, 'core.workflow.transition'),
+                ],
+            ],
         ];
     }
 
