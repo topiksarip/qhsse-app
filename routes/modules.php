@@ -202,3 +202,4 @@ require __DIR__.'/modules/quality.php';
 
 // Phase 13: Risk Management
 require __DIR__.'/modules/risk.php';
+require __DIR__ . '/modules/legal.php';
