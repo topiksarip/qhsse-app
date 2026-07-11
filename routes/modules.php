@@ -91,3 +91,22 @@ Route::middleware(['auth', 'verified'])
         Route::post('/{investigation}/cancel', [\App\Http\Controllers\Modules\Investigation\InvestigationController::class, 'cancel'])
             ->name('cancel')->middleware('permission:investigation.reports.update');
     });
+
+// CAPA / Action Tracking Module
+Route::middleware(['auth', 'verified'])
+    ->prefix('capa-actions')
+    ->name('capa.actions.')
+    ->group(function (): void {
+        Route::get('/', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'index'])->name('index')->middleware('permission:capa.actions.view');
+        Route::get('/create', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'create'])->name('create')->middleware('permission:capa.actions.create');
+        Route::post('/', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'store'])->name('store')->middleware('permission:capa.actions.create');
+        Route::get('/export', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'export'])->name('export')->middleware('permission:capa.actions.export');
+        Route::get('/{capaAction}', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'show'])->name('show')->middleware('permission:capa.actions.view');
+        Route::get('/{capaAction}/edit', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'edit'])->name('edit')->middleware('permission:capa.actions.update');
+        Route::put('/{capaAction}', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'update'])->name('update')->middleware('permission:capa.actions.update');
+        Route::post('/{capaAction}/start', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'start'])->name('start')->middleware('permission:capa.actions.update');
+        Route::post('/{capaAction}/submit-verification', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'submitVerification'])->name('submit_verification')->middleware('permission:capa.actions.submit');
+        Route::post('/{capaAction}/verify-close', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'verifyClose'])->name('verify_close')->middleware('permission:capa.actions.close');
+        Route::post('/{capaAction}/reject', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'reject'])->name('reject')->middleware('permission:capa.actions.reject');
+        Route::post('/{capaAction}/restart', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'restart'])->name('restart')->middleware('permission:capa.actions.update');
+    });

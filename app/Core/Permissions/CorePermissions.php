@@ -96,6 +96,15 @@ final class CorePermissions
             'investigation.reports.review',
             'investigation.reports.close',
             'investigation.reports.export',
+            // CAPA / Action Tracking
+            'capa.actions.view',
+            'capa.actions.create',
+            'capa.actions.update',
+            'capa.actions.submit',
+            'capa.actions.verify',
+            'capa.actions.close',
+            'capa.actions.reject',
+            'capa.actions.export',
         ];
     }
 
@@ -171,17 +180,29 @@ final class CorePermissions
             'investigation.reports.view',
         ];
 
+        $capaFull = [
+            'capa.actions.view', 'capa.actions.create', 'capa.actions.update',
+            'capa.actions.submit', 'capa.actions.verify', 'capa.actions.close',
+            'capa.actions.reject', 'capa.actions.export',
+        ];
+
+        $capaViewExport = ['capa.actions.view', 'capa.actions.export'];
+
+        $capaView = ['capa.actions.view'];
+
+        $capaAssign = ['capa.actions.view', 'capa.actions.create', 'capa.actions.update'];
+
         return [
             'Super Admin' => self::all(),
             'Admin' => self::all(),
-            'QHSSE Manager' => [...$viewOnly, 'core.scope.all', ...$incidentFull, ...$investigationFull],
-            'QHSSE Officer' => [...$viewOnly, 'core.scope.site', ...$incidentFull, ...$investigationFull],
-            'Supervisor' => ['core.companies.view', 'core.employees.view', 'core.departments.view', 'core.positions.view', 'core.scope.department', ...$incidentSupervisor, ...$investigationView],
-            'Department Head' => ['core.companies.view', 'core.employees.view', 'core.departments.view', 'core.positions.view', 'core.scope.department', ...$incidentSupervisor, ...$investigationView],
-            'Employee / Reporter' => ['core.scope.own', ...$incidentBasic, ...$investigationView],
+            'QHSSE Manager' => [...$viewOnly, 'core.scope.all', ...$incidentFull, ...$investigationFull, ...$capaFull],
+            'QHSSE Officer' => [...$viewOnly, 'core.scope.site', ...$incidentFull, ...$investigationFull, ...$capaFull],
+            'Supervisor' => ['core.companies.view', 'core.employees.view', 'core.departments.view', 'core.positions.view', 'core.scope.department', ...$incidentSupervisor, ...$investigationView, ...$capaAssign],
+            'Department Head' => ['core.companies.view', 'core.employees.view', 'core.departments.view', 'core.positions.view', 'core.scope.department', ...$incidentSupervisor, ...$investigationView, ...$capaView],
+            'Employee / Reporter' => ['core.scope.own', ...$incidentBasic, ...$investigationView, ...$capaView],
             'Contractor' => ['core.scope.company', ...$incidentBasic],
-            'Auditor' => [...$viewOnly, 'core.scope.all', ...$incidentViewExport, ...$investigationViewExport],
-            'Top Management' => [...$viewOnly, 'core.scope.all', ...$incidentViewExport, ...$investigationViewExport],
+            'Auditor' => [...$viewOnly, 'core.scope.all', ...$incidentViewExport, ...$investigationViewExport, ...$capaViewExport],
+            'Top Management' => [...$viewOnly, 'core.scope.all', ...$incidentViewExport, ...$investigationViewExport, ...$capaViewExport],
         ];
     }
 }
