@@ -15,29 +15,24 @@ type MenuItem = {
 
 const menuGroups: { label: string; items: MenuItem[] }[] = [
     {
-        label: 'Core',
+        label: 'Core & Master',
         items: [
             { label: 'Dashboard', routeName: 'dashboard', active: 'dashboard' },
             { label: 'Sites', routeName: 'core.sites.index', active: 'core.sites.*', permission: 'core.sites.view' },
             { label: 'Departments', routeName: 'core.departments.index', active: 'core.departments.*', permission: 'core.departments.view' },
+            { label: 'Areas', routeName: 'core.areas.index', active: 'core.areas.*', permission: 'core.areas.view' },
+            { label: 'Positions', routeName: 'core.positions.index', active: 'core.positions.*', permission: 'core.positions.view' },
             { label: 'Files', routeName: 'core.files.index', active: 'core.files.*', permission: 'core.files.view' },
             { label: 'Notifications', routeName: 'core.notifications.index', active: 'core.notifications.*', permission: 'core.notifications.view' },
-        ],
-    },
-    {
-        label: 'Masters',
-        items: [
             { label: 'Severities', routeName: 'core.severities.index', active: 'core.severities.*', permission: 'core.severities.view' },
             { label: 'Priorities', routeName: 'core.priorities.index', active: 'core.priorities.*', permission: 'core.priorities.view' },
             { label: 'Statuses', routeName: 'core.statuses.index', active: 'core.statuses.*', permission: 'core.statuses.view' },
             { label: 'Categories', routeName: 'core.categories.index', active: 'core.categories.*', permission: 'core.categories.view' },
             { label: 'Risk Matrix', routeName: 'core.risk-matrix.index', active: 'core.risk-matrix.*', permission: 'core.risk-matrix.view' },
-            { label: 'Areas', routeName: 'core.areas.index', active: 'core.areas.*', permission: 'core.areas.view' },
-            { label: 'Positions', routeName: 'core.positions.index', active: 'core.positions.*', permission: 'core.positions.view' },
         ],
     },
     {
-        label: 'Modul QHSSE',
+        label: 'QHSSE Modules',
         items: [
             { label: 'Laporan Insiden', routeName: 'incident.reports.index', active: 'incident.reports.*', permission: 'incident.reports.view' },
             { label: 'Investigasi & RCA', routeName: 'investigation.reports.index', active: 'investigation.reports.*', permission: 'investigation.reports.view' },
@@ -54,7 +49,7 @@ const menuGroups: { label: string; items: MenuItem[] }[] = [
         ],
     },
     {
-        label: 'Admin',
+        label: 'System Admin',
         items: [
             { label: 'Companies', routeName: 'core.companies.index', active: 'core.companies.*', permission: 'core.companies.view' },
             { label: 'Employees', routeName: 'core.employees.index', active: 'core.employees.*', permission: 'core.employees.view' },
