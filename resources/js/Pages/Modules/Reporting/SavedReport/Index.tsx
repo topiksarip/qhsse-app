@@ -174,11 +174,11 @@ export default function Index({ reports, filters }: Props) {
                                         </div>
                                     </div>
                                     <div className="flex gap-2 ml-4">
+                                        <Link href={route('saved-reports.show', report.id)}>
+                                            <SecondaryButton>Lihat</SecondaryButton>
+                                        </Link>
                                         {report.status === 'completed' && (
                                             <>
-                                                <Link href={route('saved-reports.show', report.id)}>
-                                                    <SecondaryButton>Lihat</SecondaryButton>
-                                                </Link>
                                                 <Link href={route('saved-reports.download', report.id)}>
                                                     <PrimaryButton>Download</PrimaryButton>
                                                 </Link>

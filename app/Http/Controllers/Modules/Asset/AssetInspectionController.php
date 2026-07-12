@@ -29,7 +29,7 @@ class AssetInspectionController extends Controller
             ->orderBy('inspection_date', 'desc')
             ->get();
 
-        return Inertia::render('Modules/Asset/Inspections/Index', [
+        return Inertia::render('Modules/Asset/Inspection/Index', [
             'asset' => $asset,
             'inspections' => $inspections,
             'can' => [
@@ -47,7 +47,7 @@ class AssetInspectionController extends Controller
             $q->whereIn('name', ['Super Admin', 'Admin', 'QHSSE Manager', 'QHSSE Officer']);
         })->select('id', 'name')->get();
 
-        return Inertia::render('Modules/Asset/Inspections/CreateOrEdit', [
+        return Inertia::render('Modules/Asset/Inspection/CreateOrEdit', [
             'asset' => $asset,
             'inspectors' => $inspectors,
             'results' => AssetInspection::getResults(),
@@ -88,7 +88,7 @@ class AssetInspectionController extends Controller
 
         $inspection->load(['inspector', 'capaAction', 'creator', 'updater']);
 
-        return Inertia::render('Modules/Asset/Inspections/Show', [
+        return Inertia::render('Modules/Asset/Inspection/Show', [
             'asset' => $asset,
             'inspection' => $inspection,
             'can' => [
@@ -108,7 +108,7 @@ class AssetInspectionController extends Controller
             $q->whereIn('name', ['Super Admin', 'Admin', 'QHSSE Manager', 'QHSSE Officer']);
         })->select('id', 'name')->get();
 
-        return Inertia::render('Modules/Asset/Inspections/CreateOrEdit', [
+        return Inertia::render('Modules/Asset/Inspection/CreateOrEdit', [
             'asset' => $asset,
             'inspection' => $inspection,
             'inspectors' => $inspectors,

@@ -16,16 +16,13 @@ Route::middleware(['auth', 'verified'])
             ->middleware('permission:asset.management.export');
 
         // Asset CRUD
-        Route::resource('/', AssetController::class)
-            ->parameters(['' => 'asset'])
-            ->middleware([
-                'index' => 'permission:asset.management.view',
-                'show' => 'permission:asset.management.view',
-                'create' => 'permission:asset.management.create',
-                'store' => 'permission:asset.management.create',
-                'edit' => 'permission:asset.management.update',
-                'update' => 'permission:asset.management.update',
-            ]);
+        Route::get('/', [AssetController::class, 'index'])->name('index')->middleware('permission:asset.management.view');
+        Route::get('/create', [AssetController::class, 'create'])->name('create')->middleware('permission:asset.management.create');
+        Route::post('/', [AssetController::class, 'store'])->name('store')->middleware('permission:asset.management.create');
+        Route::get('/{asset}', [AssetController::class, 'show'])->name('show')->middleware('permission:asset.management.view');
+        Route::get('/{asset}/edit', [AssetController::class, 'edit'])->name('edit')->middleware('permission:asset.management.update');
+        Route::put('/{asset}', [AssetController::class, 'update'])->name('update')->middleware('permission:asset.management.update');
+        Route::delete('/{asset}', [AssetController::class, 'destroy'])->name('destroy')->middleware('permission:asset.management.update');
 
         // Certificate Routes (nested under assets)
         Route::prefix('{asset}/certificates')->name('certificates.')->group(function (): void {

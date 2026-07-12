@@ -30,7 +30,7 @@ class AssetCertificateController extends Controller
             ->orderBy('expiry_date')
             ->get();
 
-        return Inertia::render('Modules/Asset/Certificates/Index', [
+        return Inertia::render('Modules/Asset/Certificate/Index', [
             'asset' => $asset,
             'certificates' => $certificates,
             'can' => [
@@ -43,7 +43,7 @@ class AssetCertificateController extends Controller
     {
         $this->authorize('create', [AssetCertificate::class, $asset]);
 
-        return Inertia::render('Modules/Asset/Certificates/CreateOrEdit', [
+        return Inertia::render('Modules/Asset/Certificate/CreateOrEdit', [
             'asset' => $asset,
             'can' => ['create' => true],
         ]);
@@ -98,7 +98,7 @@ class AssetCertificateController extends Controller
             collection: 'certificate'
         );
 
-        return Inertia::render('Modules/Asset/Certificates/Show', [
+        return Inertia::render('Modules/Asset/Certificate/Show', [
             'asset' => $asset,
             'certificate' => $certificate,
             'files' => $files,
@@ -113,7 +113,7 @@ class AssetCertificateController extends Controller
     {
         $this->authorize('update', $certificate);
 
-        return Inertia::render('Modules/Asset/Certificates/CreateOrEdit', [
+        return Inertia::render('Modules/Asset/Certificate/CreateOrEdit', [
             'asset' => $asset,
             'certificate' => $certificate,
             'can' => ['update' => true],

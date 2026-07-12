@@ -79,7 +79,7 @@ class EmergencyContactController extends Controller
 
         $sites = Site::where('is_active', true)->get(['id', 'name']);
 
-        return Inertia::render('Modules/EmergencyPreparedness/Contacts/Create', [
+        return Inertia::render('Modules/EmergencyPreparedness/Contacts/CreateOrEdit', [
             'sites' => $sites,
         ]);
     }
@@ -111,7 +111,7 @@ class EmergencyContactController extends Controller
 
         $sites = Site::where('is_active', true)->get(['id', 'name']);
 
-        return Inertia::render('Modules/EmergencyPreparedness/Contacts/Edit', [
+        return Inertia::render('Modules/EmergencyPreparedness/Contacts/CreateOrEdit', [
             'contact' => $contact,
             'sites' => $sites,
         ]);

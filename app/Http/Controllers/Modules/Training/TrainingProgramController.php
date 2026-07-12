@@ -45,6 +45,10 @@ class TrainingProgramController extends Controller
             'programs' => $programs,
             'filters' => $request->only(['search', 'category', 'is_active', 'is_certification']),
             'categories' => TrainingProgram::getCategories(),
+            'can' => [
+                'create' => $request->user()->can('training.programs.create'),
+                'update' => $request->user()->can('training.programs.update'),
+            ],
         ]);
     }
 
@@ -96,7 +100,7 @@ class TrainingProgramController extends Controller
         $this->authorize('training.programs.view');
 
         $program->load(['trainingRecords' => function ($query) {
-            $query->latest()->limit(10);
+            $query->with('employee')->latest()->limit(10);
         }]);
 
         return Inertia::render('Modules/Training/Programs/Show', [
@@ -106,6 +110,9 @@ class TrainingProgramController extends Controller
                 'completed' => $program->trainingRecords()->where('status', 'completed')->count(),
                 'in_progress' => $program->trainingRecords()->where('status', 'in_progress')->count(),
                 'scheduled' => $program->trainingRecords()->where('status', 'scheduled')->count(),
+            ],
+            'can' => [
+                'update' => request()->user()->can('training.programs.update'),
             ],
         ]);
     }

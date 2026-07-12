@@ -91,7 +91,7 @@ class EmergencyPlanController extends Controller
         $sites = Site::where('is_active', true)->get(['id', 'name']);
         $users = User::where('is_active', true)->get(['id', 'name']);
 
-        return Inertia::render('Modules/EmergencyPreparedness/Plans/Create', [
+        return Inertia::render('Modules/EmergencyPreparedness/Plans/CreateOrEdit', [
             'sites' => $sites,
             'users' => $users,
         ]);
@@ -144,7 +144,7 @@ class EmergencyPlanController extends Controller
         $sites = Site::where('is_active', true)->get(['id', 'name']);
         $users = User::where('is_active', true)->get(['id', 'name']);
 
-        return Inertia::render('Modules/EmergencyPreparedness/Plans/Edit', [
+        return Inertia::render('Modules/EmergencyPreparedness/Plans/CreateOrEdit', [
             'plan' => $plan,
             'sites' => $sites,
             'users' => $users,

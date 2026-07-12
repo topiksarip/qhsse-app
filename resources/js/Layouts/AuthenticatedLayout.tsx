@@ -51,6 +51,19 @@ const menuGroups: { label: string; items: MenuItem[] }[] = [
         ],
     },
     {
+        label: 'Operasional & Support',
+        items: [
+            { label: 'Audit Management', routeName: 'audits.index', active: 'audits.*', permission: 'audit.management.view' },
+            { label: 'Training & Competency', routeName: 'training.programs.index', active: 'training.*', permission: 'training.programs.view' },
+            { label: 'Emergency Preparedness', routeName: 'emergency.plans.index', active: 'emergency.*', permission: 'emergency.plans.view' },
+            { label: 'Contractor Management', routeName: 'contractors.index', active: 'contractors.*', permission: 'contractor.management.view' },
+            { label: 'Asset & Equipment Safety', routeName: 'assets.index', active: 'assets.*', permission: 'asset.management.view' },
+            { label: 'Communication & Campaign', routeName: 'campaigns.index', active: 'campaigns.*', permission: 'communication.campaigns.view' },
+            { label: 'Report Templates', routeName: 'report-templates.index', active: 'report-templates.*', permission: 'reporting.templates.view' },
+            { label: 'Saved Reports', routeName: 'saved-reports.index', active: 'saved-reports.*', permission: 'reporting.reports.view' },
+        ],
+    },
+    {
         label: 'System Admin',
         items: [
             { label: 'Companies', routeName: 'core.companies.index', active: 'core.companies.*', permission: 'core.companies.view' },
@@ -94,22 +107,38 @@ export default function Authenticated({
                             </Link>
 
                             <div className="hidden items-center gap-2 overflow-visible lg:flex">
-                                {visibleGroups.map((group) => (
-                                    <Dropdown key={group.label}>
-                                        <Dropdown.Trigger>
-                                            <button type="button" className="rounded-full px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 dark:text-slate-300 dark:hover:bg-gray-800 dark:hover:text-white">
-                                                {group.label}
-                                            </button>
-                                        </Dropdown.Trigger>
-                                        <Dropdown.Content align="left" width="48">
-                                            {group.items.map((item) => (
-                                                <Dropdown.Link key={item.routeName} href={route(item.routeName)}>
-                                                    {item.label}
-                                                </Dropdown.Link>
-                                            ))}
-                                        </Dropdown.Content>
-                                    </Dropdown>
-                                ))}
+                                {visibleGroups.map((group) => {
+                                    const isActive = group.items.some((item) => route().current(item.active));
+
+                                    return (
+                                        <Dropdown key={group.label}>
+                                            <Dropdown.Trigger>
+                                                <button
+                                                    type="button"
+                                                    aria-current={isActive ? 'page' : undefined}
+                                                    className={`rounded-full px-3 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 ${
+                                                        isActive
+                                                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                                                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-gray-800 dark:hover:text-white'
+                                                    }`}
+                                                >
+                                                    {group.label}
+                                                </button>
+                                            </Dropdown.Trigger>
+                                            <Dropdown.Content
+                                                align="left"
+                                                width="48"
+                                                contentClasses="max-h-[calc(100vh-5rem)] overflow-y-auto py-1 bg-white dark:bg-gray-700"
+                                            >
+                                                {group.items.map((item) => (
+                                                    <Dropdown.Link key={item.routeName} href={route(item.routeName)}>
+                                                        {item.label}
+                                                    </Dropdown.Link>
+                                                ))}
+                                            </Dropdown.Content>
+                                        </Dropdown>
+                                    );
+                                })}
                             </div>
                         </div>
 

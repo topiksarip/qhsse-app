@@ -193,9 +193,12 @@ export default function Index({ auth, programs, filters, can }: ProgramsIndexPro
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100 max-w-xs truncate">
+                                                    <Link
+                                                        href={route('training.programs.show', program.id)}
+                                                        className="block max-w-xs truncate text-sm font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                                    >
                                                         {program.name}
-                                                    </div>
+                                                    </Link>
                                                 </td>
                                                 <td className="px-4 py-3 whitespace-nowrap">
                                                     <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
@@ -219,6 +222,12 @@ export default function Index({ auth, programs, filters, can }: ProgramsIndexPro
                                                 </td>
                                                 <td className="px-4 py-3 whitespace-nowrap text-center text-sm">
                                                     <div className="flex items-center justify-center gap-2">
+                                                        <Link
+                                                            href={route('training.programs.show', program.id)}
+                                                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                                                        >
+                                                            Detail
+                                                        </Link>
                                                         {can.update && (
                                                             <Link
                                                                 href={route('training.programs.edit', program.id)}

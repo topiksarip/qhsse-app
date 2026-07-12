@@ -99,7 +99,7 @@ class EmergencyDrillController extends Controller
         $plans = EmergencyPlan::all(['id', 'plan_number', 'name', 'type']);
         $users = User::where('is_active', true)->get(['id', 'name']);
 
-        return Inertia::render('Modules/EmergencyPreparedness/Drills/Create', [
+        return Inertia::render('Modules/EmergencyPreparedness/Drills/CreateOrEdit', [
             'sites' => $sites,
             'plans' => $plans,
             'users' => $users,
@@ -153,7 +153,7 @@ class EmergencyDrillController extends Controller
         $plans = EmergencyPlan::all(['id', 'plan_number', 'name', 'type']);
         $users = User::where('is_active', true)->get(['id', 'name']);
 
-        return Inertia::render('Modules/EmergencyPreparedness/Drills/Edit', [
+        return Inertia::render('Modules/EmergencyPreparedness/Drills/CreateOrEdit', [
             'drill' => $drill,
             'sites' => $sites,
             'plans' => $plans,
