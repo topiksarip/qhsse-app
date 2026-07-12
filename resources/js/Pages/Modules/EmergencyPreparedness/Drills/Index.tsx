@@ -2,6 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { EmergencyDrill, EmergencyPlan, Site, PageProps, PaginatedData } from '@/types';
+import EmptyState from '@/Components/UI/EmptyState';
 
 interface DrillIndexProps extends PageProps {
     drills: PaginatedData<EmergencyDrill & { emergency_plan: EmergencyPlan }>;
@@ -233,22 +234,21 @@ export default function Index({ auth, drills, filters, sites, can }: DrillIndexP
                     <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                         <div className="p-6">
                             {drills.data.length === 0 ? (
-                                <div className="text-center py-12">
-                                    <div className="text-6xl mb-4">🚨</div>
-                                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                                        Belum ada latihan darurat
-                                    </h3>
-                                    <p className="text-gray-600 dark:text-gray-400 mb-6">
-                                        Belum ada latihan yang dijadwalkan. Klik tombol di bawah untuk menjadwalkan latihan pertama Anda.
-                                    </p>
-                                    {can.create && (
-                                        <Link
-                                            href={route('emergency.drills.create')}
-                                            className="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 focus:bg-red-700 active:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150"
-                                        >
-                                            + Jadwalkan Latihan Pertama
-                                        </Link>
-                                    )}
+                                <div className="py-12">
+                                    <EmptyState
+                                        title="Belum ada latihan darurat"
+                                        description="Jadwalkan dan dokumentasi latihan kebakaran, evakuasi, dan kesiapsiagaan darurat"
+                                        action={
+                                            can.create ? (
+                                                <Link
+                                                    href={route('emergency.drills.create')}
+                                                    className="inline-flex items-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
+                                                >
+                                                    + Jadwalkan Latihan Pertama
+                                                </Link>
+                                            ) : undefined
+                                        }
+                                    />
                                 </div>
                             ) : (
                                 <>
