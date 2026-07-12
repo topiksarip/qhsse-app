@@ -305,3 +305,42 @@ export interface CapaAction {
     title: string;
     status: string;
 }
+
+export type SecurityIncidentType =
+    | 'unauthorized_access'
+    | 'theft'
+    | 'vandalism'
+    | 'trespass'
+    | 'suspicious_activity'
+    | 'other';
+
+export type SecurityIncidentStatus = 'reported' | 'under_investigation' | 'closed';
+
+export interface Severity {
+    id: number;
+    name: string;
+    level: number;
+    color?: string | null;
+}
+
+export interface SecurityIncident {
+    id: number;
+    security_number: string;
+    type: SecurityIncidentType;
+    title: string;
+    description?: string;
+    site_id: number;
+    area_id?: number | null;
+    occurred_at?: string | null;
+    reported_by: number;
+    severity_id?: number | null;
+    status: SecurityIncidentStatus;
+    resolution?: string | null;
+    resolved_at?: string | null;
+    created_at: string;
+    updated_at: string;
+    site?: Site | null;
+    area?: Area | null;
+    reporter?: User | null;
+    severity?: Severity | null;
+}

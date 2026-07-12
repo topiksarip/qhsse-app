@@ -47,6 +47,7 @@ const menuGroups: { label: string; items: MenuItem[] }[] = [
             { label: 'Document Control', routeName: 'document.control.index', active: 'document.control.*', permission: 'document.control.view' },
             { label: 'Izin Kerja', routeName: 'permit.work.index', active: 'permit.work.*', permission: 'permit.work.view' },
             { label: 'Catatan Lingkungan', routeName: 'environment.records.index', active: 'environment.records.*', permission: 'environment.records.view' },
+            { label: 'Insiden Keamanan', routeName: 'security.incidents.index', active: 'security.incidents.*', permission: 'security.incidents.view' },
         ],
     },
     {
