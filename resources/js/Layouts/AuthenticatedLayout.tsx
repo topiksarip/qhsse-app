@@ -2,6 +2,8 @@ import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
+import ToastContainer from '@/Components/UI/ToastContainer';
+import { useToast } from '@/Hooks/useToast';
 import { PageProps } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode, useMemo, useState } from 'react';
@@ -70,6 +72,7 @@ export default function Authenticated({
     const user = auth.user;
     const permissions = new Set(auth.permissions ?? []);
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
+    const { toasts, dismiss } = useToast();
 
     const visibleGroups = useMemo(() => menuGroups
         .map((group) => ({
@@ -80,6 +83,7 @@ export default function Authenticated({
 
     return (
         <div className="min-h-screen bg-slate-100 dark:bg-gray-950">
+            <ToastContainer toasts={toasts} onDismiss={dismiss} />
             <nav className="relative z-50 border-b border-slate-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 justify-between">
