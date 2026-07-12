@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Core\Query\DatePeriodExpression;
 use App\Models\Core\MasterData\Department;
 use App\Models\Core\MasterData\Site;
 use App\Models\Core\Notifications\CoreNotification;
@@ -61,7 +62,9 @@ class DashboardController extends Controller
 
     private function applySiteDept($query, ?int $siteId, ?int $departmentId): void
     {
-        if ($siteId) $query->where('site_id', $siteId);
+        if ($siteId) {
+            $query->where('site_id', $siteId);
+        }
         if ($departmentId && in_array('department_id', $query->getModel()->getFillable())) {
             $query->where('department_id', $departmentId);
         }
@@ -142,11 +145,12 @@ class DashboardController extends Controller
         $widgets = [];
 
         // Widget 1: Incident Trend — monthly for last 6 months
+        $monthExpression = DatePeriodExpression::month(DB::getDriverName(), 'occurred_at');
         $incidentTrend = IncidentReport::query()
-            ->selectRaw("strftime('%Y-%m', occurred_at) as month, COUNT(*) as cnt")
+            ->selectRaw("{$monthExpression} as month, COUNT(*) as cnt")
             ->where('occurred_at', '>=', now()->subMonths(5)->startOfMonth())
             ->when($siteId, fn ($q) => $q->where('site_id', $siteId))
-            ->groupByRaw("strftime('%Y-%m', occurred_at)")
+            ->groupByRaw($monthExpression)
             ->pluck('cnt', 'month')
             ->toArray();
 

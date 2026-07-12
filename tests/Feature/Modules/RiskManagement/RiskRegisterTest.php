@@ -56,6 +56,14 @@ function employeeUser(): User
     return $user;
 }
 
+function seededRiskLevel(int $likelihood, int $consequence): RiskMatrixLevel
+{
+    return RiskMatrixLevel::query()
+        ->where('likelihood', $likelihood)
+        ->where('consequence', $consequence)
+        ->firstOrFail();
+}
+
 // Category 1: Functional (Happy Path)
 test('authorized user can view risk register list', function (): void {
     $admin = adminUser();
@@ -104,12 +112,7 @@ test('authorized user can assess risk register', function (): void {
 
     $site = Site::factory()->create();
     $severity = Severity::factory()->create(['level' => 3]);
-    $riskLevel = RiskMatrixLevel::factory()->create([
-        'severity_level' => 3,
-        'probability_level' => 4,
-        'risk_level' => 'RED',
-        'is_active' => true,
-    ]);
+    $riskLevel = seededRiskLevel(4, 3);
 
     $riskRegister = RiskRegister::factory()->create([
         'site_id' => $site->id,
@@ -140,12 +143,7 @@ test('risk register can transition through status workflow', function (): void {
 
     $site = Site::factory()->create();
     $severity = Severity::factory()->create(['level' => 3]);
-    $riskLevel = RiskMatrixLevel::factory()->create([
-        'severity_level' => 3,
-        'probability_level' => 4,
-        'risk_level' => 'RED',
-        'is_active' => true,
-    ]);
+    $riskLevel = seededRiskLevel(4, 3);
 
     $riskRegister = RiskRegister::factory()->create([
         'site_id' => $site->id,
@@ -312,12 +310,7 @@ test('unauthorized user cannot assess risk register', function (): void {
     $this->actingAs($employee);
 
     $severity = Severity::factory()->create(['level' => 3]);
-    $riskLevel = RiskMatrixLevel::factory()->create([
-        'severity_level' => 3,
-        'probability_level' => 4,
-        'risk_level' => 'RED',
-        'is_active' => true,
-    ]);
+    $riskLevel = seededRiskLevel(4, 3);
 
     $response = $this->post(route('risk.registers.assess', $riskRegister), [
         'severity_id' => $severity->id,
@@ -370,12 +363,7 @@ test('supervisor can create but cannot assess risk register', function (): void 
 
     // Cannot assess
     $severity = Severity::factory()->create(['level' => 3]);
-    $riskLevel = RiskMatrixLevel::factory()->create([
-        'severity_level' => 3,
-        'probability_level' => 4,
-        'risk_level' => 'RED',
-        'is_active' => true,
-    ]);
+    $riskLevel = seededRiskLevel(4, 3);
 
     $response = $this->post(route('risk.registers.assess', $riskRegister), [
         'severity_id' => $severity->id,
@@ -425,12 +413,7 @@ test('cannot assess risk register if status is not identified', function (): voi
     ]);
 
     $severity = Severity::factory()->create(['level' => 3]);
-    $riskLevel = RiskMatrixLevel::factory()->create([
-        'severity_level' => 3,
-        'probability_level' => 4,
-        'risk_level' => 'RED',
-        'is_active' => true,
-    ]);
+    $riskLevel = seededRiskLevel(4, 3);
 
     $response = $this->post(route('risk.registers.assess', $riskRegister), [
         'severity_id' => $severity->id,
@@ -488,12 +471,7 @@ test('probability_id must be between 1 and 5', function (): void {
     ]);
 
     $severity = Severity::factory()->create(['level' => 3]);
-    $riskLevel = RiskMatrixLevel::factory()->create([
-        'severity_level' => 3,
-        'probability_level' => 4,
-        'risk_level' => 'RED',
-        'is_active' => true,
-    ]);
+    $riskLevel = seededRiskLevel(4, 3);
 
     $response = $this->post(route('risk.registers.assess', $riskRegister), [
         'severity_id' => $severity->id,

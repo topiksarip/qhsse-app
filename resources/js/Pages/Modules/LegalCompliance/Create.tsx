@@ -7,7 +7,7 @@ interface FormProps extends PageProps {
     sites: { id: number; name: string }[];
     departments: { id: number; name: string }[];
     users: { id: number; name: string }[];
-    documents: { id: number; doc_number: string; title: string }[];
+    documents: { id: number; document_number: string; title: string }[];
 }
 
 interface LegalFormData {
@@ -140,7 +140,7 @@ export default function LegalRegisterForm({ auth, register, sites, departments, 
                                 <Field label="Dokumen Terkait" error={errors.document_id}>
                                     <select value={data.document_id} onChange={(e) => setData('document_id', e.target.value)} className="w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm">
                                         <option value="">Pilih Dokumen</option>
-                                        {documents.map((d) => <option key={d.id} value={d.id}>{d.doc_number} — {d.title}</option>)}
+                                        {documents.map((d) => <option key={d.id} value={d.id}>{d.document_number} — {d.title}</option>)}
                                     </select>
                                 </Field>
                                 <Field label="Record Status" error={errors.status}>

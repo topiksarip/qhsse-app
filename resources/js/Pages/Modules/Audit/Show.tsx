@@ -9,13 +9,13 @@ type Audit = {
     id: number;
     audit_number: string;
     title: string | null;
-    type: string | null;
+    audit_type: string | null;
     status: string;
     scope: string | null;
     summary: string | null;
     scheduled_date: string | null;
-    started_at: string | null;
-    closed_at: string | null;
+    start_date: string | null;
+    close_date: string | null;
     created_at: string;
     department?: Option | null;
     lead_auditor?: UserRef | null;
@@ -30,7 +30,6 @@ type Finding = {
     due_date: string | null;
     closed_at: string | null;
     created_at: string;
-    capa?: { id: number; action_number: string } | null;
 };
 type EvidenceFile = { id: number; original_name: string; mime_type: string; size: number; created_at: string };
 type Comment = { id: number; body: string; created_at: string; author?: UserRef | null };
@@ -42,11 +41,9 @@ type Ability = {
     generate_report: boolean;
     close: boolean;
     create_finding: boolean;
-    edit_finding: boolean;
     close_finding: boolean;
-    link_capa: boolean;
-    unlink_capa: boolean;
     comment: boolean;
+    upload_file: boolean;
     download_file: boolean;
 };
 
@@ -58,13 +55,13 @@ const statusLabel: Record<string, string> = {
     planned: 'Direncanakan', in_progress: 'Berlangsung', report_ready: 'Laporan Siap', closed: 'Ditutup',
 };
 const typeLabel: Record<string, string> = {
-    internal: 'Internal', external: 'Eksternal', supplier: 'Pemasok', regulator: 'Regulator',
+    internal: 'Internal', external: 'Eksternal', supplier: 'Pemasok', regulatory: 'Regulator',
 };
 const classificationStyle: Record<string, string> = {
-    major: 'bg-red-100 text-red-700', minor: 'bg-orange-100 text-orange-700', observation: 'bg-blue-100 text-blue-700',
+    major_nc: 'bg-red-100 text-red-700', minor_nc: 'bg-orange-100 text-orange-700', observation: 'bg-blue-100 text-blue-700', ofi: 'bg-cyan-100 text-cyan-700',
 };
 const classificationLabel: Record<string, string> = {
-    major: 'Mayor', minor: 'Minor', observation: 'Observasi',
+    major_nc: 'Mayor', minor_nc: 'Minor', observation: 'Observasi', ofi: 'Peluang Perbaikan',
 };
 const findingStatusStyle: Record<string, string> = {
     open: 'bg-slate-100 text-slate-700', closed: 'bg-emerald-100 text-emerald-700',
@@ -73,43 +70,45 @@ const findingStatusLabel: Record<string, string> = {
     open: 'Terbuka', closed: 'Ditutup',
 };
 
-export default function Show({ audit, findings, evidenceFiles, comments, activities, workflowHistory, can, auth }: PageProps<{
+export default function Show({ audit, findings, evidenceFiles, comments, activities, workflowHistory, can }: PageProps<{
     audit: Audit; findings: Finding[]; evidenceFiles: EvidenceFile[]; comments: Comment[]; activities: Activity[]; workflowHistory: History[]; can: Ability;
 }>) {
-    const permissions = new Set(auth.permissions ?? []);
     const [modal, setModal] = useState<'generateReport' | 'close' | null>(null);
     const [comment, setComment] = useState('');
-    const [linkingFindingId, setLinkingFindingId] = useState<number | null>(null);
+    const [showFindingForm, setShowFindingForm] = useState(false);
     const { data, setData, post, processing, errors, reset } = useForm({ summary: '' });
 
-    function startAudit() { router.post(route('audit.management.start', audit.id)); }
+    function startAudit() { router.post(route('audits.start', audit.id)); }
     function submitAction(event: FormEvent) {
         event.preventDefault();
         if (!modal) return;
-        post(route(`audit.management.${modal === 'generateReport' ? 'generate-report' : 'close'}`, audit.id), {
+        post(route(modal === 'generateReport' ? 'audits.generate-report' : 'audits.close', audit.id), {
             onSuccess: () => { setModal(null); reset(); },
         });
     }
     function submitComment(event: FormEvent) {
         event.preventDefault();
         if (!comment.trim()) return;
-        router.post(route('audit.management.comments.store', audit.id), { body: comment }, { onSuccess: () => setComment('') });
+        router.post(route('audits.comment', audit.id), { body: comment }, { onSuccess: () => setComment('') });
     }
     function closeFinding(findingId: number) {
-        router.post(route('audit.management.findings.close', [audit.id, findingId]));
+        router.post(route('audits.findings.close', [audit.id, findingId]));
     }
-    function unlinkCapa(findingId: number) {
-        router.post(route('audit.management.findings.unlink-capa', [audit.id, findingId]));
-    }
-    function submitLinkCapa(event: FormEvent) {
+
+    function submitFinding(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        if (!linkingFindingId) return;
-        const form = event.target as HTMLFormElement;
-        const formData = new FormData(form);
-        const capaId = formData.get('capa_id');
-        if (!capaId) return;
-        router.post(route('audit.management.findings.link-capa', [audit.id, linkingFindingId]), { capa_id: capaId }, {
-            onSuccess: () => setLinkingFindingId(null),
+        const form = event.currentTarget;
+        router.post(route('audits.findings.store', audit.id), Object.fromEntries(new FormData(form)), {
+            onSuccess: () => { form.reset(); setShowFindingForm(false); },
+        });
+    }
+
+    function submitEvidence(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        const form = event.currentTarget;
+        router.post(route('audits.files.store', audit.id), new FormData(form), {
+            forceFormData: true,
+            onSuccess: () => form.reset(),
         });
     }
 
@@ -127,18 +126,18 @@ export default function Show({ audit, findings, evidenceFiles, comments, activit
                             <div className="flex flex-wrap items-center gap-2">
                                 <span className="rounded-md bg-white/10 px-2.5 py-1 text-sm font-bold">{audit.audit_number}</span>
                                 <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyle[audit.status] ?? ''}`}>{statusLabel[audit.status] ?? audit.status}</span>
-                                <span className="rounded-full bg-indigo-400/20 px-2.5 py-1 text-xs font-semibold uppercase text-indigo-100">{typeLabel[audit.type ?? ''] ?? audit.type ?? '-'}</span>
+                                <span className="rounded-full bg-indigo-400/20 px-2.5 py-1 text-xs font-semibold uppercase text-indigo-100">{typeLabel[audit.audit_type ?? ''] ?? audit.audit_type ?? '-'}</span>
                             </div>
                             <h1 className="mt-4 text-2xl font-bold">{audit.title || 'Belum diberi judul'}</h1>
                             <p className="mt-2 text-sm text-slate-300">Auditor Utama: {audit.lead_auditor?.name ?? '-'} · Department: {audit.department?.name ?? 'Lintas department'}</p>
                         </div>
-                        <Link href={route('audit.management.index')} className="rounded-lg border border-white/30 px-4 py-2 text-center text-sm font-semibold hover:bg-white/10">Kembali</Link>
+                        <Link href={route('audits.index')} className="rounded-lg border border-white/30 px-4 py-2 text-center text-sm font-semibold hover:bg-white/10">Kembali</Link>
                     </div>
                 </section>
 
                 {/* Workflow Actions */}
                 <div className="flex flex-wrap gap-2">
-                    {can.update && <Link href={route('audit.management.edit', audit.id)} className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-300 dark:bg-gray-700 dark:text-gray-200">Edit</Link>}
+                    {can.update && <Link href={route('audits.edit', audit.id)} className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-300 dark:bg-gray-700 dark:text-gray-200">Edit</Link>}
                     {can.start && <button onClick={startAudit} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Mulai Audit</button>}
                     {can.generate_report && <button onClick={() => setModal('generateReport')} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700">Buat Laporan</button>}
                     {can.close && <button onClick={() => setModal('close')} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">Tutup Audit</button>}
@@ -151,8 +150,8 @@ export default function Show({ audit, findings, evidenceFiles, comments, activit
                             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Informasi Audit</h3>
                             <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
                                 <div><dt className="text-slate-500">Tanggal Jadwal</dt><dd className="mt-1 font-semibold dark:text-white">{formatDate(audit.scheduled_date)}</dd></div>
-                                <div><dt className="text-slate-500">Tanggal Mulai</dt><dd className="mt-1 font-semibold dark:text-white">{formatDate(audit.started_at)}</dd></div>
-                                <div><dt className="text-slate-500">Tanggal Tututp</dt><dd className="mt-1 font-semibold dark:text-white">{formatDate(audit.closed_at)}</dd></div>
+                                <div><dt className="text-slate-500">Tanggal Mulai</dt><dd className="mt-1 font-semibold dark:text-white">{formatDate(audit.start_date)}</dd></div>
+                                <div><dt className="text-slate-500">Tanggal Tutup</dt><dd className="mt-1 font-semibold dark:text-white">{formatDate(audit.close_date)}</dd></div>
                                 <div><dt className="text-slate-500">Dibuat</dt><dd className="mt-1 font-semibold dark:text-white">{formatDate(audit.created_at)}</dd></div>
                             </dl>
                             {audit.scope && <div className="mt-5 border-t border-slate-100 pt-5 dark:border-gray-700"><p className="text-sm font-medium text-slate-500">Ruang Lingkup</p><p className="mt-2 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">{audit.scope}</p></div>}
@@ -163,8 +162,23 @@ export default function Show({ audit, findings, evidenceFiles, comments, activit
                         <section className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Temuan ({findings.length})</h3>
-                                {can.create_finding && <Link href={route('audit.management.findings.create', audit.id)} className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700">Tambah Temuan</Link>}
+                                {can.create_finding && <button onClick={() => setShowFindingForm((visible) => !visible)} className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700">{showFindingForm ? 'Batal' : 'Tambah Temuan'}</button>}
                             </div>
+                            {showFindingForm && (
+                                <form onSubmit={submitFinding} className="mt-4 grid gap-3 rounded-lg border border-indigo-100 bg-indigo-50/50 p-4 dark:border-gray-700 dark:bg-gray-900/40 sm:grid-cols-2">
+                                    <select name="classification" required className="rounded-lg border-slate-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                                        <option value="">Pilih klasifikasi</option>
+                                        <option value="major_nc">Ketidaksesuaian Mayor</option>
+                                        <option value="minor_nc">Ketidaksesuaian Minor</option>
+                                        <option value="observation">Observasi</option>
+                                        <option value="ofi">Peluang Perbaikan</option>
+                                    </select>
+                                    <input type="date" name="due_date" className="rounded-lg border-slate-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                                    <textarea name="description" required rows={3} placeholder="Deskripsi temuan" className="rounded-lg border-slate-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:col-span-2" />
+                                    <textarea name="recommendation" rows={2} placeholder="Rekomendasi perbaikan" className="rounded-lg border-slate-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:col-span-2" />
+                                    <button className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white sm:col-span-2">Simpan Temuan</button>
+                                </form>
+                            )}
                             <div className="mt-4 space-y-4">
                                 {findings.length === 0 ? (
                                     <p className="text-sm text-slate-500">Belum ada temuan.</p>
@@ -177,16 +191,7 @@ export default function Show({ audit, findings, evidenceFiles, comments, activit
                                                 <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${findingStatusStyle[finding.status] ?? 'bg-slate-100 text-slate-700'}`}>{findingStatusLabel[finding.status] ?? finding.status}</span>
                                             </div>
                                             <div className="flex gap-2">
-                                                {can.edit_finding && <Link href={route('audit.management.findings.edit', [audit.id, finding.id])} className="rounded-md bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-gray-700 dark:text-gray-200">Edit</Link>}
                                                 {can.close_finding && finding.status === 'open' && <button onClick={() => closeFinding(finding.id)} className="rounded-md bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">Tutup Temuan</button>}
-                                                {finding.capa ? (
-                                                    <>
-                                                        <Link href={route('capa.actions.show', finding.capa.id)} className="rounded-md bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100">CAPA: {finding.capa.action_number}</Link>
-                                                        {can.unlink_capa && <button onClick={() => unlinkCapa(finding.id)} className="rounded-md bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100">Putuskan CAPA</button>}
-                                                    </>
-                                                ) : can.link_capa && finding.status === 'open' && (
-                                                    <button onClick={() => setLinkingFindingId(finding.id)} className="rounded-md bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100">Hubungkan CAPA</button>
-                                                )}
                                             </div>
                                         </div>
                                         <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">{finding.description}</p>
@@ -204,6 +209,12 @@ export default function Show({ audit, findings, evidenceFiles, comments, activit
                         {/* Evidence Files */}
                         <section className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
                             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Bukti ({evidenceFiles.length})</h3>
+                            {can.upload_file && (
+                                <form onSubmit={submitEvidence} className="mt-4 flex flex-col gap-2 rounded-lg border border-dashed border-slate-300 p-4 sm:flex-row sm:items-center dark:border-gray-600">
+                                    <input type="file" name="file" required accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" className="min-w-0 flex-1 text-sm text-slate-600 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:font-semibold file:text-indigo-700 dark:text-slate-300" />
+                                    <button className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Unggah</button>
+                                </form>
+                            )}
                             <div className="mt-4 space-y-3">
                                 {evidenceFiles.length === 0 ? (
                                     <p className="text-sm text-slate-500">Belum ada bukti.</p>
@@ -214,7 +225,7 @@ export default function Show({ audit, findings, evidenceFiles, comments, activit
                                             <p className="text-xs text-slate-500">{formatBytes(file.size)} · {new Date(file.created_at).toLocaleString('id-ID')}</p>
                                         </div>
                                         {can.download_file ? (
-                                            <a href={route('audit.management.files.download', [audit.id, file.id])} className="rounded-lg bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100">Download</a>
+                                            <a href={route('audits.files.download', [audit.id, file.id])} className="rounded-lg bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100">Download</a>
                                         ) : <span className="text-xs font-medium text-purple-600">Akses dibatasi</span>}
                                     </div>
                                 ))}
@@ -301,24 +312,6 @@ export default function Show({ audit, findings, evidenceFiles, comments, activit
                 </div>
             )}
 
-            {/* Link CAPA Modal */}
-            {linkingFindingId && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
-                    <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800">
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Hubungkan CAPA</h3>
-                        <form onSubmit={submitLinkCapa} className="mt-4 space-y-4">
-                            <div>
-                                <label className="text-sm font-medium dark:text-slate-300">CAPA ID</label>
-                                <input type="number" name="capa_id" min={1} autoFocus required className="mt-1 w-full rounded-lg border-slate-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white" placeholder="Masukkan ID CAPA..." />
-                            </div>
-                            <div className="flex justify-end gap-2">
-                                <button type="button" onClick={() => setLinkingFindingId(null)} className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">Batal</button>
-                                <button className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Hubungkan</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
         </AuthenticatedLayout>
     );
 }

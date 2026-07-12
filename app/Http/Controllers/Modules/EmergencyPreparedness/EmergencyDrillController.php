@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Modules\EmergencyPreparedness;
 
+use App\Core\Activity\ActivityService;
 use App\Core\Numbering\NumberingService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Modules\EmergencyPreparedness\ExecuteEmergencyDrillRequest;
@@ -24,7 +25,8 @@ class EmergencyDrillController extends Controller
     use AuthorizesRequests;
 
     public function __construct(
-        private readonly NumberingService $numberingService
+        private readonly NumberingService $numberingService,
+        private readonly ActivityService $activityService
     ) {}
 
     public function index(Request $request): Response
@@ -37,7 +39,7 @@ class EmergencyDrillController extends Controller
 
         // Search
         if ($search = $request->input('search')) {
-            $query->where('drill_number', 'ilike', "%{$search}%");
+            $query->where('drill_number', 'like', "%{$search}%");
         }
 
         // Filters
@@ -79,7 +81,13 @@ class EmergencyDrillController extends Controller
 
         return Inertia::render('Modules/EmergencyPreparedness/Drills/Index', [
             'drills' => $drills,
-            'filters' => $request->only(['search', 'site_id', 'plan_id', 'status', 'result', 'upcoming', 'overdue']),
+            'filters' => $request->only(['search', 'site_id', 'plan_id', 'status', 'result']),
+            'sites' => Site::where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'plans' => EmergencyPlan::orderBy('name')->get(['id', 'name']),
+            'can' => [
+                'create' => $user->can('emergency.drills.create'),
+                'export' => $user->can('emergency.drills.export'),
+            ],
         ]);
     }
 
@@ -105,16 +113,18 @@ class EmergencyDrillController extends Controller
         $validated = $request->validated();
 
         // Generate drill number
-        $validated['drill_number'] = $this->numberingService->generate('emergency');
+        $validated['drill_number'] = $this->numberingService->generate('emergency')->number;
         $validated['status'] = 'scheduled';
 
         $drill = EmergencyDrill::create($validated);
 
-        activity()
-            ->performedOn($drill)
-            ->causedBy($request->user())
-            ->withProperties(['module_name' => 'emergency', 'reference_id' => $drill->id])
-            ->log('emergency.drill.scheduled');
+        $this->activityService->log(
+            moduleName: 'emergency',
+            referenceId: $drill->id,
+            event: 'emergency.drill.created',
+            description: "Emergency drill {$drill->drill_number} scheduled",
+            actor: $request->user()
+        );
 
         return redirect()->route('emergency.drills.show', $drill)
             ->with('success', "Latihan darurat {$drill->drill_number} berhasil dijadwalkan.");
@@ -157,11 +167,13 @@ class EmergencyDrillController extends Controller
 
         $drill->update($request->validated());
 
-        activity()
-            ->performedOn($drill)
-            ->causedBy($request->user())
-            ->withProperties(['module_name' => 'emergency', 'reference_id' => $drill->id])
-            ->log('emergency.drill.updated');
+        $this->activityService->log(
+            moduleName: 'emergency',
+            referenceId: $drill->id,
+            event: 'emergency.drill.updated',
+            description: "Emergency drill {$drill->drill_number} updated",
+            actor: $request->user()
+        );
 
         return redirect()->route('emergency.drills.show', $drill)
             ->with('success', 'Latihan darurat berhasil diperbarui.');
@@ -181,16 +193,13 @@ class EmergencyDrillController extends Controller
 
         $drill->update($validated);
 
-        activity()
-            ->performedOn($drill)
-            ->causedBy($request->user())
-            ->withProperties([
-                'module_name' => 'emergency',
-                'reference_id' => $drill->id,
-                'result' => $validated['result'],
-                'executed_date' => $validated['executed_date'],
-            ])
-            ->log('emergency.drill.executed');
+        $this->activityService->log(
+            moduleName: 'emergency',
+            referenceId: $drill->id,
+            event: 'emergency.drill.executed',
+            description: "Emergency drill {$drill->drill_number} executed",
+            actor: $request->user()
+        );
 
         // Send notification if failed or needs improvement
         if (in_array($validated['result'], ['fail', 'needs_improvement'])) {
@@ -207,11 +216,13 @@ class EmergencyDrillController extends Controller
 
         $drillNumber = $drill->drill_number;
 
-        activity()
-            ->performedOn($drill)
-            ->causedBy(request()->user())
-            ->withProperties(['module_name' => 'emergency', 'reference_id' => $drill->id])
-            ->log('emergency.drill.deleted');
+        $this->activityService->log(
+            moduleName: 'emergency',
+            referenceId: $drill->id,
+            event: 'emergency.drill.deleted',
+            description: "Emergency drill {$drillNumber} deleted",
+            actor: request()->user()
+        );
 
         $drill->delete();
 
@@ -228,7 +239,7 @@ class EmergencyDrillController extends Controller
 
         // Apply same filters as index
         if ($search = $request->input('search')) {
-            $query->where('drill_number', 'ilike', "%{$search}%");
+            $query->where('drill_number', 'like', "%{$search}%");
         }
 
         if ($siteId = $request->input('site_id')) {

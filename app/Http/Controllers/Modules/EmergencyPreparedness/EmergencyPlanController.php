@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Modules\EmergencyPreparedness;
 
+use App\Core\Activity\ActivityService;
 use App\Core\Numbering\NumberingService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Modules\EmergencyPreparedness\StoreEmergencyPlanRequest;
@@ -22,7 +23,8 @@ class EmergencyPlanController extends Controller
     use AuthorizesRequests;
 
     public function __construct(
-        private readonly NumberingService $numberingService
+        private readonly NumberingService $numberingService,
+        private readonly ActivityService $activityService
     ) {}
 
     public function index(Request $request): Response
@@ -36,8 +38,8 @@ class EmergencyPlanController extends Controller
         // Search
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
-                $q->where('plan_number', 'ilike', "%{$search}%")
-                    ->orWhere('name', 'ilike', "%{$search}%");
+                $q->where('plan_number', 'like', "%{$search}%")
+                    ->orWhere('name', 'like', "%{$search}%");
             });
         }
 
@@ -74,6 +76,11 @@ class EmergencyPlanController extends Controller
         return Inertia::render('Modules/EmergencyPreparedness/Plans/Index', [
             'plans' => $plans,
             'filters' => $request->only(['search', 'site_id', 'type', 'contact_person_id', 'sort_by', 'sort_order']),
+            'sites' => Site::where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'can' => [
+                'create' => $user->can('emergency.plans.create'),
+                'export' => $user->can('emergency.plans.export'),
+            ],
         ]);
     }
 
@@ -97,15 +104,17 @@ class EmergencyPlanController extends Controller
         $validated = $request->validated();
 
         // Generate plan number
-        $validated['plan_number'] = $this->numberingService->generate('emergency');
+        $validated['plan_number'] = $this->numberingService->generate('emergency')->number;
 
         $plan = EmergencyPlan::create($validated);
 
-        activity()
-            ->performedOn($plan)
-            ->causedBy($request->user())
-            ->withProperties(['module_name' => 'emergency', 'reference_id' => $plan->id])
-            ->log('emergency.plan.created');
+        $this->activityService->log(
+            moduleName: 'emergency',
+            referenceId: $plan->id,
+            event: 'emergency.plan.created',
+            description: "Emergency plan {$plan->plan_number} created",
+            actor: $request->user()
+        );
 
         return redirect()->route('emergency.plans.show', $plan)
             ->with('success', "Rencana darurat {$plan->plan_number} berhasil dibuat.");
@@ -148,11 +157,13 @@ class EmergencyPlanController extends Controller
 
         $plan->update($request->validated());
 
-        activity()
-            ->performedOn($plan)
-            ->causedBy($request->user())
-            ->withProperties(['module_name' => 'emergency', 'reference_id' => $plan->id])
-            ->log('emergency.plan.updated');
+        $this->activityService->log(
+            moduleName: 'emergency',
+            referenceId: $plan->id,
+            event: 'emergency.plan.updated',
+            description: "Emergency plan {$plan->plan_number} updated",
+            actor: $request->user()
+        );
 
         return redirect()->route('emergency.plans.show', $plan)
             ->with('success', 'Rencana darurat berhasil diperbarui.');
@@ -164,11 +175,13 @@ class EmergencyPlanController extends Controller
 
         $planNumber = $plan->plan_number;
 
-        activity()
-            ->performedOn($plan)
-            ->causedBy(request()->user())
-            ->withProperties(['module_name' => 'emergency', 'reference_id' => $plan->id])
-            ->log('emergency.plan.deleted');
+        $this->activityService->log(
+            moduleName: 'emergency',
+            referenceId: $plan->id,
+            event: 'emergency.plan.deleted',
+            description: "Emergency plan {$planNumber} deleted",
+            actor: request()->user()
+        );
 
         $plan->delete();
 
@@ -186,8 +199,8 @@ class EmergencyPlanController extends Controller
         // Apply same filters as index
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
-                $q->where('plan_number', 'ilike', "%{$search}%")
-                    ->orWhere('name', 'ilike', "%{$search}%");
+                $q->where('plan_number', 'like', "%{$search}%")
+                    ->orWhere('name', 'like', "%{$search}%");
             });
         }
 

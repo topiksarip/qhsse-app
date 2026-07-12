@@ -29,7 +29,7 @@ class NumberingFormatSeeder extends Seeder
             ['module_name' => 'investigation', 'prefix' => 'INV', 'padding' => 4, 'separator' => '-', 'reset_frequency' => 'yearly', 'include_year' => true, 'include_site_code' => false, 'is_active' => true],
             ['module_name' => 'capa', 'prefix' => 'ACT', 'padding' => 4, 'separator' => '-', 'reset_frequency' => 'yearly', 'include_year' => true, 'include_site_code' => false, 'is_active' => true],
             ['module_name' => 'inspection', 'prefix' => 'INS', 'padding' => 4, 'separator' => '-', 'reset_frequency' => 'yearly', 'include_year' => true, 'include_site_code' => false, 'is_active' => true],
-            ['module_name' => 'audit', 'prefix' => 'AUD', 'padding' => 4, 'separator' => '-', 'reset_frequency' => 'yearly', 'include_year' => true, 'include_site_code' => false, 'is_active' => true],
+            ['module_name' => 'audit', 'prefix' => 'AUD', 'padding' => 5, 'separator' => '-', 'reset_frequency' => 'yearly', 'include_year' => true, 'include_site_code' => false, 'is_active' => true],
             ['module_name' => 'document', 'prefix' => 'DOC', 'padding' => 4, 'separator' => '-', 'reset_frequency' => 'yearly', 'include_year' => true, 'include_site_code' => false, 'is_active' => true],
             ['module_name' => 'training', 'prefix' => 'TRN', 'padding' => 4, 'separator' => '-', 'reset_frequency' => 'yearly', 'include_year' => true, 'include_site_code' => false, 'is_active' => true],
             ['module_name' => 'permit', 'prefix' => 'PTW', 'padding' => 4, 'separator' => '-', 'reset_frequency' => 'yearly', 'include_year' => true, 'include_site_code' => true, 'is_active' => true],

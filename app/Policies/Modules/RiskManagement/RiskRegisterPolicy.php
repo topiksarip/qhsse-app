@@ -62,11 +62,6 @@ class RiskRegisterPolicy
             return false;
         }
 
-        // Cannot update obsolete records
-        if ($riskRegister->isObsolete()) {
-            return false;
-        }
-
         // Super Admin and Admin can update all
         if ($user->hasRole(['Super Admin', 'Admin'])) {
             return true;

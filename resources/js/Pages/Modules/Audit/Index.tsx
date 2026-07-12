@@ -1,5 +1,6 @@
 import Pagination from '@/Components/Qhsse/Pagination';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import EmptyState from '@/Components/UI/EmptyState';
 import { PageProps } from '@/types';
 import { Paginated } from '@/types/core';
 import { Head, Link, router } from '@inertiajs/react';
@@ -10,7 +11,7 @@ type AuditItem = {
     id: number;
     audit_number: string;
     title: string | null;
-    type: string | null;
+    audit_type: string | null;
     status: string;
     scheduled_date: string | null;
     lead_auditor?: Option | null;
@@ -20,7 +21,7 @@ type AuditItem = {
 type Filters = {
     search?: string;
     status?: string;
-    type?: string;
+    audit_type?: string;
     department_id?: number | string;
     date_from?: string;
     date_to?: string;
@@ -42,24 +43,24 @@ const typeLabel: Record<string, string> = {
     internal: 'Internal',
     external: 'Eksternal',
     supplier: 'Pemasok',
-    regulator: 'Regulator',
+    regulatory: 'Regulator',
 };
 
-export default function Index({ items, filters, departments, auth }: PageProps<{
-    items: Paginated<AuditItem>; filters: Filters; departments: Option[];
+export default function Index({ audits, filters, departments, auth }: PageProps<{
+    audits: Paginated<AuditItem>; filters: Filters; departments: Option[];
 }>) {
     const permissions = new Set(auth.permissions ?? []);
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
-    const [type, setType] = useState(filters.type ?? '');
+    const [type, setType] = useState(filters.audit_type ?? '');
     const [departmentId, setDepartmentId] = useState(String(filters.department_id ?? ''));
     const [dateFrom, setDateFrom] = useState(filters.date_from ?? '');
     const [dateTo, setDateTo] = useState(filters.date_to ?? '');
 
     function submit(event: FormEvent) {
         event.preventDefault();
-        router.get(route('audit.management.index'), {
-            search, status, type,
+        router.get(route('audits.index'), {
+            search, status, audit_type: type,
             department_id: departmentId,
             date_from: dateFrom,
             date_to: dateTo,
@@ -77,8 +78,8 @@ export default function Index({ items, filters, departments, auth }: PageProps<{
                         <p className="mt-1 text-sm text-slate-300">Audit internal, eksternal, pemasok, dan regulator dengan temuan dan CAPA.</p>
                     </div>
                     <div className="flex gap-2">
-                        {permissions.has('audit.management.export') && <Link href={route('audit.management.export')} className="rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold hover:bg-white/10">Ekspor CSV</Link>}
-                        {permissions.has('audit.management.create') && <Link href={route('audit.management.create')} className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-indigo-900 hover:bg-indigo-50">Buat Audit</Link>}
+                        {permissions.has('audit.management.export') && <Link href={route('audits.export')} className="rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold hover:bg-white/10">Ekspor CSV</Link>}
+                        {permissions.has('audit.management.create') && <Link href={route('audits.create')} className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-indigo-900 hover:bg-indigo-50">Buat Audit</Link>}
                     </div>
                 </section>
 
@@ -102,7 +103,7 @@ export default function Index({ items, filters, departments, auth }: PageProps<{
                     </div>
                     <div className="flex gap-2 md:col-span-6">
                         <button className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">Terapkan</button>
-                        <button type="button" onClick={() => router.get(route('audit.management.index'))} className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">Reset</button>
+                        <button type="button" onClick={() => router.get(route('audits.index'))} className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">Reset</button>
                     </div>
                 </form>
 
@@ -114,13 +115,30 @@ export default function Index({ items, filters, departments, auth }: PageProps<{
                             ))}
                         </tr></thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-gray-700">
-                            {items.data.length === 0 ? (
-                                <tr><td colSpan={7} className="px-4 py-14 text-center text-sm text-slate-500">Belum ada audit.</td></tr>
-                            ) : items.data.map((item) => (
-                                <tr key={item.id} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-gray-700/60" onClick={() => router.get(route('audit.management.show', item.id))}>
-                                    <td className="whitespace-nowrap px-4 py-3 text-sm"><Link href={route('audit.management.show', item.id)} className="font-semibold text-indigo-600 hover:text-indigo-800" onClick={(e) => e.stopPropagation()}>{item.audit_number}</Link></td>
+                            {audits.data.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className="px-4 py-12">
+                                        <EmptyState
+                                            title="Belum ada audit"
+                                            description="Mulai rencana dan laksanakan audit internal, eksternal, pemasok, atau regulator"
+                                            action={
+                                                permissions.has('audit.management.create') ? (
+                                                    <Link
+                                                        href={route('audits.create')}
+                                                        className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+                                                    >
+                                                        Buat Audit
+                                                    </Link>
+                                                ) : undefined
+                                            }
+                                        />
+                                    </td>
+                                </tr>
+                            ) : audits.data.map((item) => (
+                                <tr key={item.id} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-gray-700/60" onClick={() => router.get(route('audits.show', item.id))}>
+                                    <td className="whitespace-nowrap px-4 py-3 text-sm"><Link href={route('audits.show', item.id)} className="font-semibold text-indigo-600 hover:text-indigo-800" onClick={(e) => e.stopPropagation()}>{item.audit_number}</Link></td>
                                     <td className="max-w-md px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-100">{item.title || 'Belum diberi judul'}<div className="mt-1 text-xs font-normal text-slate-400">{item.department?.name ?? 'Lintas department'}</div></td>
-                                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{typeLabel[item.type ?? ''] ?? item.type ?? '-'}</td>
+                                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{typeLabel[item.audit_type ?? ''] ?? item.audit_type ?? '-'}</td>
                                     <td className="whitespace-nowrap px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyle[item.status] ?? 'bg-slate-100 text-slate-700'}`}>{statusLabel[item.status] ?? item.status}</span></td>
                                     <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-500">{item.scheduled_date ? new Date(item.scheduled_date).toLocaleDateString('id-ID') : '-'}</td>
                                     <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-500">{item.lead_auditor?.name ?? '-'}</td>
@@ -130,7 +148,7 @@ export default function Index({ items, filters, departments, auth }: PageProps<{
                         </tbody>
                     </table>
                 </div></div>
-                <Pagination links={items.links} />
+                <Pagination links={audits.links} />
             </div></div>
         </AuthenticatedLayout>
     );

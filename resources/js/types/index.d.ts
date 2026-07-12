@@ -41,7 +41,11 @@ export interface EmergencyContact {
     name: string;
     role: string;
     phone: string;
+    mobile?: string;
     email?: string;
+    address?: string;
+    notes?: string;
+    display_order: number;
     is_active: boolean;
     created_at: string;
     updated_at: string;
@@ -460,7 +464,7 @@ export interface LegalRegister {
     site?: { id: number; name: string } | null;
     department?: { id: number; name: string } | null;
     owner?: { id: number; name: string } | null;
-    document?: { id: number; doc_number: string; title: string } | null;
+    document?: { id: number; document_number: string; title: string } | null;
     obligations?: LegalObligation[];
     files?: any[];
     comments?: { id: number; content: string; internal: boolean; created_at: string; author?: { name: string } }[];
@@ -483,3 +487,6 @@ export interface LegalObligation {
     updated_at: string;
     evidenceFile?: any | null;
 }
+
+// ── Reporting & Export ────────────────────────────────────────────────────────
+export * from './modules/reporting';

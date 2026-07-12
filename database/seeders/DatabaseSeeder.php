@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Database\Seeders\AuditSeeder;
+use Database\Seeders\Modules\Reporting\ReportTemplateSeeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -29,6 +30,8 @@ class DatabaseSeeder extends Seeder
             InspectionSeeder::class,
             DocumentControlSeeder::class,
             AuditSeeder::class,
+            CampaignSeeder::class,
+            ReportTemplateSeeder::class,
         ]);
 
         // User::factory(10)->create();

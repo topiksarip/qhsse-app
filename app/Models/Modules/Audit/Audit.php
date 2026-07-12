@@ -4,6 +4,8 @@ namespace App\Models\Modules\Audit;
 
 use App\Models\Concerns\Auditable;
 use App\Models\Contracts\ProvidesAuditContext;
+use App\Models\Core\Comments\Comment;
+use App\Models\Core\Files\ManagedFile;
 use App\Models\Core\MasterData\Department;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -59,6 +61,20 @@ class Audit extends Model implements ProvidesAuditContext
         return $this->hasMany(AuditFinding::class, 'audit_id');
     }
 
+    /** @return HasMany<ManagedFile> */
+    public function files(): HasMany
+    {
+        return $this->hasMany(ManagedFile::class, 'reference_id')
+            ->where('module_name', 'audit');
+    }
+
+    /** @return HasMany<Comment> */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class, 'reference_id')
+            ->where('module_name', 'audit');
+    }
+
     public function auditContext(): array
     {
         return ['module_name' => 'audit', 'reference_id' => $this->getKey()];
@@ -72,7 +88,7 @@ class Audit extends Model implements ProvidesAuditContext
     public function majorFindingsHaveCapa(): bool
     {
         return $this->findings()
-            ->where('classification', 'major')
+            ->where('classification', 'major_nc')
             ->whereNull('capa_action_id')
             ->doesntExist();
     }

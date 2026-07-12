@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Fixed browser/runtime regressions across later modules: restored backward-compatible fluent `ListQuery` contracts, corrected Asset/Contractor master-data namespaces and Legal evidence model namespace, and added authenticated business-index smoke coverage. Verified 340 tests, 1.212 assertions, production assets, and 25/25 live UAT business pages.
+- Completed total debugging of the 19-test failure baseline: fixed Audit numbering/finding/evidence/audit-trail/workflow/Inertia contracts, Risk Management matrix schema and seeded-master usage, and Emergency Drill state authorization; restored a fully passing parallel suite and production frontend build.
+- Fixed Dashboard monthly incident trend on PostgreSQL by resolving database-specific month expressions while preserving SQLite test compatibility; added regression coverage and verified the authenticated Dashboard in the browser.
+- Restored the Legal Register vertical slice: aligned Numbering and Scope service namespaces, integrated Controlled Documents, corrected Inertia/Vite entrypoint loading, generated string register numbers, used shared Core activity logs, restored shared file/comment/activity relations, and added index/create/export/store/show plus permission regression tests.
 - Initial documentation structure created.
 - Core foundation blueprint created.
 - All module specs created.

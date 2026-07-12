@@ -8,23 +8,23 @@ use App\Http\Controllers\Modules\EmergencyPreparedness\EmergencyPlanController;
 use Illuminate\Support\Facades\Route;
 
 // Emergency Plans
+Route::get('plans/export', [EmergencyPlanController::class, 'export'])
+    ->name('emergency.plans.export');
+
 Route::resource('plans', EmergencyPlanController::class)
     ->names('emergency.plans')
     ->parameters(['plans' => 'plan']);
 
-Route::get('plans/export', [EmergencyPlanController::class, 'export'])
-    ->name('emergency.plans.export');
-
 // Emergency Drills
+Route::get('drills/export', [EmergencyDrillController::class, 'export'])
+    ->name('emergency.drills.export');
+
 Route::resource('drills', EmergencyDrillController::class)
     ->names('emergency.drills')
     ->parameters(['drills' => 'drill']);
 
 Route::post('drills/{drill}/execute', [EmergencyDrillController::class, 'execute'])
     ->name('emergency.drills.execute');
-
-Route::get('drills/export', [EmergencyDrillController::class, 'export'])
-    ->name('emergency.drills.export');
 
 // Emergency Contacts
 Route::resource('contacts', EmergencyContactController::class)

@@ -30,9 +30,9 @@ class EmergencyContactController extends Controller
         // Search
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'ilike', "%{$search}%")
-                    ->orWhere('role', 'ilike', "%{$search}%")
-                    ->orWhere('phone', 'ilike', "%{$search}%");
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('role', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
             });
         }
 
@@ -65,6 +65,11 @@ class EmergencyContactController extends Controller
         return Inertia::render('Modules/EmergencyPreparedness/Contacts/Index', [
             'contacts' => $contacts,
             'filters' => $request->only(['search', 'site_id', 'is_active', 'sort_by', 'sort_order']),
+            'sites' => Site::where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'can' => [
+                'create' => $user->can('emergency.contacts.create'),
+                'export' => false, // No export route for contacts yet
+            ],
         ]);
     }
 

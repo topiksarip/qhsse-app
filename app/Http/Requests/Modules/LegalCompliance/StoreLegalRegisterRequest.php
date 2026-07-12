@@ -26,7 +26,7 @@ class StoreLegalRegisterRequest extends FormRequest
             'department_id' => ['nullable', 'exists:departments,id'],
             'owner_id' => ['required', 'exists:users,id'],
             'next_review_date' => ['nullable', 'date', 'after:today'],
-            'document_id' => ['nullable', 'exists:documents,id'],
+            'document_id' => ['nullable', 'exists:controlled_documents,id'],
             'notes' => ['nullable', 'string'],
         ];
     }

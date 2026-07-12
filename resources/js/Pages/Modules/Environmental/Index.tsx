@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { PageProps, PaginatedData, EnvironmentalRecord, Site, EnvironmentalType, EnvironmentalStatus } from '@/types';
 import { useState } from 'react';
+import EmptyState from '@/Components/UI/EmptyState';
 import TypeBadge from '@/Components/Environmental/TypeBadge';
 import StatusBadge from '@/Components/Environmental/StatusBadge';
 import ExceedanceBadge from '@/Components/Environmental/ExceedanceBadge';
@@ -179,8 +180,21 @@ export default function Index({ auth, records, filters, sites, types, statuses }
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                 {records.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={11} className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                                            🌿 Belum ada catatan lingkungan
+                                        <td colSpan={11} className="px-4 py-12">
+                                            <EmptyState
+                                                title="Belum ada catatan lingkungan"
+                                                description="Mulai dokumentasikan pengukuran, pemantauan, dan insiden lingkungan"
+                                                action={
+                                                    canCreate ? (
+                                                        <Link
+                                                            href={route('environment.records.create')}
+                                                            className="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700"
+                                                        >
+                                                            Buat Catatan
+                                                        </Link>
+                                                    ) : undefined
+                                                }
+                                            />
                                         </td>
                                     </tr>
                                 ) : records.data.map((r) => (

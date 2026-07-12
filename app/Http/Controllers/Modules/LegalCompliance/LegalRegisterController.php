@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Modules\LegalCompliance;
 
-use App\Core\Services\NumberingService;
+use App\Core\Activity\ActivityService;
+use App\Core\Numbering\NumberingService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Modules\LegalCompliance\StoreLegalRegisterRequest;
 use App\Http\Requests\Modules\LegalCompliance\UpdateLegalRegisterRequest;
 use App\Models\Core\MasterData\Department;
 use App\Models\Core\MasterData\Site;
-use App\Models\Modules\DocumentControl\Document;
+use App\Models\Modules\DocumentControl\ControlledDocument;
 use App\Models\Modules\LegalCompliance\LegalRegister;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -24,7 +25,8 @@ class LegalRegisterController extends Controller
     use AuthorizesRequests;
 
     public function __construct(
-        private readonly NumberingService $numberingService
+        private readonly NumberingService $numberingService,
+        private readonly ActivityService $activityService,
     ) {}
 
     public function index(Request $request): Response
@@ -98,7 +100,7 @@ class LegalRegisterController extends Controller
         $sites = Site::where('is_active', true)->get(['id', 'name']);
         $departments = Department::where('is_active', true)->get(['id', 'name']);
         $users = User::where('is_active', true)->get(['id', 'name']);
-        $documents = Document::where('status', 'approved')->get(['id', 'doc_number', 'title']);
+        $documents = ControlledDocument::where('status', 'approved')->get(['id', 'document_number', 'title']);
 
         return Inertia::render('Modules/LegalCompliance/Create', [
             'sites' => $sites,
@@ -114,20 +116,21 @@ class LegalRegisterController extends Controller
 
         $validated = $request->validated();
 
-        // Generate register number
-        $validated['register_number'] = $this->numberingService->generate('legal');
+        $generated = $this->numberingService->generate('legal', $request->user());
+        $validated['register_number'] = $generated->number;
 
         // Set default compliance status if not provided
         $validated['compliance_status'] = $validated['compliance_status'] ?? 'in_progress';
 
         $register = LegalRegister::create($validated);
 
-        // Log activity
-        activity()
-            ->performedOn($register)
-            ->causedBy($request->user())
-            ->withProperties(['module_name' => 'legal', 'reference_id' => $register->id])
-            ->log('legal.register.created');
+        $this->activityService->log(
+            'legal',
+            $register->id,
+            'legal.register.created',
+            "Register {$register->register_number} dibuat",
+            $request->user(),
+        );
 
         return redirect()->route('legal.registers.show', $register)
             ->with('success', "Register {$register->register_number} berhasil dibuat.");
@@ -145,7 +148,7 @@ class LegalRegisterController extends Controller
             'obligations.evidenceFile',
             'files',
             'comments.author',
-            'activities.causer',
+            'activities.actor',
         ]);
 
         return Inertia::render('Modules/LegalCompliance/Show', [
@@ -160,7 +163,7 @@ class LegalRegisterController extends Controller
         $sites = Site::where('is_active', true)->get(['id', 'name']);
         $departments = Department::where('is_active', true)->get(['id', 'name']);
         $users = User::where('is_active', true)->get(['id', 'name']);
-        $documents = Document::where('status', 'approved')->get(['id', 'doc_number', 'title']);
+        $documents = ControlledDocument::where('status', 'approved')->get(['id', 'document_number', 'title']);
 
         return Inertia::render('Modules/LegalCompliance/Edit', [
             'register' => $register,
@@ -176,32 +179,35 @@ class LegalRegisterController extends Controller
         $this->authorize('update', $register);
 
         $oldComplianceStatus = $register->compliance_status;
-        
+
         $register->update($request->validated());
 
         // Log compliance status change
         if ($oldComplianceStatus !== $register->compliance_status) {
-            activity()
-                ->performedOn($register)
-                ->causedBy($request->user())
-                ->withProperties([
-                    'module_name' => 'legal',
-                    'reference_id' => $register->id,
+            $this->activityService->log(
+                'legal',
+                $register->id,
+                'legal.compliance.changed',
+                'Status kepatuhan register diperbarui',
+                $request->user(),
+                [
                     'old_status' => $oldComplianceStatus,
                     'new_status' => $register->compliance_status,
-                ])
-                ->log('legal.compliance.changed');
+                ],
+            );
 
             // Send notification if changed to non_compliant
             if ($register->compliance_status === 'non_compliant') {
                 // TODO: Send notification to QHSSE Manager
             }
         } else {
-            activity()
-                ->performedOn($register)
-                ->causedBy($request->user())
-                ->withProperties(['module_name' => 'legal', 'reference_id' => $register->id])
-                ->log('legal.register.updated');
+            $this->activityService->log(
+                'legal',
+                $register->id,
+                'legal.register.updated',
+                "Register {$register->register_number} diperbarui",
+                $request->user(),
+            );
         }
 
         return redirect()->route('legal.registers.show', $register)
@@ -214,11 +220,13 @@ class LegalRegisterController extends Controller
 
         $registerNumber = $register->register_number;
 
-        activity()
-            ->performedOn($register)
-            ->causedBy(request()->user())
-            ->withProperties(['module_name' => 'legal', 'reference_id' => $register->id])
-            ->log('legal.register.deleted');
+        $this->activityService->log(
+            'legal',
+            $register->id,
+            'legal.register.deleted',
+            "Register {$registerNumber} dihapus",
+            request()->user(),
+        );
 
         $register->delete();
 
@@ -265,7 +273,7 @@ class LegalRegisterController extends Controller
 
         $registers = $query->get();
 
-        $filename = 'legal_register_export_' . now()->format('Ymd_His') . '.csv';
+        $filename = 'legal_register_export_'.now()->format('Ymd_His').'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
@@ -274,9 +282,9 @@ class LegalRegisterController extends Controller
 
         $callback = function () use ($registers) {
             $file = fopen('php://output', 'w');
-            
+
             // UTF-8 BOM for Excel compatibility
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
             // Header row
             fputcsv($file, [
@@ -309,7 +317,7 @@ class LegalRegisterController extends Controller
                     $register->department?->name ?? '-',
                     $register->owner->name,
                     $register->next_review_date?->format('Y-m-d') ?? '-',
-                    $register->document?->doc_number ?? '-',
+                    $register->document?->document_number ?? '-',
                     $register->status === 'active' ? 'Aktif' : 'Tidak Aktif',
                     $register->created_at->format('Y-m-d H:i'),
                 ]);

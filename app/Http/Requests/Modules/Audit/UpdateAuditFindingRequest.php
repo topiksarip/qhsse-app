@@ -16,8 +16,9 @@ class UpdateAuditFindingRequest extends FormRequest
     {
         return [
             'description' => ['required', 'string', 'min:10'],
-            'classification' => ['required', Rule::in(['major', 'minor', 'observation'])],
+            'classification' => ['required', Rule::in(['major_nc', 'minor_nc', 'observation', 'ofi'])],
             'recommendation' => ['nullable', 'string'],
+            'capa_action_id' => ['nullable', 'integer', 'exists:capa_actions,id'],
             'due_date' => ['nullable', 'date'],
         ];
     }

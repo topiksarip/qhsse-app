@@ -140,12 +140,12 @@ class RiskRegisterController extends Controller
 
         try {
             // Generate register number
-            $registerNumber = $this->numberingService->generate('risk', $actor);
+            $generated = $this->numberingService->generate('risk', $actor);
 
             // Create risk register
             $riskRegister = RiskRegister::create([
                 ...$validated,
-                'register_number' => $registerNumber,
+                'register_number' => $generated->number,
             ]);
 
             // Audit trail
@@ -267,8 +267,8 @@ class RiskRegisterController extends Controller
         try {
             // Verify risk_level_id matches severity × probability
             $severity = Severity::findOrFail($validated['severity_id']);
-            $expectedRiskLevel = RiskMatrixLevel::where('severity_level', $severity->level)
-                ->where('probability_level', $validated['probability_id'])
+            $expectedRiskLevel = RiskMatrixLevel::where('consequence', $severity->level)
+                ->where('likelihood', $validated['probability_id'])
                 ->where('is_active', true)
                 ->first();
 
@@ -296,7 +296,7 @@ class RiskRegisterController extends Controller
                 'risk',
                 $riskRegister->id,
                 'risk.assessed',
-                "Risk register {$riskRegister->register_number} telah dinilai. Risk level: {$riskRegister->riskLevel->name}",
+                "Risk register {$riskRegister->register_number} telah dinilai. Risk level: {$riskRegister->riskLevel->level}",
                 $actor
             );
 
@@ -502,56 +502,33 @@ class RiskRegisterController extends Controller
             $query->where('risk_level_id', request('risk_level_id'));
         }
 
-        $items = $query->orderBy('created_at', 'desc')->limit(10000)->get();
+        $query->orderBy('created_at', 'desc');
 
-        $headers = [
-            'Nomor',
-            'Judul',
-            'Tipe',
-            'Site',
-            'Area',
-            'Department',
-            'Aktivitas',
-            'Hazard',
-            'Existing Controls',
-            'Initial Severity',
-            'Initial Probability',
-            'Initial Risk Level',
-            'Additional Controls',
-            'Residual Severity',
-            'Residual Probability',
-            'Residual Risk Level',
-            'Owner',
-            'Status',
-            'Review Date',
-            'Created At',
+        $columns = [
+            'Nomor' => 'register_number',
+            'Judul' => 'title',
+            'Tipe' => 'type',
+            'Site' => fn($item) => $item->site?->name ?? '',
+            'Area' => fn($item) => $item->area?->name ?? '',
+            'Department' => fn($item) => $item->department?->name ?? '',
+            'Aktivitas' => 'activity',
+            'Hazard' => 'hazard',
+            'Existing Controls' => 'existing_controls',
+            'Initial Severity' => fn($item) => $item->severity?->name ?? '',
+            'Initial Probability' => 'probability_id',
+            'Initial Risk Level' => fn($item) => $item->riskLevel?->name ?? '',
+            'Additional Controls' => 'additional_controls',
+            'Residual Severity' => fn($item) => $item->residualSeverity?->name ?? '',
+            'Residual Probability' => 'residual_probability_id',
+            'Residual Risk Level' => fn($item) => $item->residualRiskLevel?->name ?? '',
+            'Owner' => fn($item) => $item->owner?->name ?? '',
+            'Status' => 'status',
+            'Review Date' => fn($item) => $item->review_date?->format('Y-m-d') ?? '',
+            'Created At' => fn($item) => $item->created_at->format('Y-m-d H:i:s'),
         ];
-
-        $rows = $items->map(fn ($item) => [
-            $item->register_number,
-            $item->title,
-            $item->type,
-            $item->site?->name ?? '',
-            $item->area?->name ?? '',
-            $item->department?->name ?? '',
-            $item->activity,
-            $item->hazard,
-            $item->existing_controls ?? '',
-            $item->severity?->name ?? '',
-            $item->probability_id ?? '',
-            $item->riskLevel?->name ?? '',
-            $item->additional_controls ?? '',
-            $item->residualSeverity?->name ?? '',
-            $item->residual_probability_id ?? '',
-            $item->residualRiskLevel?->name ?? '',
-            $item->owner?->name ?? '',
-            $item->status,
-            $item->review_date?->format('Y-m-d') ?? '',
-            $item->created_at->format('Y-m-d H:i:s'),
-        ])->toArray();
 
         $filename = 'risk_registers_export_' . now()->format('Ymd_His') . '.csv';
 
-        return $this->csvExporter->export($filename, $headers, $rows);
+        return $this->csvExporter->stream($query, $columns, $filename);
     }
 }

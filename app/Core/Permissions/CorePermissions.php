@@ -152,6 +152,42 @@ final class CorePermissions
             'legal.obligations.view',
             'legal.obligations.create',
             'legal.obligations.update',
+
+            // Contractor Management
+            'contractor.management.view',
+            'contractor.management.create',
+            'contractor.management.update',
+            'contractor.management.delete',
+            'contractor.management.export',
+            'contractor.management.approve',
+
+            // Asset & Equipment Safety
+            'asset.management.view',
+            'asset.management.create',
+            'asset.management.update',
+            'asset.management.export',
+            'asset.certificates.view',
+            'asset.certificates.create',
+            'asset.certificates.update',
+            'asset.inspections.view',
+            'asset.inspections.create',
+
+            // Communication & Campaign
+            'communication.campaigns.view',
+            'communication.campaigns.create',
+            'communication.campaigns.update',
+            'communication.campaigns.publish',
+            'communication.campaigns.export',
+            'communication.acknowledgments.view',
+
+            // Advanced Reporting & Export
+            'reporting.templates.view',
+            'reporting.templates.create',
+            'reporting.templates.update',
+            'reporting.reports.view',
+            'reporting.reports.generate',
+            'reporting.reports.download',
+
             // Emergency Preparedness
             'emergency.plans.view',
             'emergency.plans.create',
@@ -165,6 +201,37 @@ final class CorePermissions
             'emergency.contacts.view',
             'emergency.contacts.create',
             'emergency.contacts.update',
+            // Permit to Work
+            'permit.work.view',
+            'permit.work.create',
+            'permit.work.update',
+            'permit.work.approve',
+            'permit.work.close',
+            'permit.work.cancel',
+            'permit.work.export',
+            'permit.checklist.sign',
+            // Environmental Monitoring
+            'environment.records.view',
+            'environment.records.create',
+            'environment.records.update',
+            'environment.records.approve',
+            'environment.records.close',
+            'environment.records.export',
+            // Security Management
+            'security.incidents.view',
+            'security.incidents.create',
+            'security.incidents.update',
+            'security.incidents.close',
+            'security.incidents.export',
+            'security.visitor.view',
+            'security.visitor.log',
+            // Quality NCR
+            'quality.ncrs.view',
+            'quality.ncrs.create',
+            'quality.ncrs.update',
+            'quality.ncrs.close',
+            'quality.ncrs.export',
+            'quality.complaints.view',
         ];
     }
 
@@ -280,17 +347,55 @@ final class CorePermissions
         $emergencyView = ['emergency.plans.view', 'emergency.drills.view', 'emergency.contacts.view'];
         $emergencyCreate = ['emergency.plans.view', 'emergency.plans.create', 'emergency.plans.update', 'emergency.drills.view', 'emergency.drills.create', 'emergency.drills.update', 'emergency.contacts.view', 'emergency.contacts.create', 'emergency.contacts.update'];
 
+        $permitFull = ['permit.work.view', 'permit.work.create', 'permit.work.update', 'permit.work.approve', 'permit.work.close', 'permit.work.cancel', 'permit.work.export', 'permit.checklist.sign'];
+        $permitViewExport = ['permit.work.view', 'permit.work.export'];
+        $permitView = ['permit.work.view'];
+        $permitCreate = ['permit.work.view', 'permit.work.create', 'permit.work.update'];
+
+        $environmentFull = ['environment.records.view', 'environment.records.create', 'environment.records.update', 'environment.records.approve', 'environment.records.close', 'environment.records.export'];
+        $environmentViewExport = ['environment.records.view', 'environment.records.export'];
+        $environmentView = ['environment.records.view'];
+        $environmentCreate = ['environment.records.view', 'environment.records.create', 'environment.records.update'];
+
+        $securityFull = ['security.incidents.view', 'security.incidents.create', 'security.incidents.update', 'security.incidents.close', 'security.incidents.export', 'security.visitor.view', 'security.visitor.log'];
+        $securityViewExport = ['security.incidents.view', 'security.incidents.export', 'security.visitor.view'];
+        $securityView = ['security.incidents.view', 'security.visitor.view'];
+        $securityCreate = ['security.incidents.view', 'security.incidents.create', 'security.incidents.update', 'security.visitor.view', 'security.visitor.log'];
+
+        $qualityFull = ['quality.ncrs.view', 'quality.ncrs.create', 'quality.ncrs.update', 'quality.ncrs.close', 'quality.ncrs.export', 'quality.complaints.view'];
+        $qualityViewExport = ['quality.ncrs.view', 'quality.ncrs.export', 'quality.complaints.view'];
+        $qualityView = ['quality.ncrs.view', 'quality.complaints.view'];
+        $qualityCreate = ['quality.ncrs.view', 'quality.ncrs.create', 'quality.ncrs.update', 'quality.complaints.view'];
+
+        $contractorFull = ['contractor.management.view', 'contractor.management.create', 'contractor.management.update', 'contractor.management.delete', 'contractor.management.export', 'contractor.management.approve'];
+        $contractorViewExport = ['contractor.management.view', 'contractor.management.export'];
+        $contractorView = ['contractor.management.view'];
+        $contractorCreate = ['contractor.management.view', 'contractor.management.create', 'contractor.management.update'];
+
+        $assetFull = ['asset.management.view', 'asset.management.create', 'asset.management.update', 'asset.management.export', 'asset.certificates.view', 'asset.certificates.create', 'asset.certificates.update', 'asset.inspections.view', 'asset.inspections.create'];
+        $assetViewExport = ['asset.management.view', 'asset.management.export', 'asset.certificates.view', 'asset.inspections.view'];
+        $assetView = ['asset.management.view', 'asset.certificates.view', 'asset.inspections.view'];
+        $assetCreate = ['asset.management.view', 'asset.management.create', 'asset.management.update'];
+
+        $communicationFull = ['communication.campaigns.view', 'communication.campaigns.create', 'communication.campaigns.update', 'communication.campaigns.publish', 'communication.campaigns.export', 'communication.acknowledgments.view'];
+        $communicationViewExport = ['communication.campaigns.view', 'communication.campaigns.export', 'communication.acknowledgments.view'];
+        $communicationView = ['communication.campaigns.view'];
+
+        $reportingFull = ['reporting.templates.view', 'reporting.templates.create', 'reporting.templates.update', 'reporting.reports.view', 'reporting.reports.generate', 'reporting.reports.download'];
+        $reportingViewDownload = ['reporting.templates.view', 'reporting.reports.view', 'reporting.reports.download'];
+        $reportingGenerate = ['reporting.templates.view', 'reporting.reports.view', 'reporting.reports.generate', 'reporting.reports.download'];
+
         return [
             'Super Admin' => self::all(),
             'Admin' => self::all(),
-            'QHSSE Manager' => [...$viewOnly, 'core.scope.all', ...$incidentFull, ...$investigationFull, ...$capaFull, ...$inspectionFull, ...$documentFull, ...$auditFull, ...$riskFull, ...$legalFull, ...$emergencyFull],
-            'QHSSE Officer' => [...$viewOnly, 'core.scope.site', ...$incidentFull, ...$investigationFull, ...$capaFull, ...$inspectionFull, ...$documentCreate, ...$auditExecute, ...$riskFull, ...$legalFull, ...$emergencyFull],
-            'Supervisor' => ['core.companies.view', 'core.employees.view', 'core.departments.view', 'core.positions.view', 'core.scope.department', ...$incidentSupervisor, ...$investigationView, ...$capaAssign, ...$inspectionView, ...$documentCreate, ...$auditView, ...$riskCreate, ...$legalView, ...$emergencyCreate],
-            'Department Head' => ['core.companies.view', 'core.employees.view', 'core.departments.view', 'core.positions.view', 'core.scope.department', ...$incidentSupervisor, ...$investigationView, ...$capaView, ...$inspectionView, ...$documentView, 'core.workflow.transition', 'document.control.submit_review', ...$auditView, ...$riskView, ...$legalView, ...$emergencyView],
-            'Employee / Reporter' => ['core.scope.own', ...$incidentBasic, ...$investigationView, ...$capaView, ...$inspectionView, ...$documentView, ...$auditView, ...$riskView, ...$legalView, ...$emergencyView],
-            'Contractor' => ['core.scope.company', ...$incidentBasic, ...$documentView],
-            'Auditor' => [...$viewOnly, 'core.scope.all', ...$incidentViewExport, ...$investigationViewExport, ...$capaViewExport, ...$inspectionView, ...$documentViewExport, ...$auditViewExport, ...$riskViewExport, ...$legalViewExport, ...$emergencyViewExport],
-            'Top Management' => [...$viewOnly, 'core.scope.all', ...$incidentViewExport, ...$investigationViewExport, ...$capaViewExport, ...$inspectionView, ...$documentViewExport, ...$auditViewExport, ...$riskViewExport, ...$legalViewExport, ...$emergencyViewExport],
+            'QHSSE Manager' => [...$viewOnly, 'core.scope.all', ...$incidentFull, ...$investigationFull, ...$capaFull, ...$inspectionFull, ...$documentFull, ...$auditFull, ...$riskFull, ...$legalFull, ...$emergencyFull, ...$permitFull, ...$environmentFull, ...$securityFull, ...$qualityFull, ...$contractorFull, ...$assetFull, ...$communicationFull, ...$reportingFull],
+            'QHSSE Officer' => [...$viewOnly, 'core.scope.site', ...$incidentFull, ...$investigationFull, ...$capaFull, ...$inspectionFull, ...$documentCreate, ...$auditExecute, ...$riskFull, ...$legalFull, ...$emergencyFull, ...$permitFull, ...$environmentFull, ...$securityFull, ...$qualityFull, ...$contractorFull, ...$assetFull, ...$communicationFull, ...$reportingGenerate],
+            'Supervisor' => ['core.companies.view', 'core.employees.view', 'core.departments.view', 'core.positions.view', 'core.scope.department', ...$incidentSupervisor, ...$investigationView, ...$capaAssign, ...$inspectionView, ...$documentCreate, ...$auditView, ...$riskCreate, ...$legalView, ...$emergencyCreate, ...$permitCreate, ...$environmentCreate, ...$securityCreate, ...$qualityCreate, ...$contractorCreate, ...$assetCreate, ...$communicationView, ...$reportingGenerate],
+            'Department Head' => ['core.companies.view', 'core.employees.view', 'core.departments.view', 'core.positions.view', 'core.scope.department', ...$incidentSupervisor, ...$investigationView, ...$capaView, ...$inspectionView, ...$documentView, 'core.workflow.transition', 'document.control.submit_review', ...$auditView, ...$riskView, ...$legalView, ...$emergencyView, ...$permitView, ...$environmentView, ...$securityView, ...$qualityView, ...$assetViewExport, ...$communicationViewExport, ...$reportingViewDownload],
+            'Employee / Reporter' => ['core.scope.own', ...$incidentBasic, ...$investigationView, ...$capaView, ...$inspectionView, ...$documentView, ...$auditView, ...$riskView, ...$legalView, ...$emergencyView, ...$permitView, ...$environmentView, ...$securityView, ...$qualityView, ...$assetView, ...$communicationView],
+            'Contractor' => ['core.scope.company', ...$incidentBasic, ...$documentView, ...$communicationView],
+            'Auditor' => [...$viewOnly, 'core.scope.all', ...$incidentViewExport, ...$investigationViewExport, ...$capaViewExport, ...$inspectionView, ...$documentViewExport, ...$auditViewExport, ...$riskViewExport, ...$legalViewExport, ...$emergencyViewExport, ...$permitViewExport, ...$environmentViewExport, ...$securityViewExport, ...$qualityViewExport, ...$assetViewExport, ...$communicationViewExport, ...$reportingViewDownload],
+            'Top Management' => [...$viewOnly, 'core.scope.all', ...$incidentViewExport, ...$investigationViewExport, ...$capaViewExport, ...$inspectionView, ...$documentViewExport, ...$auditViewExport, ...$riskViewExport, ...$legalViewExport, ...$emergencyViewExport, ...$permitViewExport, ...$environmentViewExport, ...$securityViewExport, ...$qualityViewExport, ...$assetViewExport, ...$communicationViewExport, ...$reportingViewDownload],
         ];
     }
 }

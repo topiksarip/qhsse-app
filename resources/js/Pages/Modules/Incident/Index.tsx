@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Pagination from '@/Components/Qhsse/Pagination';
+import EmptyState from '@/Components/UI/EmptyState';
 import { Paginated } from '@/types/core';
 import { PageProps } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
@@ -137,8 +138,21 @@ export default function Index({ items, filters, auth }: PageProps<{ items: Pagin
                                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                     {items.data.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
-                                                Belum ada laporan insiden. {permissions.has('incident.reports.create') && 'Klik "Buat Laporan" untuk membuat laporan pertama.'}
+                                            <td colSpan={7} className="px-4 py-12">
+                                                <EmptyState
+                                                    title="Belum ada laporan insiden"
+                                                    description="Mulai dokumentasikan insiden, near miss, dan unsafe condition di tempat kerja"
+                                                    action={
+                                                        permissions.has('incident.reports.create') ? (
+                                                            <Link
+                                                                href={route('incident.reports.create')}
+                                                                className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+                                                            >
+                                                                Buat Laporan
+                                                            </Link>
+                                                        ) : undefined
+                                                    }
+                                                />
                                             </td>
                                         </tr>
                                     ) : (

@@ -48,11 +48,6 @@ class EmergencyDrillPolicy
             return false;
         }
 
-        // Can only execute scheduled drills
-        if ($emergencyDrill->status !== 'scheduled') {
-            return false;
-        }
-
         return $this->scopeService->canAccess($user, $emergencyDrill);
     }
 

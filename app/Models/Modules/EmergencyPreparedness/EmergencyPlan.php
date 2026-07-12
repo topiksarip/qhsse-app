@@ -33,7 +33,7 @@ class EmergencyPlan extends Model
     ];
 
     protected $casts = [
-        'emergency_contacts' => AsArrayObject::class,
+        'emergency_contacts' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

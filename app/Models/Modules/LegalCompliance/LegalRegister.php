@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models\Modules\LegalCompliance;
 
+use App\Models\Core\Activity\ActivityLog;
+use App\Models\Core\Comments\Comment;
+use App\Models\Core\Files\ManagedFile;
 use App\Models\Core\MasterData\Department;
 use App\Models\Core\MasterData\Site;
-use App\Models\Modules\DocumentControl\Document;
+use App\Models\Modules\DocumentControl\ControlledDocument;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -64,12 +67,30 @@ class LegalRegister extends Model
 
     public function document(): BelongsTo
     {
-        return $this->belongsTo(Document::class);
+        return $this->belongsTo(ControlledDocument::class, 'document_id');
     }
 
     public function obligations(): HasMany
     {
         return $this->hasMany(LegalObligation::class, 'legal_register_id');
+    }
+
+    public function files(): HasMany
+    {
+        return $this->hasMany(ManagedFile::class, 'reference_id')
+            ->where('module_name', 'legal');
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class, 'reference_id')
+            ->where('module_name', 'legal');
+    }
+
+    public function activities(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class, 'reference_id')
+            ->where('module_name', 'legal');
     }
 
     // Scopes

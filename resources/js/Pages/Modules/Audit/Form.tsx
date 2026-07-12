@@ -8,7 +8,7 @@ type AuditItem = {
     id: number;
     audit_number: string;
     title: string;
-    type: string;
+    audit_type: string;
     scope: string | null;
     summary: string | null;
     scheduled_date: string | null;
@@ -21,7 +21,7 @@ const auditTypes = [
     { value: 'internal', label: 'Internal' },
     { value: 'external', label: 'Eksternal' },
     { value: 'supplier', label: 'Pemasok' },
-    { value: 'regulator', label: 'Regulator' },
+    { value: 'regulatory', label: 'Regulator' },
 ];
 
 export default function Form({ item, departments, users }: PageProps<{
@@ -30,7 +30,7 @@ export default function Form({ item, departments, users }: PageProps<{
     const editing = item !== null;
     const { data, setData, post, processing, errors } = useForm({
         title: item?.title ?? '',
-        audit_type: item?.type ?? 'internal',
+        audit_type: item?.audit_type ?? 'internal',
         scope: item?.scope ?? '',
         summary: item?.summary ?? '',
         department_id: item?.department_id ? String(item.department_id) : '',
@@ -41,7 +41,7 @@ export default function Form({ item, departments, users }: PageProps<{
 
     function submit(event: FormEvent) {
         event.preventDefault();
-        post(editing ? route('audit.management.update', item.id) : route('audit.management.store'), { forceFormData: true });
+        post(editing ? route('audits.update', item.id) : route('audits.store'), { forceFormData: true });
     }
 
     const inputClass = 'mt-1 block w-full rounded-lg border-slate-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white';
@@ -109,7 +109,7 @@ export default function Form({ item, departments, users }: PageProps<{
                 </section>
 
                 <div className="flex flex-wrap justify-between gap-3">
-                    <Link href={editing ? route('audit.management.show', item.id) : route('audit.management.index')} className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">Batal</Link>
+                    <Link href={editing ? route('audits.show', item.id) : route('audits.index')} className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">Batal</Link>
                     <button type="submit" disabled={processing} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">{editing ? 'Simpan Perubahan' : 'Buat Audit'}</button>
                 </div>
             </form></div>

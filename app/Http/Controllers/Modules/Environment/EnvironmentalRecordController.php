@@ -87,7 +87,7 @@ class EnvironmentalRecordController extends Controller
             ->paginate($request->input('per_page', 15))
             ->withQueryString();
 
-        return Inertia::render('Modules/Environment/Index', [
+        return Inertia::render('Modules/Environmental/Index', [
             'records' => $records,
             'filters' => $request->only(['scope', 'site_id', 'type', 'status', 'is_exceedance', 'search', 'date_from', 'date_to']),
             'sites' => Site::select('id', 'name')->orderBy('name')->get(),
@@ -98,7 +98,7 @@ class EnvironmentalRecordController extends Controller
 
     public function create(): InertiaResponse
     {
-        return Inertia::render('Modules/Environment/Form', [
+        return Inertia::render('Modules/Environmental/Form', [
             'sites' => Site::select('id', 'name')->orderBy('name')->get(),
             'areas' => Area::select('id', 'site_id', 'name')->orderBy('name')->get(),
             'types' => EnvironmentalRecord::getTypes(),
@@ -173,14 +173,14 @@ class EnvironmentalRecordController extends Controller
             'capaAction',
         ]);
 
-        return Inertia::render('Modules/Environment/Show', [
+        return Inertia::render('Modules/Environmental/Show', [
             'record' => $environmentalRecord,
         ]);
     }
 
     public function edit(EnvironmentalRecord $environmentalRecord): InertiaResponse
     {
-        return Inertia::render('Modules/Environment/Form', [
+        return Inertia::render('Modules/Environmental/Form', [
             'record' => $environmentalRecord,
             'sites' => Site::select('id', 'name')->orderBy('name')->get(),
             'areas' => Area::select('id', 'site_id', 'name')->orderBy('name')->get(),

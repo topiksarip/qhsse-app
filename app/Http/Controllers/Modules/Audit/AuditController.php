@@ -6,6 +6,8 @@ use App\Core\Activity\ActivityService;
 use App\Core\Audit\AuditService;
 use App\Core\Comments\CommentService;
 use App\Core\Export\CsvExporter;
+use App\Core\Files\FileReference;
+use App\Core\Files\ManagedFileService;
 use App\Core\Notifications\NotificationService;
 use App\Core\Numbering\NumberingService;
 use App\Core\Query\ListQuery;
@@ -21,7 +23,6 @@ use App\Models\Core\Comments\Comment;
 use App\Models\Core\Files\ManagedFile;
 use App\Models\Core\MasterData\Department;
 use App\Models\Core\MasterData\Site;
-use App\Models\Core\Workflow\WorkflowHistory;
 use App\Models\Modules\Audit\Audit;
 use App\Models\Modules\Audit\AuditFinding;
 use App\Models\User;
@@ -29,6 +30,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -48,6 +50,7 @@ class AuditController extends Controller
         private readonly NotificationService $notifications,
         private readonly ActivityService $activity,
         private readonly AuditService $audit,
+        private readonly ManagedFileService $files,
     ) {}
 
     public function index(Request $request, ListQuery $listQuery): Response
@@ -58,7 +61,7 @@ class AuditController extends Controller
             'creator:id,name',
         ])->withCount([
             'findings',
-            'findings as major_findings_count' => fn ($q) => $q->where('classification', 'major'),
+            'findings as major_findings_count' => fn ($q) => $q->where('classification', 'major_nc'),
         ]);
 
         $this->applyFilters($query, $request);
@@ -92,27 +95,41 @@ class AuditController extends Controller
         $this->ensureAssignmentWithinScope($actor, $validated);
 
         $audit = DB::transaction(function () use ($validated, $actor) {
+            // Generate audit number first
+            $generated = $this->numbering->generate(
+                moduleName: 'audit',
+                actor: $actor
+            );
+
             $audit = Audit::create([
+                'audit_number' => $generated->number,
                 'title' => $validated['title'],
                 'audit_type' => $validated['audit_type'],
-                'scope' => $validated['scope'],
-                'department_id' => $validated['department_id'],
+                'scope' => $validated['scope'] ?? null,
+                'department_id' => $validated['department_id'] ?? null,
                 'lead_auditor_id' => $validated['lead_auditor_id'],
                 'scheduled_date' => $validated['scheduled_date'],
                 'status' => 'planned',
                 'created_by' => $actor->id,
             ]);
 
-            $generated = $this->numbering->generate(
-                moduleName: 'audit',
-                actor: $actor,
-                referenceType: Audit::class,
-                referenceId: $audit->id,
-            );
-
-            $audit->update(['audit_number' => $generated->number]);
+            // Update generated number with reference
+            $generated->update([
+                'reference_type' => Audit::class,
+                'reference_id' => $audit->id,
+            ]);
 
             $this->workflow->start('audit', $audit->id, $actor);
+
+            $this->audit->log(
+                'audit.created',
+                $audit,
+                [],
+                $audit->getAttributes(),
+                $actor,
+                'audit',
+                $audit->id,
+            );
 
             $this->activity->log(
                 moduleName: 'audit',
@@ -162,30 +179,27 @@ class AuditController extends Controller
             ->limit(50)
             ->get();
 
-        $workflowHistory = WorkflowHistory::query()
-            ->where('module_name', 'audit')
-            ->where('reference_id', $audit->id)
-            ->with('actor:id,name')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        $availableTransitions = $this->workflow->getAvailableTransitions('audit', $audit->status);
+        $workflow = $this->workflow->getWorkflow('audit', $audit->id);
+        $user = auth()->user();
 
         return Inertia::render('Modules/Audit/Show', [
             'audit' => $audit,
+            'findings' => $audit->findings,
             'evidenceFiles' => $evidenceFiles,
             'comments' => $comments,
             'activities' => $activities,
-            'workflowHistory' => $workflowHistory,
-            'availableTransitions' => $availableTransitions,
+            'workflowHistory' => $workflow['history'],
+            'availableTransitions' => $workflow['available_transitions'],
             'can' => [
                 'update' => $this->canUpdate($audit),
-                'execute' => $this->canExecute($audit),
+                'start' => $this->canExecute($audit) && $audit->status === 'planned',
+                'generate_report' => $this->canExecute($audit) && $audit->status === 'in_progress',
                 'close' => $this->canClose($audit),
-                'export' => auth()->user()->can('audit.management.export'),
                 'create_finding' => $this->canCreateFinding($audit),
-                'update_finding' => auth()->user()->can('audit.findings.update') && in_array($audit->status, ['in_progress', 'report_ready']),
-                'close_finding' => auth()->user()->can('audit.findings.close') && in_array($audit->status, ['in_progress', 'report_ready']),
+                'close_finding' => $user->can('audit.findings.close') && in_array($audit->status, ['in_progress', 'report_ready']),
+                'comment' => $user->can('core.comments.create'),
+                'upload_file' => $user->can('core.files.upload'),
+                'download_file' => $user->can('core.files.download'),
             ],
         ]);
     }
@@ -218,8 +232,8 @@ class AuditController extends Controller
         $audit->update([
             'title' => $validated['title'],
             'audit_type' => $validated['audit_type'],
-            'scope' => $validated['scope'],
-            'department_id' => $validated['department_id'],
+            'scope' => $validated['scope'] ?? null,
+            'department_id' => $validated['department_id'] ?? null,
             'lead_auditor_id' => $validated['lead_auditor_id'],
             'scheduled_date' => $validated['scheduled_date'],
         ]);
@@ -242,6 +256,9 @@ class AuditController extends Controller
         $actor = $request->user();
         abort_unless($this->canExecute($audit), 403);
 
+        // Only allow starting audits in 'planned' status
+        abort_if($audit->status !== 'planned', 403, 'Audit harus berstatus planned untuk dimulai.');
+
         try {
             DB::transaction(function () use ($audit, $actor): void {
                 $this->workflow->transition('audit', $audit->id, 'start', $actor);
@@ -259,6 +276,9 @@ class AuditController extends Controller
     {
         $actor = $request->user();
         abort_unless($this->canExecute($audit), 403);
+
+        // Only allow generating report for audits in 'in_progress' status
+        abort_if($audit->status !== 'in_progress', 403, 'Audit harus berstatus in_progress untuk membuat laporan.');
 
         $validated = $request->validated();
 
@@ -312,6 +332,7 @@ class AuditController extends Controller
                 'classification' => $validated['classification'],
                 'description' => $validated['description'],
                 'recommendation' => $validated['recommendation'] ?? null,
+                'capa_action_id' => $validated['capa_action_id'] ?? null,
                 'due_date' => $validated['due_date'] ?? null,
                 'status' => 'open',
             ]);
@@ -336,6 +357,7 @@ class AuditController extends Controller
             'description' => $validated['description'],
             'classification' => $validated['classification'],
             'recommendation' => $validated['recommendation'] ?? null,
+            'capa_action_id' => $validated['capa_action_id'] ?? null,
             'due_date' => $validated['due_date'] ?? null,
         ]);
 
@@ -360,12 +382,59 @@ class AuditController extends Controller
 
     public function comment(Request $request, Audit $audit, CommentService $comments): RedirectResponse
     {
-        $this->ensureVisible($request->user(), $audit);
-        abort_unless($request->user()->can('core.comments.create'), 403);
+        $actor = $request->user();
+        $this->ensureVisible($actor, $audit);
+        abort_unless($actor->can('core.comments.create'), 403);
+
         $validated = $request->validate(['body' => ['required', 'string', 'max:5000']]);
-        $comments->add('audit', $audit->id, $validated['body'], $request->user());
+        $comments->add('audit', $audit->id, $validated['body'], $actor);
 
         return back()->with('success', 'Komentar ditambahkan.');
+    }
+
+    public function uploadEvidence(Request $request, Audit $audit): RedirectResponse
+    {
+        $actor = $request->user();
+        $this->ensureVisible($actor, $audit);
+        abort_unless($actor->can('core.files.upload'), 403);
+
+        $validated = $request->validate([
+            'file' => ['required', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx'],
+        ]);
+
+        $file = $this->files->store(
+            $validated['file'],
+            new FileReference('audit', $audit->id, 'evidence'),
+            $actor,
+        );
+
+        $this->audit->log(
+            'audit.file.uploaded',
+            $audit,
+            [],
+            ['file_id' => $file->id, 'original_name' => $file->original_name],
+            $actor,
+            'audit',
+            $audit->id,
+        );
+        $this->activity->log('audit', $audit->id, 'audit.file_uploaded', "Bukti {$file->original_name} diunggah", $actor);
+
+        return back()->with('success', 'Bukti audit berhasil diunggah.');
+    }
+
+    public function downloadEvidence(Request $request, Audit $audit, ManagedFile $file): StreamedResponse
+    {
+        $actor = $request->user();
+        $this->ensureVisible($actor, $audit);
+        abort_unless($actor->can('core.files.download'), 403);
+        abort_unless(
+            $file->module_name === 'audit'
+                && $file->reference_id === $audit->id
+                && $file->deleted_at === null,
+            404,
+        );
+
+        return Storage::disk($file->disk)->download($file->path, $file->original_name);
     }
 
     public function export(Request $request, ListQuery $listQuery, CsvExporter $exporter): StreamedResponse
@@ -388,7 +457,7 @@ class AuditController extends Controller
             'Tanggal Mulai' => fn ($item) => $item->start_date?->format('Y-m-d') ?? '',
             'Tanggal Laporan' => fn ($item) => $item->report_date?->format('Y-m-d') ?? '',
             'Tanggal Tutup' => fn ($item) => $item->close_date?->format('Y-m-d') ?? '',
-        ], 'audits-export.csv');
+        ], 'audits-export-' . now()->format('YmdHis') . '.csv');
     }
 
     private function visibleQuery(User $user): Builder
@@ -507,6 +576,7 @@ class AuditController extends Controller
         }
 
         return [
+            'item' => $audit,
             'auditTypes' => self::AUDIT_TYPES,
             'departments' => $departmentsQuery->orderBy('name')->get(['id', 'name']),
             'users' => $usersQuery->orderBy('name')->get(['id', 'name']),

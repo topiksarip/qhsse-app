@@ -99,7 +99,7 @@ export default function Show({ auth, register }: ShowProps) {
                             <Row label="Site" value={register.site?.name ?? '-'} />
                             <Row label="Department" value={register.department?.name ?? '-'} />
                             <Row label="Owner" value={register.owner?.name ?? '-'} />
-                            <Row label="Dokumen" value={register.document ? `${register.document.doc_number} — ${register.document.title}` : '-'} />
+                            <Row label="Dokumen" value={register.document ? `${register.document.document_number} — ${register.document.title}` : '-'} />
                             <Row label="Review Berikutnya" value={register.next_review_date ?? '-'} />
                             <Row label="Status Kepatuhan" value={register.compliance_status_label ?? register.compliance_status} />
                             {register.notes && (

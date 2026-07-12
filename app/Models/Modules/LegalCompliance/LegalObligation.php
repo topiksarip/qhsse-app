@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Modules\LegalCompliance;
 
-use App\Models\Core\ManagedFile;
+use App\Models\Core\Files\ManagedFile;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

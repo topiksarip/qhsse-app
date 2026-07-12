@@ -17,8 +17,8 @@ class StoreAuditRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'audit_type' => ['required', Rule::in(['internal', 'external', 'supplier', 'regulatory'])],
-            'scope' => ['required', 'string', 'min:10'],
-            'department_id' => ['required', 'exists:departments,id'],
+            'scope' => ['nullable', 'string'],
+            'department_id' => ['nullable', 'exists:departments,id'],
             'lead_auditor_id' => ['required', 'exists:users,id'],
             'scheduled_date' => ['required', 'date', 'after_or_equal:today'],
         ];

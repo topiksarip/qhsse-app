@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Modules\Training;
 use App\Core\Activity\ActivityService;
 use App\Core\Audit\AuditService;
 use App\Core\Export\CsvExporter;
+use App\Core\Files\ManagedFileService;
 use App\Core\Notifications\NotificationService;
 use App\Core\Numbering\NumberingService;
 use App\Core\Query\ListQuery;
-use App\Core\Services\Files\PrivateFileService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Modules\Training\StoreTrainingRecordRequest;
 use App\Http\Requests\Modules\Training\UpdateTrainingRecordRequest;
@@ -26,7 +26,7 @@ class TrainingRecordController extends Controller
     public function __construct(
         private readonly ListQuery $listQuery,
         private readonly NumberingService $numberingService,
-        private readonly PrivateFileService $fileService,
+        private readonly ManagedFileService $fileService,
         private readonly AuditService $auditService,
         private readonly ActivityService $activityService,
         private readonly NotificationService $notificationService,
@@ -75,8 +75,9 @@ class TrainingRecordController extends Controller
 
         $records = $this->listQuery->paginate(
             $query,
-            $request->get('search'),
             ['training_number', 'provider'],
+            ['training_number', 'training_date', 'created_at'],
+            'created_at',
             (int) $request->get('per_page', 15)
         );
 
@@ -95,7 +96,8 @@ class TrainingRecordController extends Controller
     {
         $this->authorize('training.records.create');
 
-        return Inertia::render('Modules/Training/Records/Form', [
+        return Inertia::render('Modules/Training/Records/CreateOrEdit', [
+            'record' => null,
             'programs' => TrainingProgram::active()->get(['id', 'name', 'code', 'duration_hours', 'is_certification', 'validity_months']),
             'employees' => Employee::where('is_active', true)->get(['id', 'name', 'employee_no']),
             'statuses' => TrainingRecord::getStatuses(),
@@ -169,7 +171,7 @@ class TrainingRecordController extends Controller
 
         $record->load(['employee', 'trainingProgram']);
 
-        return Inertia::render('Modules/Training/Records/Form', [
+        return Inertia::render('Modules/Training/Records/CreateOrEdit', [
             'record' => $record,
             'programs' => TrainingProgram::active()->get(['id', 'name', 'code', 'duration_hours', 'is_certification', 'validity_months']),
             'employees' => Employee::where('is_active', true)->get(['id', 'name', 'employee_no']),

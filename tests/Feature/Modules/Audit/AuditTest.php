@@ -65,6 +65,27 @@ test('authorized user can view audit register', function () {
         );
 });
 
+test('authorized user can view audit detail with workflow payload', function () {
+    actingAs($this->admin);
+
+    $audit = Audit::factory()->create([
+        'department_id' => $this->department->id,
+        'lead_auditor_id' => $this->admin->id,
+    ]);
+    startAuditWorkflow($audit, $this->admin);
+
+    $this->get(route('audits.show', $audit))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Modules/Audit/Show')
+            ->where('audit.id', $audit->id)
+            ->has('findings')
+            ->has('evidenceFiles')
+            ->has('workflowHistory')
+            ->has('can')
+        );
+});
+
 test('authorized user can create numbered audit with atomic numbering', function () {
     actingAs($this->admin);
 
@@ -305,9 +326,10 @@ test('QHSSE Manager can view all audits regardless of department', function () {
     $response = $this->get(route('audits.index'));
 
     $response->assertOk();
-    expect($response->viewData('audits')->pluck('id'))
-        ->toContain($audit1->id)
-        ->toContain($audit2->id);
+    $response->assertInertia(fn ($page) => $page
+        ->where('audits.data', fn ($audits) => collect($audits)->pluck('id')->contains($audit1->id)
+            && collect($audits)->pluck('id')->contains($audit2->id))
+    );
 });
 
 test('QHSSE Officer can only view audits in same site', function () {
@@ -329,10 +351,10 @@ test('QHSSE Officer can only view audits in same site', function () {
     $response = $this->get(route('audits.index'));
 
     $response->assertOk();
-    $audits = $response->viewData('audits');
-    expect($audits->pluck('id'))
-        ->toContain($auditSameSite->id)
-        ->not->toContain($auditOtherSite->id);
+    $response->assertInertia(fn ($page) => $page
+        ->where('audits.data', fn ($audits) => collect($audits)->pluck('id')->contains($auditSameSite->id)
+            && ! collect($audits)->pluck('id')->contains($auditOtherSite->id))
+    );
 });
 
 test('Supervisor can only view audits in same department', function () {
@@ -352,10 +374,10 @@ test('Supervisor can only view audits in same department', function () {
     $response = $this->get(route('audits.index'));
 
     $response->assertOk();
-    $audits = $response->viewData('audits');
-    expect($audits->pluck('id'))
-        ->toContain($auditSameDept->id)
-        ->not->toContain($auditOtherDept->id);
+    $response->assertInertia(fn ($page) => $page
+        ->where('audits.data', fn ($audits) => collect($audits)->pluck('id')->contains($auditSameDept->id)
+            && ! collect($audits)->pluck('id')->contains($auditOtherDept->id))
+    );
 });
 
 test('Employee can only view audits they created', function () {
@@ -380,10 +402,10 @@ test('Employee can only view audits they created', function () {
     $response = $this->get(route('audits.index'));
 
     $response->assertOk();
-    $audits = $response->viewData('audits');
-    expect($audits->pluck('id'))
-        ->toContain($ownAudit->id)
-        ->not->toContain($otherAudit->id);
+    $response->assertInertia(fn ($page) => $page
+        ->where('audits.data', fn ($audits) => collect($audits)->pluck('id')->contains($ownAudit->id)
+            && ! collect($audits)->pluck('id')->contains($otherAudit->id))
+    );
 });
 
 test('user without audit permission cannot view audit register', function () {
@@ -453,7 +475,7 @@ test('can upload evidence file to audit', function () {
 
     $file = UploadedFile::fake()->create('audit-evidence.pdf', 512, 'application/pdf');
 
-    $this->post(route('audits.show', $audit), [
+    $this->post(route('audits.files.store', $audit), [
         'file' => $file,
     ]);
 
@@ -486,7 +508,7 @@ test('audit creation records audit trail', function () {
         ->first();
 
     expect($auditLog)->not->toBeNull()
-        ->and($auditLog->user_id)->toBe($this->admin->id);
+        ->and($auditLog->actor_id)->toBe($this->admin->id);
 });
 
 test('can export audits to CSV', function () {
@@ -499,8 +521,11 @@ test('can export audits to CSV', function () {
     $response = $this->get(route('audits.export'));
 
     $response->assertOk()
-        ->assertHeader('content-type', 'text/csv; charset=UTF-8')
-        ->assertHeader('content-disposition', 'attachment; filename=audits-export-*.csv');
+        ->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+    expect($response->headers->get('content-disposition'))
+        ->toContain('attachment; filename=audits-export-')
+        ->toContain('.csv');
 });
 
 test('can filter audits by status', function () {
@@ -517,10 +542,10 @@ test('can filter audits by status', function () {
 
     $response = $this->get(route('audits.index', ['status' => 'planned']));
 
-    $audits = $response->viewData('audits');
-    expect($audits->pluck('id'))
-        ->toContain($planned->id)
-        ->not->toContain($inProgress->id);
+    $response->assertInertia(fn ($page) => $page
+        ->where('audits.data', fn ($audits) => collect($audits)->pluck('id')->contains($planned->id)
+            && ! collect($audits)->pluck('id')->contains($inProgress->id))
+    );
 });
 
 test('can filter audits by audit type', function () {
@@ -537,10 +562,10 @@ test('can filter audits by audit type', function () {
 
     $response = $this->get(route('audits.index', ['audit_type' => 'internal']));
 
-    $audits = $response->viewData('audits');
-    expect($audits->pluck('id'))
-        ->toContain($internal->id)
-        ->not->toContain($external->id);
+    $response->assertInertia(fn ($page) => $page
+        ->where('audits.data', fn ($audits) => collect($audits)->pluck('id')->contains($internal->id)
+            && ! collect($audits)->pluck('id')->contains($external->id))
+    );
 });
 
 test('can add comment to audit', function () {
@@ -551,10 +576,10 @@ test('can add comment to audit', function () {
     ]);
 
     $this->post(route('audits.comment', $audit), [
-        'content' => 'This is a test comment',
+        'body' => 'This is a test comment',
     ])->assertRedirect();
 
     expect($audit->comments()->count())->toBe(1)
-        ->and($audit->comments()->first()->content)->toContain('test comment');
+        ->and($audit->comments()->first()->body)->toContain('test comment');
 });
 

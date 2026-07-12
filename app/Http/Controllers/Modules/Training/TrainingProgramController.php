@@ -35,8 +35,9 @@ class TrainingProgramController extends Controller
 
         $programs = $this->listQuery->paginate(
             $query,
-            $request->get('search'),
             ['code', 'name', 'description'],
+            ['code', 'name', 'created_at'],
+            'created_at',
             (int) $request->get('per_page', 15)
         );
 
@@ -54,7 +55,8 @@ class TrainingProgramController extends Controller
     {
         $this->authorize('training.programs.create');
 
-        return Inertia::render('Modules/Training/Programs/Form', [
+        return Inertia::render('Modules/Training/Programs/CreateOrEdit', [
+            'program' => null,
             'categories' => TrainingProgram::getCategories(),
         ]);
     }
@@ -115,7 +117,7 @@ class TrainingProgramController extends Controller
     {
         $this->authorize('training.programs.update');
 
-        return Inertia::render('Modules/Training/Programs/Form', [
+        return Inertia::render('Modules/Training/Programs/CreateOrEdit', [
             'program' => $program,
             'categories' => TrainingProgram::getCategories(),
         ]);

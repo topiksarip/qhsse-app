@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Policies\Modules\LegalCompliance;
 
+use App\Core\Services\ScopeService;
 use App\Models\Modules\LegalCompliance\LegalObligation;
-use App\Models\Modules\LegalCompliance\LegalRegister;
 use App\Models\User;
-use App\Services\Core\ScopeService;
 
 class LegalObligationPolicy
 {

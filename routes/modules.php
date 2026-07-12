@@ -183,6 +183,8 @@ Route::middleware(['auth', 'verified'])
         Route::put('/{audit}/findings/{finding}', [AuditController::class, 'updateFinding'])->name('findings.update')->middleware('permission:audit.findings.update');
         Route::post('/{audit}/findings/{finding}/close', [AuditController::class, 'closeFinding'])->name('findings.close')->middleware('permission:audit.findings.close');
         Route::post('/{audit}/comment', [AuditController::class, 'comment'])->name('comment')->middleware('permission:core.comments.create');
+        Route::post('/{audit}/files', [AuditController::class, 'uploadEvidence'])->name('files.store')->middleware('permission:core.files.upload');
+        Route::get('/{audit}/files/{file}/download', [AuditController::class, 'downloadEvidence'])->name('files.download')->middleware('permission:core.files.download');
     });
 
 // Phase 8: Training & Competency Management
@@ -206,3 +208,15 @@ require __DIR__ . '/modules/legal.php';
 
 // Phase 15: Emergency Preparedness
 require __DIR__ . '/modules/emergency.php';
+
+// Phase 16: Contractor Management
+require __DIR__ . '/modules/contractor.php';
+
+// Phase 17: Asset & Equipment Safety
+require __DIR__ . '/modules/asset.php';
+
+// Phase 18: Communication & Campaign
+require __DIR__ . '/modules/communication.php';
+
+// Phase 19: Advanced Reporting & Export
+require __DIR__ . '/modules/reporting.php';
