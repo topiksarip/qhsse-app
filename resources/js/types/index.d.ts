@@ -373,3 +373,58 @@ export interface SecurityIncident {
     reporter?: User | null;
     severity?: Severity | null;
 }
+
+// ── Risk Management ──────────────────────────────────────────────────────────
+export type RiskRegisterType = 'hazard_identification' | 'jsa' | 'hiradc' | 'risk_assessment';
+export type RiskRegisterStatus =
+    | 'identified'
+    | 'assessed'
+    | 'controls_needed'
+    | 'controls_in_place'
+    | 'monitored'
+    | 'obsolete';
+
+export interface RiskMatrixLevel {
+    id: number;
+    // The seeder/migration uses `likelihood` (probability) and `consequence` (severity level).
+    likelihood: number;
+    consequence: number;
+    score: number;
+    level: string;
+    color: string;
+    description?: string | null;
+    is_active: boolean;
+}
+
+export interface RiskRegister {
+    id: number;
+    register_number: string;
+    title: string;
+    type: RiskRegisterType;
+    site_id: number;
+    area_id?: number | null;
+    department_id?: number | null;
+    activity: string;
+    hazard: string;
+    existing_controls?: string | null;
+    severity_id?: number | null;
+    probability_id?: number | null;
+    risk_level_id?: number | null;
+    additional_controls?: string | null;
+    residual_severity_id?: number | null;
+    residual_probability_id?: number | null;
+    residual_risk_level_id?: number | null;
+    owner_id: number;
+    status: RiskRegisterStatus;
+    review_date?: string | null;
+    created_at: string;
+    updated_at: string;
+    site?: Site | null;
+    area?: Area | null;
+    department?: { id: number; name: string } | null;
+    owner?: User | null;
+    severity?: Severity | null;
+    riskLevel?: RiskMatrixLevel | null;
+    residualSeverity?: Severity | null;
+    residualRiskLevel?: RiskMatrixLevel | null;
+}
