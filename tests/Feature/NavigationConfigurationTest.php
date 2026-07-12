@@ -39,8 +39,12 @@ it('only references registered routes and permissions in the main navigation', f
 it('exposes operational modules through their backend view permissions', function () {
     expect(navigationItems())->toMatchArray([
         'Audit Management' => ['route' => 'audits.index', 'active' => 'audits.*', 'permission' => 'audit.management.view'],
-        'Training & Competency' => ['route' => 'training.programs.index', 'active' => 'training.*', 'permission' => 'training.programs.view'],
-        'Emergency Preparedness' => ['route' => 'emergency.plans.index', 'active' => 'emergency.*', 'permission' => 'emergency.plans.view'],
+        'Program Pelatihan' => ['route' => 'training.programs.index', 'active' => 'training.programs.*', 'permission' => 'training.programs.view'],
+        'Record Pelatihan' => ['route' => 'training.records.index', 'active' => 'training.records.*', 'permission' => 'training.records.view'],
+        'Matriks Kompetensi' => ['route' => 'training.matrix.index', 'active' => 'training.matrix.*', 'permission' => 'training.records.view'],
+        'Rencana Darurat' => ['route' => 'emergency.plans.index', 'active' => 'emergency.plans.*', 'permission' => 'emergency.plans.view'],
+        'Latihan Darurat' => ['route' => 'emergency.drills.index', 'active' => 'emergency.drills.*', 'permission' => 'emergency.drills.view'],
+        'Kontak Darurat' => ['route' => 'emergency.contacts.index', 'active' => 'emergency.contacts.*', 'permission' => 'emergency.contacts.view'],
         'Contractor Management' => ['route' => 'contractors.index', 'active' => 'contractors.*', 'permission' => 'contractor.management.view'],
         'Asset & Equipment Safety' => ['route' => 'assets.index', 'active' => 'assets.*', 'permission' => 'asset.management.view'],
         'Communication & Campaign' => ['route' => 'campaigns.index', 'active' => 'campaigns.*', 'permission' => 'communication.campaigns.view'],

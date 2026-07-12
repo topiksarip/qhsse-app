@@ -8,25 +8,27 @@ use App\Http\Controllers\Modules\EmergencyPreparedness\EmergencyPlanController;
 use Illuminate\Support\Facades\Route;
 
 // Emergency Plans
-Route::get('plans/export', [EmergencyPlanController::class, 'export'])
-    ->name('emergency.plans.export');
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('plans/export', [EmergencyPlanController::class, 'export'])
+        ->name('emergency.plans.export');
 
-Route::resource('plans', EmergencyPlanController::class)
-    ->names('emergency.plans')
-    ->parameters(['plans' => 'plan']);
+    Route::resource('plans', EmergencyPlanController::class)
+        ->names('emergency.plans')
+        ->parameters(['plans' => 'plan']);
 
-// Emergency Drills
-Route::get('drills/export', [EmergencyDrillController::class, 'export'])
-    ->name('emergency.drills.export');
+    // Emergency Drills
+    Route::get('drills/export', [EmergencyDrillController::class, 'export'])
+        ->name('emergency.drills.export');
 
-Route::resource('drills', EmergencyDrillController::class)
-    ->names('emergency.drills')
-    ->parameters(['drills' => 'drill']);
+    Route::resource('drills', EmergencyDrillController::class)
+        ->names('emergency.drills')
+        ->parameters(['drills' => 'drill']);
 
-Route::post('drills/{drill}/execute', [EmergencyDrillController::class, 'execute'])
-    ->name('emergency.drills.execute');
+    Route::post('drills/{drill}/execute', [EmergencyDrillController::class, 'execute'])
+        ->name('emergency.drills.execute');
 
-// Emergency Contacts
-Route::resource('contacts', EmergencyContactController::class)
-    ->names('emergency.contacts')
-    ->parameters(['contacts' => 'contact']);
+    // Emergency Contacts
+    Route::resource('contacts', EmergencyContactController::class)
+        ->names('emergency.contacts')
+        ->parameters(['contacts' => 'contact']);
+});
