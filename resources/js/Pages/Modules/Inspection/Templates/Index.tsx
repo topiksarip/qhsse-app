@@ -3,6 +3,7 @@ import Pagination from '@/Components/Qhsse/Pagination';
 import { Paginated } from '@/types/core';
 import { PageProps } from '@/types';
 import { Head, Link } from '@inertiajs/react';
+import EmptyState from '@/Components/UI/EmptyState';
 
 type Template = { id: number; code: string; name: string; category: string; is_active: boolean; items_count: number };
 
@@ -26,8 +27,26 @@ export default function TemplateIndex({ items, auth }: PageProps<{ items: Pagina
                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Active</th>
                         </tr></thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                            {items.data.length === 0 ? <tr><td colSpan={5} className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">Belum ada template.</td></tr> :
-                                items.data.map((t) => (
+                            {items.data.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="px-4 py-12">
+                                        <EmptyState
+                                            title="Belum ada template"
+                                            description="Kelola template checklist inspeksi area, alat, dan proses"
+                                            action={
+                                                permissions.has('inspection.checklists.create') ? (
+                                                    <Link
+                                                        href={route('inspection.templates.create')}
+                                                        className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+                                                    >
+                                                        Buat Template
+                                                    </Link>
+                                                ) : undefined
+                                            }
+                                        />
+                                    </td>
+                                </tr>
+                            ) : items.data.map((t) => (
                                     <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                         <td className="px-4 py-3 text-sm"><Link href={route('inspection.templates.show', t.id)} className="font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400">{t.code}</Link></td>
                                         <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-200">{t.name}</td>

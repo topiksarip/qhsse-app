@@ -7,6 +7,7 @@ import InputLabel from '@/Components/InputLabel';
 import { PaginationLink } from '@/types/core';
 import Pagination from '@/Components/Qhsse/Pagination';
 import { useState } from 'react';
+import EmptyState from '@/Components/UI/EmptyState';
 
 interface Campaign {
     id: number;
@@ -241,11 +242,16 @@ export default function Index({ campaigns, filters }: Props) {
                         </table>
 
                         {campaigns.data.length === 0 && (
-                            <div className="text-center py-12">
-                                <p className="text-gray-500 mb-4">Belum ada campaign</p>
-                                <Link href={route('campaigns.create')}>
-                                    <PrimaryButton>Buat Campaign Pertama</PrimaryButton>
-                                </Link>
+                            <div className="py-12">
+                                <EmptyState
+                                    title="Belum ada campaign"
+                                    description="Buat campaign untuk komunikasi safety alert, policy update, dan pengumuman QHSSE"
+                                    action={
+                                        <Link href={route('campaigns.create')}>
+                                            <PrimaryButton>Buat Campaign Pertama</PrimaryButton>
+                                        </Link>
+                                    }
+                                />
                             </div>
                         )}
                     </div>

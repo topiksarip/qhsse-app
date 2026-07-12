@@ -4,6 +4,7 @@ import { PageProps } from '@/types';
 import { Paginated } from '@/types/core';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
+import EmptyState from '@/Components/UI/EmptyState';
 
 type Option = { id: number; name: string };
 type TypeOption = { value: string; label: string };
@@ -66,7 +67,26 @@ export default function Index({ items, filters, departments, documentTypes, auth
                     <table className="min-w-full divide-y divide-slate-200 dark:divide-gray-700">
                         <thead className="bg-slate-50 dark:bg-gray-900"><tr>{['Nomor', 'Judul', 'Tipe / Versi', 'Status', 'Owner', 'Review'].map((label) => <th key={label} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</th>)}</tr></thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-gray-700">
-                            {items.data.length === 0 ? <tr><td colSpan={6} className="px-4 py-14 text-center text-sm text-slate-500">Belum ada dokumen terkontrol.</td></tr> : items.data.map((item) => (
+                            {items.data.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="px-4 py-12">
+                                        <EmptyState
+                                            title="Belum ada dokumen terkontrol"
+                                            description="Kelola SOP, WI, JSA, HIRADC, MSDS, policy dengan lifecycle terkontrol"
+                                            action={
+                                                permissions.has('document.control.create') ? (
+                                                    <Link
+                                                        href={route('document.control.create')}
+                                                        className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+                                                    >
+                                                        Buat Dokumen
+                                                    </Link>
+                                                ) : undefined
+                                            }
+                                        />
+                                    </td>
+                                </tr>
+                            ) : items.data.map((item) => (
                                 <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-gray-700/60">
                                     <td className="whitespace-nowrap px-4 py-3 text-sm"><Link href={route('document.control.show', item.id)} className="font-semibold text-indigo-600 hover:text-indigo-800">{item.document_number}</Link>{item.is_confidential && <span className="ml-2" title="Rahasia">🔒</span>}</td>
                                     <td className="max-w-md px-4 py-3 text-sm font-medium text-slate-800 dark:text-slate-100">{item.title || 'Belum diberi judul'}<div className="mt-1 text-xs font-normal text-slate-400">{item.department?.name ?? 'Lintas department'}</div></td>

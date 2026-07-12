@@ -8,6 +8,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
+import EmptyState from '@/Components/UI/EmptyState';
 
 interface Props {
     templates: {
@@ -203,11 +204,16 @@ export default function Index({ templates, filters }: Props) {
                         </table>
 
                         {templates.data.length === 0 && (
-                            <div className="text-center py-12">
-                                <p className="text-gray-500 mb-4">Tidak ada template ditemukan</p>
-                                <Link href={route('report-templates.create')}>
-                                    <PrimaryButton>Buat Template Custom</PrimaryButton>
-                                </Link>
+                            <div className="py-12">
+                                <EmptyState
+                                    title="Tidak ada template ditemukan"
+                                    description="Buat template custom untuk laporan QHSSE sesuai kebutuhan organisasi"
+                                    action={
+                                        <Link href={route('report-templates.create')}>
+                                            <PrimaryButton>Buat Template Custom</PrimaryButton>
+                                        </Link>
+                                    }
+                                />
                             </div>
                         )}
                     </div>

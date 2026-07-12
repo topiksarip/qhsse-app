@@ -8,6 +8,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import InputLabel from '@/Components/InputLabel';
+import EmptyState from '@/Components/UI/EmptyState';
 
 interface Props {
     reports: {
@@ -212,11 +213,16 @@ export default function Index({ reports, filters }: Props) {
 
                     {/* Empty State */}
                     {reports.data.length === 0 && (
-                        <div className="bg-white shadow rounded-lg p-12 text-center">
-                            <p className="text-gray-500 mb-4">Belum ada laporan yang di-generate</p>
-                            <Link href={route('saved-reports.create')}>
-                                <PrimaryButton>Generate Report Baru</PrimaryButton>
-                            </Link>
+                        <div className="py-12">
+                            <EmptyState
+                                title="Belum ada laporan yang di-generate"
+                                description="Generate laporan QHSSE dari template untuk dokumentasi dan analisis"
+                                action={
+                                    <Link href={route('saved-reports.create')}>
+                                        <PrimaryButton>Generate Report Baru</PrimaryButton>
+                                    </Link>
+                                }
+                            />
                         </div>
                     )}
 
