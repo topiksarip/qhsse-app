@@ -52,6 +52,16 @@ End-to-end debugging and corrective deployment of the QHSSE Laravel/Inertia appl
    - PHP post limit: 30 MB.
    - Nginx `client_max_body_size`: 25 MB.
 
+10. **Redis runtime integration**
+    - Production sessions, cache, and queue now use Redis.
+    - The queue worker runs `queue:work redis` with automatic restart.
+    - A fresh authenticated session and all smoke tests passed after switching drivers.
+
+11. **HTTP security headers**
+    - Nginx version disclosure is disabled.
+    - `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and `Permissions-Policy` are active.
+    - CSP remains deferred until external Bunny Fonts/Laravel landing assets are removed or explicitly allowlisted.
+
 ## Backups
 
 - Database: `/var/backups/qhsse/qhsse_production-20260712-165539.dump`
@@ -61,18 +71,29 @@ End-to-end debugging and corrective deployment of the QHSSE Laravel/Inertia appl
   `/var/backups/qhsse/php-fpm.ini.before-tuning`
 - Nginx config backup:
   `/var/backups/qhsse/nginx-qhsse.before-tuning`
+- Redis runtime environment backup:
+  `/var/backups/qhsse/.env.before-redis-runtime`
+- Nginx security-header backups:
+  `/var/backups/qhsse/nginx.conf.before-security-headers` and
+  `/var/backups/qhsse/nginx-qhsse.before-security-headers`
 
 ## Verification
 
 - Production build passed.
 - Route cache passed.
-- Full backend test suite passed before final security hardening: 342 tests / 1,217 assertions.
+- Final full backend test suite passed: 343 tests / 1,231 assertions.
 - Authentication smoke test passed: login returned 302 to `/dashboard`.
 - 29 authenticated dashboard/core/business pages returned HTTP 200.
+- External `http://18.192.98.211:8000/login` returned HTTP 200.
+- Public `/register` returned HTTP 404 and the landing page reported `canRegister=false`.
+- Vite manifest and the generated application asset returned HTTP 200.
 - No pending migrations.
 - No failed queue jobs.
 - Nginx, PHP-FPM, PostgreSQL, Redis, Cloudflare Tunnel, and queue worker active.
 - Cron service active and scheduler registered.
+- PostgreSQL and Redis listen only on loopback; Nginx is the only application listener on port 8000.
+- PHP-FPM can write to private Laravel storage.
+- VPS had about 1.3 GiB available RAM, 4 GiB swap, and 51 GiB free disk at final verification.
 
 ## Access
 
