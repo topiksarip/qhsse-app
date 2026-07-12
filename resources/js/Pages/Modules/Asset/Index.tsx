@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { FormEvent, useState } from 'react';
+import EmptyState from '@/Components/UI/EmptyState';
 
 interface Asset {
     id: number;
@@ -187,7 +188,26 @@ export default function Index({ auth, assets, filters, sites, categories, status
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {assets.data.map((asset) => (
+                                    {assets.data.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={6} className="px-6 py-12">
+                                                <EmptyState
+                                                    title="No assets found"
+                                                    description="Manage safety-critical equipment, machinery, and assets requiring inspection and certification"
+                                                    action={
+                                                        can.create ? (
+                                                            <Link
+                                                                href="/assets/create"
+                                                                className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                                                            >
+                                                                Add Asset
+                                                            </Link>
+                                                        ) : undefined
+                                                    }
+                                                />
+                                            </td>
+                                        </tr>
+                                    ) : assets.data.map((asset) => (
                                         <tr key={asset.id} className={asset.safety_critical ? 'border-l-4 border-red-500' : ''}>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <Link href={`/assets/${asset.id}`} className="text-blue-600 hover:text-blue-900">

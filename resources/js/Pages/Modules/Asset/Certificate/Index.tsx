@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { PageProps } from '@/types';
+import EmptyState from '@/Components/UI/EmptyState';
 
 interface Certificate {
     id: number;
@@ -125,16 +126,21 @@ export default function Index({ auth, asset, certificates, can }: PageProps<{
                             </table>
 
                             {certificates.length === 0 && (
-                                <div className="text-center py-12">
-                                    <p className="text-gray-500 mb-4">No certificates added yet.</p>
-                                    {can.create && (
-                                        <Link
-                                            href={`/assets/${asset.id}/certificates/create`}
-                                            className="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700"
-                                        >
-                                            Add First Certificate
-                                        </Link>
-                                    )}
+                                <div className="py-12">
+                                    <EmptyState
+                                        title="No certificates added yet"
+                                        description="Manage asset certificates, calibration records, and compliance documentation"
+                                        action={
+                                            can.create ? (
+                                                <Link
+                                                    href={`/assets/${asset.id}/certificates/create`}
+                                                    className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                                                >
+                                                    Add First Certificate
+                                                </Link>
+                                            ) : undefined
+                                        }
+                                    />
                                 </div>
                             )}
                         </div>
