@@ -1,9 +1,10 @@
 import ChartPlaceholder from '@/Components/Dashboard/ChartPlaceholder';
 import DashboardFilters from '@/Components/Dashboard/DashboardFilters';
 import KpiCard from '@/Components/Dashboard/KpiCard';
+import QuickActionCard from '@/Components/Dashboard/QuickActionCard';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { useMemo } from 'react';
 
 type Option = { id: number; name: string; site_id?: number | null };
@@ -25,6 +26,30 @@ export default function Dashboard({ filters, filterOptions, kpis, widgets, quick
     const { auth } = usePage<PageProps>().props;
     const permissions = new Set(auth.permissions ?? []);
     const visibleQuickLinks = quickLinks.filter((item) => permissions.has(item.permission));
+
+    // Icon mapping for quick actions
+    const quickLinkIcons: Record<string, JSX.Element> = {
+        'incident.reports.index': (
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+        ),
+        'investigation.reports.index': (
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        ),
+        'capa.actions.index': (
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+        ),
+        'inspection.checklists.index': (
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        ),
+    };
 
     return (
         <AuthenticatedLayout
@@ -60,6 +85,30 @@ export default function Dashboard({ filters, filterOptions, kpis, widgets, quick
                         </div>
                     </section>
 
+                    {/* Quick Actions - Promoted to high priority */}
+                    {visibleQuickLinks.length > 0 && (
+                        <section>
+                            <div className="mb-4">
+                                <h3 className="text-lg font-bold text-slate-950 dark:text-white">Quick Actions</h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">Fast access to key operational modules</p>
+                            </div>
+                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                                {visibleQuickLinks.slice(0, 4).map((item) => (
+                                    <QuickActionCard
+                                        key={item.route}
+                                        label={item.label}
+                                        route={route(item.route)}
+                                        icon={quickLinkIcons[item.route] || (
+                                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                            </svg>
+                                        )}
+                                    />
+                                ))}
+                            </div>
+                        </section>
+                    )}
+
                     {/* KPI Cards */}
                     <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                         {kpis.map((kpi) => <KpiCard key={kpi.label} {...kpi} />)}
@@ -68,20 +117,6 @@ export default function Dashboard({ filters, filterOptions, kpis, widgets, quick
                     {/* Charts */}
                     <section className="grid gap-6 xl:grid-cols-2">
                         {widgets.map((widget) => <ChartPlaceholder key={widget.title} {...widget} />)}
-                    </section>
-
-                    {/* Quick Links */}
-                    <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                                <h3 className="text-lg font-bold text-slate-950 dark:text-white">Quick Access</h3>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Role-aware shortcuts to operational modules.</p>
-                            </div>
-                        </div>
-                        <div className="mt-5 flex flex-wrap gap-3">
-                            {visibleQuickLinks.map((item) => <Link key={item.route} href={route(item.route)} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-500 hover:text-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:border-gray-700 dark:text-slate-200 dark:hover:border-emerald-400 dark:hover:text-emerald-300">{item.label}</Link>)}
-                            {visibleQuickLinks.length === 0 && <span className="text-sm text-slate-500">No quick links available for this role.</span>}
-                        </div>
                     </section>
                 </div>
             </div>
