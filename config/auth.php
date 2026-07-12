@@ -20,6 +20,8 @@ return [
         'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
     ],
 
+    'allow_public_registration' => env('ALLOW_PUBLIC_REGISTRATION', false),
+
     /*
     |--------------------------------------------------------------------------
     | Authentication Guards
