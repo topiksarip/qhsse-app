@@ -261,10 +261,29 @@ class PermitController extends Controller
 
         $workflow = $this->workflowService->getWorkflow('permit', $permit->id);
 
+        // Map workflow transitions to permit action keys, gated by permission.
+        $availableActions = collect($workflow['available_transitions'])
+            ->map(function (array $t) {
+                return [
+                    'action_key' => $t['action_key'],
+                    'action_label' => $t['action_label'],
+                    'requires_reason' => (bool) $t['requires_reason'],
+                ];
+            })
+            ->all();
+
+        $checklistProgress = [
+            'total' => $permit->checklists->count(),
+            'signed' => $permit->checklists->where('is_checked', true)->count(),
+            'all_signed' => $permit->checklists->count() > 0
+                && $permit->checklists->where('is_checked', false)->count() === 0,
+        ];
+
         return Inertia::render('Modules/Permit/Show', [
             'permit' => $permit,
             'workflow' => $workflow,
-            'availableActions' => $this->workflowService->getAvailableActions('permit', $permit->status, auth()->user()),
+            'availableActions' => $availableActions,
+            'checklistProgress' => $checklistProgress,
         ]);
     }
 

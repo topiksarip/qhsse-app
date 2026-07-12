@@ -133,6 +133,45 @@ class WorkflowService
             ->all();
     }
 
+    /**
+     * Build a workflow payload for a module reference.
+     * Returns current status + ordered available transitions + history.
+     */
+    public function getWorkflow(string $moduleName, int $referenceId): array
+    {
+        $instance = WorkflowInstance::query()
+            ->with(['histories.actor', 'definition'])
+            ->where('module_name', $moduleName)
+            ->where('reference_id', $referenceId)
+            ->first();
+
+        if (! $instance) {
+            return [
+                'current_status' => null,
+                'available_transitions' => [],
+                'history' => [],
+            ];
+        }
+
+        return [
+            'current_status' => $instance->current_status,
+            'available_transitions' => $this->availableTransitions($instance),
+            'history' => $instance->histories
+                ->sortBy('created_at')
+                ->map(fn ($h) => [
+                    'id' => $h->id,
+                    'from_status' => $h->from_status,
+                    'to_status' => $h->to_status,
+                    'action_key' => $h->action_key,
+                    'action_label' => $h->action_label,
+                    'reason' => $h->reason,
+                    'actor_name' => $h->actor?->name,
+                    'created_at' => $h->created_at?->toDateTimeString(),
+                ])
+                ->all(),
+        ];
+    }
+
     private function recordHistory(
         WorkflowInstance $instance,
         ?string $fromStatus,

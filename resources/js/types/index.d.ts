@@ -134,6 +134,15 @@ export interface Department {
     updated_at: string;
 }
 
+export interface Area {
+    id: number;
+    site_id: number;
+    name: string;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface TrainingProgram {
     id: number;
     code: string;
@@ -168,4 +177,78 @@ export interface TrainingRecord {
     employee?: Employee;
     program?: TrainingProgram;
     certificate_file?: ManagedFile;
+}
+
+export type PermitType =
+    | 'hot_work'
+    | 'working_at_height'
+    | 'confined_space'
+    | 'electrical'
+    | 'excavation'
+    | 'lifting'
+    | 'other';
+
+export type PermitStatus =
+    | 'draft'
+    | 'submitted'
+    | 'under_review'
+    | 'approved'
+    | 'active'
+    | 'closed'
+    | 'rejected';
+
+export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
+
+export type ValidityStatus = 'active' | 'expired' | 'expiring_soon' | 'not_started';
+
+export interface PermitChecklist {
+    id: number;
+    permit_id: number;
+    item_text: string;
+    is_checked: boolean;
+    checked_by?: number | null;
+    checked_at?: string | null;
+    checker?: { id: number; name: string } | null;
+}
+
+export interface Permit {
+    id: number;
+    permit_number: string;
+    type: PermitType;
+    title: string;
+    description?: string;
+    site_id: number;
+    area_id?: number | null;
+    department_id?: number | null;
+    contractor_id?: number | null;
+    work_location: string;
+    work_description?: string;
+    start_datetime: string;
+    end_datetime: string;
+    validity_hours: number;
+    status: PermitStatus;
+    risk_level?: RiskLevel | null;
+    jsa_reference?: string | null;
+    approved_by?: number | null;
+    approved_at?: string | null;
+    closed_by?: number | null;
+    closed_at?: string | null;
+    cancellation_reason?: string | null;
+    created_by: number;
+    created_at: string;
+    updated_at: string;
+    site?: Site;
+    area?: Area | null;
+    department?: Department | null;
+    contractor?: Company | null;
+    creator?: User | null;
+    approver?: User | null;
+    closer?: User | null;
+    checklists?: PermitChecklist[];
+}
+
+export interface Company {
+    id: number;
+    name: string;
+    type?: string;
 }
