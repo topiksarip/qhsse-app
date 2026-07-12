@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Pagination from '@/Components/Qhsse/Pagination';
+import EmptyState from '@/Components/UI/EmptyState';
 import { Paginated } from '@/types/core';
 import { PageProps } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
@@ -84,7 +85,24 @@ export default function Index({ items, filters, auth }: PageProps<{ items: Pagin
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                     {items.data.length === 0 ? (
-                                        <tr><td colSpan={6} className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">Belum ada investigasi.</td></tr>
+                                        <tr>
+                                            <td colSpan={6} className="px-4 py-12">
+                                                <EmptyState
+                                                    title="Belum ada investigasi"
+                                                    description="Mulai dengan membuat laporan investigasi pertama Anda"
+                                                    action={
+                                                        permissions.has('investigation.reports.create') ? (
+                                                            <Link
+                                                                href={route('investigation.reports.create')}
+                                                                className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+                                                            >
+                                                                Buat Investigasi
+                                                            </Link>
+                                                        ) : undefined
+                                                    }
+                                                />
+                                            </td>
+                                        </tr>
                                     ) : (
                                         items.data.map((item) => (
                                             <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
