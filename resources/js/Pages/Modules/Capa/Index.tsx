@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Pagination from '@/Components/Qhsse/Pagination';
+import EmptyState from '@/Components/UI/EmptyState';
 import { Paginated } from '@/types/core';
 import { PageProps } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
@@ -69,7 +70,26 @@ export default function Index({ items, filters, auth }: PageProps<{ items: Pagin
                                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Priority</th>
                             </tr></thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                {items.data.length === 0 ? (<tr><td colSpan={6} className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">Belum ada CAPA action.</td></tr>) : (
+                                {items.data.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="px-4 py-12">
+                                            <EmptyState
+                                                title="Belum ada CAPA action"
+                                                description="Mulai dengan membuat corrective/preventive action pertama Anda"
+                                                action={
+                                                    permissions.has('capa.actions.create') ? (
+                                                        <Link
+                                                            href={route('capa.actions.create')}
+                                                            className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+                                                        >
+                                                            Buat Action
+                                                        </Link>
+                                                    ) : undefined
+                                                }
+                                            />
+                                        </td>
+                                    </tr>
+                                ) : (
                                     items.data.map((item) => (
                                         <tr key={item.id} className={isOverdue(item) ? 'bg-red-50 dark:bg-red-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}>
                                             <td className="whitespace-nowrap px-4 py-3 text-sm"><Link href={route('capa.actions.show', item.id)} className="font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400">{item.action_number}</Link></td>
