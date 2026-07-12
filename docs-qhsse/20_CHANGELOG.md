@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **P0.1 Gap Closure**: Added 6 submenus (Program/Record/Matrix Pelatihan, Rencana/Latihan/Kontak Darurat) for discoverability, injected training permissions into QHSSE Manager/Officer/Supervisor roles, hardened Emergency routes with auth/verified/active middleware, and added P01RegressionTest covering anonymous redirect, route access, and role grants (6 tests, 71 assertions). Navigation now shows 12 operational items, all tests passing.
 - Added permission-aware main navigation for Audit, Training, Emergency, Contractor, Asset, Campaign, Report Templates, and Saved Reports; fixed Asset read-only route middleware and added navigation configuration regression coverage.
 - Repaired P0 Inertia UI resolution: aligned Emergency create/edit controllers with shared `CreateOrEdit` pages, normalized Asset certificate/inspection render paths to singular frontend folders, added Training Program detail, Report Template form/detail, and Saved Report detail pages, and added an architecture regression test requiring every literal `Inertia::render()` target to resolve to a TSX page.
 - Hardened production deployment readiness: removed duplicate core update route names while retaining PUT/PATCH support, made baseline seeding independent of development-only Faker packages, ensured the Super Admin baseline user exists before business demo seeders run, disabled public self-registration by default for controlled RBAC onboarding, and added regression coverage for route caching and production-safe seeding.
