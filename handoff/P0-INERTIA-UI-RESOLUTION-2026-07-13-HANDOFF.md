@@ -98,4 +98,17 @@
 
 ## 14. Next Readiness
 
-- Ready untuk audit route authenticated dan deployment setelah full suite/build final lulus.
+- P0 dan navigasi telah di-commit, dipush, dan dideploy non-destruktif ke production.
+
+## 15. Production Deployment
+
+- Source commit aplikasi: `ebb0420` (`fix(ui): resolve module pages and navigation`).
+- Database dan source bundle dibackup sebelum deployment; pointer backup diverifikasi tersedia.
+- Deployment menggunakan fast-forward `develop`, `npm ci`, production build, migration non-destruktif, cache rebuild, dan restart PHP-FPM/queue worker.
+- Tidak ada migration pending dan tidak ada failed queue job.
+- Authenticated UAT: 14/14 halaman merespons HTTP 200, termasuk delapan destination navigasi, Emergency create pages, Report Template create, dan Report Template detail.
+- Production belum memiliki Training Program, Saved Report, atau Asset; detail page ketiganya tidak diuji dengan data dummy.
+- Session UAT sementara dihapus setelah verifikasi.
+- Nginx, PHP-FPM, PostgreSQL, Redis, queue worker, dan cron aktif.
+- Nginx loopback `/login` merespons HTTP 200 sekitar 0,024 detik.
+- Direct-IP port 8000 dari workstation terpantau intermiten (HTTP 200 sekitar 1,2 detik pada satu probe dan timeout pada probe lain), sementara service internal tetap sehat; investigasi jalur jaringan publik diteruskan sebagai operational follow-up.
