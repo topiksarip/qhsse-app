@@ -47,6 +47,7 @@ const menuGroups: { label: string; items: MenuItem[] }[] = [
             { label: 'Insiden Keamanan', routeName: 'security.incidents.index', active: 'security.incidents.*', permission: 'security.incidents.view' },
             { label: 'Log Pengunjung', routeName: 'security.visitors.index', active: 'security.visitors.*', permission: 'security.visitor.view' },
             { label: 'NCR (Non-Conformance)', routeName: 'quality.ncrs.index', active: 'quality.ncrs.*', permission: 'quality.ncrs.view' },
+            { label: 'Complaint Customer', routeName: 'quality.complaints.index', active: 'quality.complaints.*', permission: 'quality.complaints.view' },
             { label: 'Risk Register', routeName: 'risk.registers.index', active: 'risk.registers.*', permission: 'risk.registers.view' },
             { label: 'Legal & Compliance', routeName: 'legal.registers.index', active: 'legal.registers.*', permission: 'legal.register.view' },
         ],
