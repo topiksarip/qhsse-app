@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Pagination from '@/Components/Qhsse/Pagination';
+import EmptyState from '@/Components/UI/EmptyState';
 import { Paginated } from '@/types/core';
 import { PageProps } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
@@ -52,7 +53,26 @@ export default function Index({ items, filters, auth }: PageProps<{ items: Pagin
                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Jadwal</th>
                         </tr></thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                            {items.data.length === 0 ? <tr><td colSpan={7} className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">Belum ada inspeksi.</td></tr> :
+                            {items.data.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className="px-4 py-12">
+                                        <EmptyState
+                                            title="Belum ada inspeksi"
+                                            description="Mulai dengan membuat inspeksi pertama Anda"
+                                            action={
+                                                permissions.has('inspection.checklists.create') ? (
+                                                    <Link
+                                                        href={route('inspection.checklists.create')}
+                                                        className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+                                                    >
+                                                        Buat Inspeksi
+                                                    </Link>
+                                                ) : undefined
+                                            }
+                                        />
+                                    </td>
+                                </tr>
+                            ) :
                                 items.data.map((item) => (
                                     <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                         <td className="px-4 py-3 text-sm"><Link href={route('inspection.checklists.show', item.id)} className="font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400">{item.inspection_number}</Link></td>
