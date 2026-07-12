@@ -49,8 +49,9 @@ Route::middleware(['auth', 'verified'])->prefix('core')->name('core.')->group(fu
         Route::middleware("permission:core.{$resource}.create")->get("{$resource}/create", [$controller, 'create'])->name("{$resource}.create");
         Route::middleware("permission:core.{$resource}.create")->post($resource, [$controller, 'store'])->name("{$resource}.store");
         Route::middleware("permission:core.{$resource}.update")->get("{$resource}/{$parameter}/edit", [$controller, 'edit'])->name("{$resource}.edit");
-        Route::middleware("permission:core.{$resource}.update")->put("{$resource}/{$parameter}", [$controller, 'update'])->name("{$resource}.update");
-        Route::middleware("permission:core.{$resource}.update")->patch("{$resource}/{$parameter}", [$controller, 'update'])->name("{$resource}.update");
+        Route::middleware("permission:core.{$resource}.update")
+            ->match(['put', 'patch'], "{$resource}/{$parameter}", [$controller, 'update'])
+            ->name("{$resource}.update");
         Route::middleware("permission:core.{$resource}.deactivate")->delete("{$resource}/{$parameter}", [$controller, 'destroy'])->name("{$resource}.destroy");
     }
 
@@ -68,8 +69,9 @@ Route::middleware(['auth', 'verified'])->prefix('core')->name('core.')->group(fu
         Route::middleware("permission:core.{$resource}.create")->get("{$resource}/create", [$controller, 'create'])->name("{$resource}.create");
         Route::middleware("permission:core.{$resource}.create")->post($resource, [$controller, 'store'])->name("{$resource}.store");
         Route::middleware("permission:core.{$resource}.update")->get("{$resource}/{$parameter}/edit", [$controller, 'edit'])->name("{$resource}.edit");
-        Route::middleware("permission:core.{$resource}.update")->put("{$resource}/{$parameter}", [$controller, 'update'])->name("{$resource}.update");
-        Route::middleware("permission:core.{$resource}.update")->patch("{$resource}/{$parameter}", [$controller, 'update'])->name("{$resource}.update");
+        Route::middleware("permission:core.{$resource}.update")
+            ->match(['put', 'patch'], "{$resource}/{$parameter}", [$controller, 'update'])
+            ->name("{$resource}.update");
         Route::middleware("permission:core.{$resource}.deactivate")->delete("{$resource}/{$parameter}", [$controller, 'destroy'])->name("{$resource}.destroy");
     }
 
@@ -113,8 +115,7 @@ Route::middleware(['auth', 'verified'])->prefix('core')->name('core.')->group(fu
     });
     Route::middleware('permission:core.companies.update')->group(function (): void {
         Route::get('companies/{company}/edit', [CompanyController::class, 'edit'])->name('companies.edit');
-        Route::put('companies/{company}', [CompanyController::class, 'update'])->name('companies.update');
-        Route::patch('companies/{company}', [CompanyController::class, 'update'])->name('companies.update');
+        Route::match(['put', 'patch'], 'companies/{company}', [CompanyController::class, 'update'])->name('companies.update');
     });
     Route::delete('companies/{company}', [CompanyController::class, 'destroy'])
         ->middleware('permission:core.companies.deactivate')
@@ -129,8 +130,7 @@ Route::middleware(['auth', 'verified'])->prefix('core')->name('core.')->group(fu
     });
     Route::middleware('permission:core.employees.update')->group(function (): void {
         Route::get('employees/{employee}/edit', [EmployeeController::class, 'edit'])->name('employees.edit');
-        Route::put('employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
-        Route::patch('employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
+        Route::match(['put', 'patch'], 'employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
     });
     Route::delete('employees/{employee}', [EmployeeController::class, 'destroy'])
         ->middleware('permission:core.employees.deactivate')
@@ -145,8 +145,7 @@ Route::middleware(['auth', 'verified'])->prefix('core')->name('core.')->group(fu
     });
     Route::middleware('permission:core.users.update')->group(function (): void {
         Route::get('users/{user}/edit', [UserAdminController::class, 'edit'])->name('users.edit');
-        Route::put('users/{user}', [UserAdminController::class, 'update'])->name('users.update');
-        Route::patch('users/{user}', [UserAdminController::class, 'update'])->name('users.update');
+        Route::match(['put', 'patch'], 'users/{user}', [UserAdminController::class, 'update'])->name('users.update');
     });
     Route::delete('users/{user}', [UserAdminController::class, 'destroy'])
         ->middleware('permission:core.users.deactivate')

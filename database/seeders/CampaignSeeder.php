@@ -29,8 +29,6 @@ class CampaignSeeder extends Seeder
                 'name' => 'Head Office',
                 'address' => 'Jakarta',
                 'is_active' => true,
-                'created_by' => $user->id,
-                'updated_by' => $user->id,
             ]);
         }
 
@@ -40,8 +38,6 @@ class CampaignSeeder extends Seeder
                 'code' => 'QHSSE',
                 'name' => 'QHSSE Department',
                 'is_active' => true,
-                'created_by' => $user->id,
-                'updated_by' => $user->id,
             ]);
         }
 

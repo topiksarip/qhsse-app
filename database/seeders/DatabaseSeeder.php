@@ -24,6 +24,21 @@ class DatabaseSeeder extends Seeder
             NumberingFormatSeeder::class,
             WorkflowSeeder::class,
             NotificationTemplateSeeder::class,
+        ]);
+
+        $user = User::query()->firstOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'email_verified_at' => now(),
+                'is_active' => true,
+                'password' => Hash::make('password'),
+            ],
+        );
+
+        $user->assignRole('Super Admin');
+
+        $this->call([
             IncidentReportingSeeder::class,
             InvestigationSeeder::class,
             CapaSeeder::class,
@@ -33,17 +48,5 @@ class DatabaseSeeder extends Seeder
             CampaignSeeder::class,
             ReportTemplateSeeder::class,
         ]);
-
-        // User::factory(10)->create();
-
-        $user = User::query()->firstOrCreate(
-            ['email' => 'test@example.com'],
-            array_merge(
-                User::factory()->make(['name' => 'Test User', 'email' => 'test@example.com'])->toArray(),
-                ['password' => Hash::make('password')],
-            ),
-        );
-
-        $user->assignRole('Super Admin');
     }
 }
