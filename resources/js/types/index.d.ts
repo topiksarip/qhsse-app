@@ -252,3 +252,56 @@ export interface Company {
     name: string;
     type?: string;
 }
+
+export type EnvironmentalType =
+    | 'waste'
+    | 'spill'
+    | 'emission'
+    | 'noise'
+    | 'water_monitoring'
+    | 'other';
+
+export type EnvironmentalStatus =
+    | 'recorded'
+    | 'investigated'
+    | 'action_open'
+    | 'closed';
+
+export interface EnvironmentalRecord {
+    id: number;
+    record_number: string;
+    type: EnvironmentalType;
+    title: string;
+    description?: string;
+    site_id: number;
+    area_id?: number | null;
+    occurred_at?: string | null;
+    measured_value?: number | null;
+    unit?: string | null;
+    limit_value?: number | null;
+    is_exceedance: boolean;
+    waste_type?: string | null;
+    quantity?: number | null;
+    disposal_method?: string | null;
+    material?: string | null;
+    volume?: number | null;
+    containment?: string | null;
+    parameter?: string | null;
+    location?: string | null;
+    reporter_id: number;
+    status: EnvironmentalStatus;
+    capa_action_id?: number | null;
+    created_at: string;
+    updated_at: string;
+    site?: Site | null;
+    area?: Area | null;
+    reporter?: User | null;
+    capa_action?: CapaAction | null;
+}
+
+export interface CapaAction {
+    id: number;
+    number: string;
+    title: string;
+    status: string;
+}
