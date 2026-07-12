@@ -50,6 +50,7 @@ const menuGroups: { label: string; items: MenuItem[] }[] = [
             { label: 'Insiden Keamanan', routeName: 'security.incidents.index', active: 'security.incidents.*', permission: 'security.incidents.view' },
             { label: 'NCR (Non-Conformance)', routeName: 'quality.ncrs.index', active: 'quality.ncrs.*', permission: 'quality.ncrs.view' },
             { label: 'Risk Register', routeName: 'risk.registers.index', active: 'risk.registers.*', permission: 'risk.registers.view' },
+            { label: 'Legal & Compliance', routeName: 'legal.registers.index', active: 'legal.registers.*', permission: 'legal.register.view' },
         ],
     },
     {

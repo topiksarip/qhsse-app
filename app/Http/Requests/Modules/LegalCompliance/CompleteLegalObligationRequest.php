@@ -17,7 +17,7 @@ class CompleteLegalObligationRequest extends FormRequest
     {
         return [
             'last_completed' => ['required', 'date', 'before_or_equal:today'],
-            'evidence_file_id' => ['required', 'exists:managed_files,id'],
+            'evidence_file_id' => ['nullable', 'exists:managed_files,id'],
         ];
     }
 

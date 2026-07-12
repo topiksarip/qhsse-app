@@ -428,3 +428,58 @@ export interface RiskRegister {
     residualSeverity?: Severity | null;
     residualRiskLevel?: RiskMatrixLevel | null;
 }
+
+// ── Legal & Compliance ───────────────────────────────────────────────────────
+export type LegalRegisterCategory = 'national' | 'regional' | 'industry' | 'internal';
+export type LegalComplianceStatus = 'compliant' | 'non_compliant' | 'in_progress' | 'not_applicable';
+export type LegalRegisterStatus = 'active' | 'inactive';
+export type LegalObligationFrequency = 'monthly' | 'quarterly' | 'annual';
+export type LegalObligationStatus = 'pending' | 'completed';
+
+export interface LegalRegister {
+    id: number;
+    register_number: string;
+    title: string;
+    regulation_name: string;
+    regulation_number: string;
+    issuing_body: string;
+    category: LegalRegisterCategory;
+    category_label?: string;
+    compliance_status: LegalComplianceStatus;
+    compliance_status_label?: string;
+    compliance_status_color?: string;
+    site_id: number | null;
+    department_id: number | null;
+    owner_id: number;
+    next_review_date: string | null;
+    document_id: number | null;
+    notes: string | null;
+    status: LegalRegisterStatus;
+    created_at: string;
+    updated_at: string;
+    site?: { id: number; name: string } | null;
+    department?: { id: number; name: string } | null;
+    owner?: { id: number; name: string } | null;
+    document?: { id: number; doc_number: string; title: string } | null;
+    obligations?: LegalObligation[];
+    files?: any[];
+    comments?: { id: number; content: string; internal: boolean; created_at: string; author?: { name: string } }[];
+    activities?: { id: number; description: string; created_at: string; actor?: { name: string } }[];
+}
+
+export interface LegalObligation {
+    id: number;
+    legal_register_id: number;
+    obligation_description: string;
+    frequency: LegalObligationFrequency;
+    frequency_label?: string;
+    last_completed: string | null;
+    next_due: string | null;
+    evidence_file_id: number | null;
+    status: LegalObligationStatus;
+    status_label?: string;
+    status_color?: string;
+    created_at: string;
+    updated_at: string;
+    evidenceFile?: any | null;
+}
