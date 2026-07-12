@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import { PageProps, TrainingProgram, Employee, TrainingRecord } from '@/types';
 import { useState } from 'react';
 import MatrixCell from '@/Components/Training/MatrixCell';
+import EmptyState from '@/Components/UI/EmptyState';
 
 interface MatrixIndexProps extends PageProps {
     programs: TrainingProgram[];
@@ -200,14 +201,11 @@ export default function Index({ auth, programs, employees, matrix, filters }: Ma
                         </div>
 
                         {employees.length === 0 || programs.length === 0 ? (
-                            <div className="p-12 text-center">
-                                <div className="text-6xl mb-4">📋</div>
-                                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                                    Data belum tersedia
-                                </h3>
-                                <p className="text-gray-600 dark:text-gray-400">
-                                    Pastikan sudah ada program pelatihan dan karyawan untuk menampilkan matrix.
-                                </p>
+                            <div className="p-12">
+                                <EmptyState
+                                    title="Data belum tersedia"
+                                    description="Matrix kompetensi membutuhkan data karyawan dan program pelatihan. Pastikan kedua data sudah tersedia."
+                                />
                             </div>
                         ) : (
                             <div className="overflow-x-auto">

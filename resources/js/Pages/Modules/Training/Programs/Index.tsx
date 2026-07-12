@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { PageProps, PaginatedData, TrainingProgram } from '@/types';
 import { useState } from 'react';
+import EmptyState from '@/Components/UI/EmptyState';
 
 interface ProgramsIndexProps extends PageProps {
     programs: PaginatedData<TrainingProgram>;
@@ -139,22 +140,21 @@ export default function Index({ auth, programs, filters, can }: ProgramsIndexPro
                         </div>
 
                         {programs.data.length === 0 ? (
-                            <div className="p-12 text-center">
-                                <div className="text-6xl mb-4">📚</div>
-                                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                                    Belum ada program pelatihan
-                                </h3>
-                                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                                    Belum ada program yang dibuat. Klik tombol di bawah untuk membuat program pelatihan pertama.
-                                </p>
-                                {can.create && (
-                                    <Link
-                                        href={route('training.programs.create')}
-                                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700"
-                                    >
-                                        + Buat Program Pertama
-                                    </Link>
-                                )}
+                            <div className="p-12">
+                                <EmptyState
+                                    title="Belum ada program pelatihan"
+                                    description="Kelola program pelatihan, sertifikasi, dan kompetensi QHSSE untuk karyawan"
+                                    action={
+                                        can.create ? (
+                                            <Link
+                                                href={route('training.programs.create')}
+                                                className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                                            >
+                                                + Buat Program Pertama
+                                            </Link>
+                                        ) : undefined
+                                    }
+                                />
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
