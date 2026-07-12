@@ -323,6 +323,35 @@ export interface Severity {
     color?: string | null;
 }
 
+export type NcrSource = 'internal' | 'external' | 'customer_complaint' | 'audit' | 'supplier';
+export type NcrStatus = 'open' | 'under_review' | 'in_progress' | 'closed' | 'rejected';
+
+export interface Ncr {
+    id: number;
+    ncr_number: string;
+    title: string;
+    source: NcrSource;
+    description?: string;
+    site_id: number;
+    department_id?: number | null;
+    product_service?: string | null;
+    batch_lot?: string | null;
+    customer_name?: string | null;
+    severity_id?: number | null;
+    status: NcrStatus;
+    root_cause?: string | null;
+    corrective_action?: string | null;
+    preventive_action?: string | null;
+    capa_action_id?: number | null;
+    closed_at?: string | null;
+    created_at: string;
+    updated_at: string;
+    site?: Site | null;
+    department?: { id: number; name: string } | null;
+    severity?: Severity | null;
+    capaAction?: CapaAction | null;
+}
+
 export interface SecurityIncident {
     id: number;
     security_number: string;

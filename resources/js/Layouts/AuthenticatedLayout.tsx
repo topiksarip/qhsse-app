@@ -48,6 +48,7 @@ const menuGroups: { label: string; items: MenuItem[] }[] = [
             { label: 'Izin Kerja', routeName: 'permit.work.index', active: 'permit.work.*', permission: 'permit.work.view' },
             { label: 'Catatan Lingkungan', routeName: 'environment.records.index', active: 'environment.records.*', permission: 'environment.records.view' },
             { label: 'Insiden Keamanan', routeName: 'security.incidents.index', active: 'security.incidents.*', permission: 'security.incidents.view' },
+            { label: 'NCR (Non-Conformance)', routeName: 'quality.ncrs.index', active: 'quality.ncrs.*', permission: 'quality.ncrs.view' },
         ],
     },
     {
