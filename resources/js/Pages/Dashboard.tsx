@@ -53,24 +53,79 @@ export default function Dashboard({ filters, filterOptions, kpis, widgets, quick
             <div className="py-10">
                 <div className="mx-auto max-w-7xl space-y-8 sm:px-6 lg:px-8">
                     {/* Filters */}
-                    <section className="overflow-hidden rounded-3xl bg-slate-950 text-white shadow-2xl dark:bg-black">
-                        <div className="relative p-8">
-                            <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-emerald-400/20 blur-3xl" />
-                            <div className="absolute bottom-0 left-1/2 h-48 w-48 rounded-full bg-cyan-400/10 blur-3xl" />
-                            <div className="relative grid gap-8 lg:grid-cols-[1.25fr_0.75fr]">
+                    <section className="rounded-xl bg-white border border-slate-200 shadow-sm dark:bg-gray-900 dark:border-gray-700">
+                        <div className="p-8">
+                            <div className="grid gap-8 lg:grid-cols-[1.25fr_0.75fr]">
                                 <div>
-                                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-300">Live Dashboard</p>
-                                    <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight sm:text-5xl">Real-time KPI dari 4 modul operasional.</h1>
-                                    <p className="mt-4 max-w-2xl text-base text-slate-300">Insident, Investigasi, CAPA, dan Inspeksi — filter by site, department, dan date range.</p>
+                                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-600 dark:text-emerald-400">Live Dashboard</p>
+                                    <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight text-slate-900 dark:text-white sm:text-5xl">Real-time KPI dari 4 modul operasional.</h1>
+                                    <p className="mt-4 max-w-2xl text-base text-slate-600 dark:text-slate-300">Insident, Investigasi, CAPA, dan Inspeksi — filter by site, department, dan date range.</p>
                                 </div>
-                                <form onSubmit={submit} className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
-                                    <div className="grid gap-3 sm:grid-cols-2">
-                                        <label className="text-sm text-slate-200">From<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="mt-1 w-full rounded-md border-white/10 bg-slate-950/80 text-white" /></label>
-                                        <label className="text-sm text-slate-200">To<input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="mt-1 w-full rounded-md border-white/10 bg-slate-950/80 text-white" /></label>
-                                        <label className="text-sm text-slate-200">Site<select value={siteId} onChange={(e) => { setSiteId(e.target.value); setDepartmentId(''); }} className="mt-1 w-full rounded-md border-white/10 bg-slate-950/80 text-white"><option value="">All Sites</option>{filterOptions.sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
-                                        <label className="text-sm text-slate-200">Department<select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)} className="mt-1 w-full rounded-md border-white/10 bg-slate-950/80 text-white"><option value="">All Departments</option>{departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select></label>
+                                <form onSubmit={submit} className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <div>
+                                            <label htmlFor="filter-from" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                                From Date
+                                            </label>
+                                            <input
+                                                id="filter-from"
+                                                type="date"
+                                                value={from}
+                                                onChange={(e) => setFrom(e.target.value)}
+                                                className="w-full rounded-md border-slate-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-emerald-500 focus:ring-emerald-500"
+                                                aria-label="Filter start date"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="filter-to" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                                To Date
+                                            </label>
+                                            <input
+                                                id="filter-to"
+                                                type="date"
+                                                value={to}
+                                                onChange={(e) => setTo(e.target.value)}
+                                                className="w-full rounded-md border-slate-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-emerald-500 focus:ring-emerald-500"
+                                                aria-label="Filter end date"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="filter-site" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                                Site
+                                            </label>
+                                            <select
+                                                id="filter-site"
+                                                value={siteId}
+                                                onChange={(e) => { setSiteId(e.target.value); setDepartmentId(''); }}
+                                                className="w-full rounded-md border-slate-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-emerald-500 focus:ring-emerald-500"
+                                                aria-label="Filter by site"
+                                            >
+                                                <option value="">All Sites</option>
+                                                {filterOptions.sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label htmlFor="filter-department" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                                Department
+                                            </label>
+                                            <select
+                                                id="filter-department"
+                                                value={departmentId}
+                                                onChange={(e) => setDepartmentId(e.target.value)}
+                                                className="w-full rounded-md border-slate-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-emerald-500 focus:ring-emerald-500"
+                                                aria-label="Filter by department"
+                                            >
+                                                <option value="">All Departments</option>
+                                                {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                            </select>
+                                        </div>
                                     </div>
-                                    <button className="mt-4 w-full rounded-xl bg-emerald-400 px-4 py-3 text-sm font-black uppercase tracking-widest text-slate-950 transition hover:bg-emerald-300">Apply Filters</button>
+                                    <button
+                                        type="submit"
+                                        className="mt-4 w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                                    >
+                                        Apply Filters
+                                    </button>
                                 </form>
                             </div>
                         </div>
@@ -87,7 +142,7 @@ export default function Dashboard({ filters, filterOptions, kpis, widgets, quick
                     </section>
 
                     {/* Quick Links */}
-                    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                    <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <div>
                                 <h3 className="text-lg font-bold text-slate-950 dark:text-white">Quick Access</h3>
@@ -95,7 +150,7 @@ export default function Dashboard({ filters, filterOptions, kpis, widgets, quick
                             </div>
                         </div>
                         <div className="mt-5 flex flex-wrap gap-3">
-                            {visibleQuickLinks.map((item) => <Link key={item.route} href={route(item.route)} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-400 hover:text-emerald-700 dark:border-gray-700 dark:text-slate-200 dark:hover:border-emerald-400 dark:hover:text-emerald-300">{item.label}</Link>)}
+                            {visibleQuickLinks.map((item) => <Link key={item.route} href={route(item.route)} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-500 hover:text-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:border-gray-700 dark:text-slate-200 dark:hover:border-emerald-400 dark:hover:text-emerald-300">{item.label}</Link>)}
                             {visibleQuickLinks.length === 0 && <span className="text-sm text-slate-500">No quick links available for this role.</span>}
                         </div>
                     </section>
