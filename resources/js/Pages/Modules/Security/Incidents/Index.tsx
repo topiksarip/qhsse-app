@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { PageProps, PaginatedData, SecurityIncident, Site } from '@/types';
 import { useState } from 'react';
+import EmptyState from '@/Components/UI/EmptyState';
 import TypeBadge from '@/Components/Security/TypeBadge';
 import StatusBadge from '@/Components/Security/StatusBadge';
 import SeverityBadge from '@/Components/Security/SeverityBadge';
@@ -147,7 +148,24 @@ export default function Index({ auth, incidents, filters, sites, types, statuses
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                 {incidents.data.length === 0 ? (
-                                    <tr><td colSpan={8} className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">Belum ada insiden keamanan</td></tr>
+                                    <tr>
+                                        <td colSpan={8} className="px-4 py-12">
+                                            <EmptyState
+                                                title="Belum ada insiden keamanan"
+                                                description="Laporkan insiden keamanan seperti akses tidak sah, pencurian, atau vandalisme"
+                                                action={
+                                                    canCreate ? (
+                                                        <Link
+                                                            href={route('security.incidents.create')}
+                                                            className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                                                        >
+                                                            Laporkan Insiden
+                                                        </Link>
+                                                    ) : undefined
+                                                }
+                                            />
+                                        </td>
+                                    </tr>
                                 ) : incidents.data.map((i) => (
                                     <tr key={i.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                         <td className="whitespace-nowrap px-4 py-3 font-mono text-sm">{i.security_number}</td>

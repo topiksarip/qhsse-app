@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { FormEvent, useState } from 'react';
+import EmptyState from '@/Components/UI/EmptyState';
 
 interface Contractor {
     id: number;
@@ -248,7 +249,26 @@ export default function Index({
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {contractors.data.map((contractor) => (
+                                    {contractors.data.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={6} className="px-6 py-12">
+                                                <EmptyState
+                                                    title="Belum ada kontraktor"
+                                                    description="Kelola data kontraktor, kontrak, safety induction, dan compliance QHSSE"
+                                                    action={
+                                                        can.create ? (
+                                                            <Link
+                                                                href={route('contractors.create')}
+                                                                className="inline-flex items-center rounded-lg bg-gray-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-700"
+                                                            >
+                                                                Tambah Kontraktor
+                                                            </Link>
+                                                        ) : undefined
+                                                    }
+                                                />
+                                            </td>
+                                        </tr>
+                                    ) : contractors.data.map((contractor) => (
                                         <tr key={contractor.id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm font-medium text-gray-900">

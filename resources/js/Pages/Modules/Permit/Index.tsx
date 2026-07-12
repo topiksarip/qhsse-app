@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { PageProps, PaginatedData, Permit, Site, Department } from '@/types';
 import { useState } from 'react';
+import EmptyState from '@/Components/UI/EmptyState';
 import PermitTypeBadge from '@/Components/Permit/PermitTypeBadge';
 import StatusBadge from '@/Components/Permit/StatusBadge';
 import RiskBadge from '@/Components/Permit/RiskBadge';
@@ -163,11 +164,21 @@ export default function Index({ auth, permits, filters, sites, departments, type
                             </p>
                         </div>
                         {permits.data.length === 0 ? (
-                            <div className="p-12 text-center">
-                                <div className="mb-4 text-6xl">📋</div>
-                                <h3 className="mb-2 text-lg font-medium text-gray-900 dark:text-gray-100">Belum ada izin kerja</h3>
-                                <p className="mb-4 text-gray-600 dark:text-gray-400">Belum ada izin kerja yang dibuat.</p>
-                                {canCreate && <Link href={route('permit.work.create')} className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">+ Buat Izin Kerja Pertama</Link>}
+                            <div className="p-12">
+                                <EmptyState
+                                    title="Belum ada izin kerja"
+                                    description="Kelola izin kerja untuk aktivitas berisiko tinggi seperti hot work, confined space, dan working at height"
+                                    action={
+                                        canCreate ? (
+                                            <Link
+                                                href={route('permit.work.create')}
+                                                className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                                            >
+                                                Buat Izin Kerja
+                                            </Link>
+                                        ) : undefined
+                                    }
+                                />
                             </div>
                         ) : (
                             <div className="overflow-x-auto">

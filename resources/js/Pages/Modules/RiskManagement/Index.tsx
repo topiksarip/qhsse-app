@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { PageProps, PaginatedData, RiskRegister, Site, Department, Area, Severity, RiskMatrixLevel } from '@/types';
 import { useState } from 'react';
+import EmptyState from '@/Components/UI/EmptyState';
 import TypeBadge from '@/Components/Risk/TypeBadge';
 import StatusBadge from '@/Components/Risk/StatusBadge';
 import RiskLevelBadge from '@/Components/Risk/RiskLevelBadge';
@@ -132,15 +133,21 @@ export default function Index({ auth, items, filters, sites, areas, departments,
                     </div>
 
                     {items.data.length === 0 ? (
-                        <div className="rounded-lg bg-white p-12 text-center shadow dark:bg-gray-800">
-                            <p className="text-4xl">📋</p>
-                            <p className="mt-3 text-lg font-medium text-gray-700 dark:text-gray-300">Belum ada risk register</p>
-                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Belum ada risiko yang teridentifikasi.</p>
-                            {canCreate && (
-                                <Link href={route('risk.registers.create')} className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-                                    + Buat Risk Register
-                                </Link>
-                            )}
+                        <div className="rounded-lg bg-white p-12 shadow dark:bg-gray-800">
+                            <EmptyState
+                                title="Belum ada risk register"
+                                description="Identifikasi dan kelola risiko dengan HIRADC, JSA, dan risk assessment"
+                                action={
+                                    canCreate ? (
+                                        <Link
+                                            href={route('risk.registers.create')}
+                                            className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                                        >
+                                            Buat Risk Register
+                                        </Link>
+                                    ) : undefined
+                                }
+                            />
                         </div>
                     ) : (
                         <>

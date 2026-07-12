@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { PageProps, PaginatedData, LegalRegister } from '@/types';
+import EmptyState from '@/Components/UI/EmptyState';
 import ComplianceStatusBadge from '@/Components/LegalCompliance/ComplianceStatusBadge';
 import CategoryBadge from '@/Components/LegalCompliance/CategoryBadge';
 import RegisterStatusBadge from '@/Components/LegalCompliance/RegisterStatusBadge';
@@ -116,7 +117,24 @@ export default function Index({ auth, registers, filters }: IndexProps) {
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                 {registers.data.length === 0 ? (
-                                    <tr><td colSpan={8} className="px-4 py-10 text-center text-sm text-gray-500">Tidak ada register ditemukan.</td></tr>
+                                    <tr>
+                                        <td colSpan={8} className="px-4 py-12">
+                                            <EmptyState
+                                                title="Tidak ada register ditemukan"
+                                                description="Kelola register peraturan dan regulasi kepatuhan QHSSE"
+                                                action={
+                                                    canCreate ? (
+                                                        <Link
+                                                            href={route('legal.registers.create')}
+                                                            className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                                                        >
+                                                            Buat Register
+                                                        </Link>
+                                                    ) : undefined
+                                                }
+                                            />
+                                        </td>
+                                    </tr>
                                 ) : (
                                     registers.data.map((r) => {
                                         const obligations = r.obligations ?? [];
