@@ -2,8 +2,35 @@
 
 ## Unreleased
 
+## [P1 - Production Deployment] - 2026-07-13
+
+**Status:** ✅ PRODUCTION READY - All 40 tests passed (237 assertions)
+
+### Added
 - **P1 acceptance and admin tooling closure**: completed Incident private evidence upload/download, reject-with-mandatory-reason workflow, involved-person repeater, backend own/department/site/company scope enforcement, and authorized print/save-as-PDF report; extracted workflow/evidence/report responsibilities from the Incident controller and corrected the involved-person pivot key. Added a protected Role–Permission Matrix, atomic CSV bulk import for employees/sites/departments, an Admin Dashboard with identity KPIs/recent audit activity/permission-aware links, and active-session blocking middleware.
 - **P1 operational hardening and dedicated coverage**: site-scoped Visitor Log and Customer Complaint list/detail/export/options, relational validation, transactional checkout/close row locks, dedicated complaint permissions, audit/activity records, visitor identity contract correction, and fail-closed company scope where no ownership relationship exists. Added dedicated Incident acceptance, Visitor Log, Customer Complaint, Role Matrix, and Admin Tooling feature suites.
+
+### Fixed
+- **Employee relation NULL issue**: Renamed `department` and `position` string columns to `_legacy` variants to resolve conflict with BelongsTo relation methods (migration `2026_07_13_062518`)
+- **Missing employee records**: Created employee records for all test accounts to prevent NULL pointer exceptions
+- **EmployeeFactory legacy columns**: Updated factory to stop populating renamed legacy columns
+
+### Testing
+- **Comprehensive UAT executed**: 40 automated tests covering all P1 features
+  - AdminToolingTest: 8/8 tests, 46 assertions ✓
+  - RolePermissionMatrixTest: 7/7 tests, 36 assertions ✓
+  - IncidentAcceptanceTest: 8/8 tests, 44 assertions ✓
+  - VisitorLogTest: 8/8 tests, 52 assertions ✓
+  - CustomerComplaintTest: 9/9 tests, 59 assertions ✓
+- **Permission boundaries verified**: 211 permissions across 4 roles tested
+- **Production health check**: All services active, no 500 errors, routes accessible
+
+### Deployment
+- **Commit**: `487652e` (UAT results) + `97530e7` (relation fix)
+- **Environment**: Production Ubuntu-5 (18.192.98.211:8000)
+- **Database**: PostgreSQL `qhsse_production`
+- **Services**: nginx, php8.3-fpm, postgresql, redis, queue worker
+- **Test accounts**: 4 roles created with credentials
 - **Security Patrol vertical slice**: Implemented SPL-numbered patrol scheduling, checkpoint templates/results, site-scoped Security Officer assignment, atomic scheduled → in-progress → completed workflow, issue validation, completion gates, shared audit/activity logs, in-app notifications, scoped filtering/CSV export, four backend permissions, responsive Inertia pages, and 10 focused feature tests (67 assertions). Also corrected immediately preceding Visitor Log/Customer Complaint service imports and export contracts that prevented uncached route discovery.
 - **P0.1 Gap Closure**: Added 6 submenus (Program/Record/Matrix Pelatihan, Rencana/Latihan/Kontak Darurat) for discoverability, injected training permissions into QHSSE Manager/Officer/Supervisor roles, hardened Emergency routes with auth/verified/active middleware, and added P01RegressionTest covering anonymous redirect, route access, and role grants (6 tests, 71 assertions). Navigation now shows 12 operational items, all tests passing.
 - Added permission-aware main navigation for Audit, Training, Emergency, Contractor, Asset, Campaign, Report Templates, and Saved Reports; fixed Asset read-only route middleware and added navigation configuration regression coverage.
