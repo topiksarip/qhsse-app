@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Modules\Training;
 
-use App\Core\Query\ListQuery;
 use App\Http\Controllers\Controller;
 use App\Models\Core\Users\Employee;
 use App\Models\Modules\Training\TrainingProgram;
@@ -13,10 +12,6 @@ use Inertia\Response;
 
 class TrainingMatrixController extends Controller
 {
-    public function __construct(
-        private readonly ListQuery $listQuery,
-    ) {}
-
     /**
      * Display the training matrix.
      */

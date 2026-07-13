@@ -17,7 +17,6 @@ use Inertia\Response;
 class TrainingProgramController extends Controller
 {
     public function __construct(
-        private readonly ListQuery $listQuery,
         private readonly AuditService $auditService,
         private readonly ActivityService $activityService,
     ) {}
@@ -25,7 +24,7 @@ class TrainingProgramController extends Controller
     /**
      * Display a listing of training programs.
      */
-    public function index(Request $request): Response
+    public function index(Request $request, ListQuery $listQuery): Response
     {
         $query = TrainingProgram::query()
             ->when($request->get('category'), fn ($q, $category) => $q->where('category', $category))
@@ -33,7 +32,7 @@ class TrainingProgramController extends Controller
             ->when($request->has('is_certification'), fn ($q) => $q->where('is_certification', (bool) $request->get('is_certification')))
             ->orderBy('created_at', 'desc');
 
-        $programs = $this->listQuery->paginate(
+        $programs = $listQuery->paginate(
             $query,
             ['code', 'name', 'description'],
             ['code', 'name', 'created_at'],

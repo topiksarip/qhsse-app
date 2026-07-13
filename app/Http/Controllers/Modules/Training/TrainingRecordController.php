@@ -24,7 +24,6 @@ use Inertia\Response;
 class TrainingRecordController extends Controller
 {
     public function __construct(
-        private readonly ListQuery $listQuery,
         private readonly NumberingService $numberingService,
         private readonly ManagedFileService $fileService,
         private readonly AuditService $auditService,
@@ -35,7 +34,7 @@ class TrainingRecordController extends Controller
     /**
      * Display a listing of training records.
      */
-    public function index(Request $request): Response
+    public function index(Request $request, ListQuery $listQuery): Response
     {
         $user = $request->user();
 
@@ -73,7 +72,7 @@ class TrainingRecordController extends Controller
             }
         }
 
-        $records = $this->listQuery->paginate(
+        $records = $listQuery->paginate(
             $query,
             ['training_number', 'provider'],
             ['training_number', 'training_date', 'created_at'],
