@@ -104,6 +104,14 @@ The first concurrent full-suite attempt failed because a config-cache command wa
 - `.hermes/` is local environment data and must remain untracked.
 - Repository remote credentials were observed to be embedded in remote URLs; values are intentionally omitted. Rotate them and migrate to SSH or a credential helper as an operational security follow-up.
 
+### Production preflight after push
+
+- Source commit `0bcceb19cba1f5fa1ce4dcbd08c8d0cddb0318de` was pushed to `origin/develop`; local/remote ahead-behind is `0/0`.
+- Public production `/login` returns HTTP 200 and `/register` returns HTTP 404, confirming the existing deployment is online.
+- New `/admin`, `/core/roles`, and Incident print routes return HTTP 404, and the login page references the previous asset manifest. Production has not auto-deployed this commit.
+- Manual SSH preflight was blocked with `Permission denied (publickey)`. The local SSH agent has no identities, no production host alias/control socket is available, and the repository has no deployment workflow.
+- No production backup, pull, migration, seed, service restart, or authenticated UAT was attempted after the access check failed.
+
 ## 8. Remaining Release Gates
 
 The source phase is complete, but the package must not be called Released until all items below are complete:
@@ -117,6 +125,8 @@ The source phase is complete, but the package must not be called Released until 
 7. Run anonymous and authenticated smoke checks.
 8. Run production UAT for Incident evidence/reject/involved persons/print, Visitor Log, Customer Complaint, Role Matrix, Bulk Import, and Admin Dashboard.
 9. Mark applicable Module Register rows Released only after UAT evidence exists.
+
+**Current blocker:** provide an authorized production SSH identity/host account, or have an authorized operator execute the deployment runbook. Do not mark this package Released before the production commit, manifest, services, migrations, and authenticated UAT are verified.
 
 ## 9. Deferred Module 20 Scope
 
