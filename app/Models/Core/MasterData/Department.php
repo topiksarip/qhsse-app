@@ -3,7 +3,7 @@
 namespace App\Models\Core\MasterData;
 
 use App\Models\Concerns\Auditable;
-
+use Database\Factories\Core\MasterData\DepartmentFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,8 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Department extends Model
 {
-    /** @use HasFactory<\Database\Factories\Core\MasterData\DepartmentFactory> */
-    use HasFactory, Auditable;
+    /** @use HasFactory<DepartmentFactory> */
+    use Auditable, HasFactory;
 
     protected $fillable = ['site_id', 'code', 'name', 'is_active'];
 
@@ -31,5 +31,10 @@ class Department extends Model
     public function positions(): HasMany
     {
         return $this->hasMany(Position::class);
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
     }
 }
