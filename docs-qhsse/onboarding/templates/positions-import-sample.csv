@@ -1,0 +1,62 @@
+site_code,department_code,name,code,level,is_active
+HQ,QHSSE,Manager,MGR,manager,true
+HQ,QHSSE,Officer,OFF,staff,true
+HQ,QHSSE,Coordinator,COORD,supervisor,true
+HQ,HR,Manager,MGR,manager,true
+HQ,HR,Specialist,SPEC,staff,true
+HQ,FIN,Manager,MGR,manager,true
+HQ,FIN,Accountant,ACC,staff,true
+HQ,IT,Manager,MGR,manager,true
+HQ,IT,System Administrator,SYSADM,staff,true
+HQ,IT,Developer,DEV,staff,true
+HQ,PROC,Manager,MGR,manager,true
+HQ,PROC,Buyer,BYR,staff,true
+HQ,GA,Manager,MGR,manager,true
+HQ,GA,Supervisor,SPV,supervisor,true
+JKT,PROD,Plant Manager,PMGR,manager,true
+JKT,PROD,Production Supervisor,PSPV,supervisor,true
+JKT,PROD,Operator,OPR,staff,true
+JKT,QC,QC Manager,QCMGR,manager,true
+JKT,QC,QC Inspector,QCINSP,staff,true
+JKT,MAINT,Maintenance Manager,MMGR,manager,true
+JKT,MAINT,Technician,TECH,staff,true
+JKT,MAINT,Mechanic,MECH,staff,true
+JKT,WH,Warehouse Manager,WHMGR,manager,true
+JKT,WH,Warehouse Supervisor,WHSPV,supervisor,true
+JKT,WH,Warehouse Staff,WHSTAFF,staff,true
+JKT,ENG,Engineering Manager,EMGR,manager,true
+JKT,ENG,Process Engineer,PENG,staff,true
+BKS,PROD,Plant Manager,PMGR,manager,true
+BKS,PROD,Production Supervisor,PSPV,supervisor,true
+BKS,PROD,Operator,OPR,staff,true
+BKS,QC,QC Supervisor,QCSPV,supervisor,true
+BKS,QC,QC Inspector,QCINSP,staff,true
+BKS,MAINT,Maintenance Supervisor,MSPV,supervisor,true
+BKS,MAINT,Technician,TECH,staff,true
+BKS,WH,Warehouse Supervisor,WHSPV,supervisor,true
+KRW,PROD,Plant Manager,PMGR,manager,true
+KRW,PROD,Production Supervisor,PSPV,supervisor,true
+KRW,PROD,Operator,OPR,staff,true
+KRW,QC,QC Inspector,QCINSP,staff,true
+KRW,MAINT,Technician,TECH,staff,true
+KRW,LOG,Logistics Supervisor,LOGSPV,supervisor,true
+TNG,WHOPS,Warehouse Manager,WHMGR,manager,true
+TNG,WHOPS,Warehouse Supervisor,WHSPV,supervisor,true
+TNG,WHOPS,Forklift Operator,FORK,staff,true
+TNG,LOG,Logistics Coordinator,LOGCRD,staff,true
+BDG,SALES,Sales Manager,SMGR,manager,true
+BDG,SALES,Sales Executive,SEXEC,staff,true
+BDG,CS,Customer Service Supervisor,CSSPV,supervisor,true
+BDG,CS,Customer Service Rep,CSREP,staff,true
+SBY,PROD,Plant Manager,PMGR,manager,true
+SBY,PROD,Production Supervisor,PSPV,supervisor,true
+SBY,PROD,Operator,OPR,staff,true
+SBY,QC,QC Inspector,QCINSP,staff,true
+SBY,MAINT,Technician,TECH,staff,true
+SMG,SALES,Sales Manager,SMGR,manager,true
+SMG,SALES,Sales Executive,SEXEC,staff,true
+MDN,WHOPS,Warehouse Supervisor,WHSPV,supervisor,true
+MDN,WHOPS,Warehouse Staff,WHSTAFF,staff,true
+MKS,PROD,Plant Manager,PMGR,manager,true
+MKS,PROD,Operator,OPR,staff,true
+MKS,QC,QC Inspector,QCINSP,staff,true

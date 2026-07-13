@@ -1,0 +1,31 @@
+site_code,name,code,is_active
+HQ,QHSSE Department,QHSSE,true
+HQ,Human Resources,HR,true
+HQ,Finance & Accounting,FIN,true
+HQ,Information Technology,IT,true
+HQ,Procurement,PROC,true
+HQ,General Affairs,GA,true
+JKT,Production,PROD,true
+JKT,Quality Control,QC,true
+JKT,Maintenance,MAINT,true
+JKT,Warehouse,WH,true
+JKT,Engineering,ENG,true
+BKS,Production,PROD,true
+BKS,Quality Control,QC,true
+BKS,Maintenance,MAINT,true
+BKS,Warehouse,WH,true
+KRW,Production,PROD,true
+KRW,Quality Control,QC,true
+KRW,Maintenance,MAINT,true
+KRW,Logistics,LOG,true
+TNG,Warehouse Operations,WHOPS,true
+TNG,Logistics,LOG,true
+BDG,Sales & Marketing,SALES,true
+BDG,Customer Service,CS,true
+SBY,Production,PROD,true
+SBY,Quality Control,QC,true
+SBY,Maintenance,MAINT,true
+SMG,Sales & Marketing,SALES,true
+MDN,Warehouse Operations,WHOPS,true
+MKS,Production,PROD,true
+MKS,Quality Control,QC,true

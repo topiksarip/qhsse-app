@@ -1,0 +1,11 @@
+name,code,address,phone,is_active
+Headquarters,HQ,"Jl. Sudirman No. 123, Jakarta Pusat",+62 21 1234 5678,true
+Plant Jakarta,JKT,"Jl. Industri Raya No. 45, Jakarta Timur",+62 21 8765 4321,true
+Plant Bekasi,BKS,"Kawasan Industri MM2100 Blok A1, Bekasi",+62 21 8900 1234,true
+Plant Karawang,KRW,"Jl. Industri Raya Lot 15, Karawang",+62 267 123 4567,true
+Warehouse Tangerang,TNG,"Jl. Logistik No. 88, Tangerang",+62 21 5566 7788,true
+Office Bandung,BDG,"Jl. Gatot Subroto No. 200, Bandung",+62 22 7654 3210,true
+Plant Surabaya,SBY,"Jl. Rungkut Industri III No. 50, Surabaya",+62 31 8765 4321,true
+Office Semarang,SMG,"Jl. Pemuda No. 150, Semarang",+62 24 3456 7890,true
+Warehouse Medan,MDN,"Jl. Gatot Subroto Km 7.5, Medan",+62 61 4567 8901,true
+Plant Makassar,MKS,"Jl. Perindustrian Blok E, Makassar",+62 411 234 5678,true
