@@ -33,8 +33,6 @@ class EmployeeFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'phone' => fake()->phoneNumber(),
-            'department' => fake()->randomElement(['QHSSE', 'Operations', 'Maintenance', 'Security']),
-            'position' => fake()->jobTitle(),
             'is_active' => true,
         ];
     }
