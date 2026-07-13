@@ -17,6 +17,7 @@ class TrainingSeeder extends Seeder
         // Check if we have employees
         if (Employee::count() === 0) {
             $this->command->warn('No employees found. Skipping TrainingSeeder.');
+
             return;
         }
 
@@ -89,6 +90,7 @@ class TrainingSeeder extends Seeder
 
         if ($employees->isEmpty() || $createdPrograms->isEmpty()) {
             $this->command->warn('No active employees or programs found. Skipping training records.');
+
             return;
         }
 
@@ -97,10 +99,21 @@ class TrainingSeeder extends Seeder
             $randomPrograms = $createdPrograms->random(min(3, $createdPrograms->count()));
 
             foreach ($randomPrograms as $program) {
-                TrainingRecord::factory()
-                    ->for($employee)
-                    ->for($program)
-                    ->create();
+                TrainingRecord::create([
+                    'training_number' => 'TRN-'.now()->year.'-'.str_pad((string) rand(1, 9999), 4, '0', STR_PAD_LEFT),
+                    'employee_id' => $employee->id,
+                    'training_program_id' => $program->id,
+                    'provider' => null,
+                    'start_date' => now()->subMonths(rand(1, 6)),
+                    'end_date' => now()->subMonths(rand(0, 5)),
+                    'status' => 'completed',
+                    'score' => rand(70, 100),
+                    'result' => 'pass',
+                    'certificate_number' => 'CERT-'.now()->year.'-'.rand(1000, 9999),
+                    'certificate_file_id' => null,
+                    'expiry_date' => $program->validity_months ? now()->addMonths($program->validity_months) : null,
+                    'notes' => null,
+                ]);
             }
         }
 
