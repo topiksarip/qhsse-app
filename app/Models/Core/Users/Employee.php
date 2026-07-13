@@ -59,7 +59,7 @@ class Employee extends Model
     /** @return BelongsTo<Department, Employee> */
     public function department(): BelongsTo
     {
-        return $this->departmentMaster();
+        return $this->belongsTo(Department::class, 'department_id');
     }
 
     /** @return BelongsTo<Position, Employee> */
@@ -71,7 +71,7 @@ class Employee extends Model
     /** @return BelongsTo<Position, Employee> */
     public function position(): BelongsTo
     {
-        return $this->positionMaster();
+        return $this->belongsTo(Position::class, 'position_id');
     }
 
     /** @return HasOne<User> */
