@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Modules\Security\PatrolChecklistController;
+use App\Http\Controllers\Modules\Security\PatrolResultController;
 use App\Http\Controllers\Modules\Security\SecurityIncidentController;
 use App\Http\Controllers\Modules\Security\VisitorLogController;
 use Illuminate\Support\Facades\Route;
@@ -24,5 +26,18 @@ Route::middleware(['auth', 'verified'])->prefix('security')->name('security.')->
         Route::get('/{visitor}/edit', [VisitorLogController::class, 'edit'])->name('edit')->middleware('permission:security.visitor.log');
         Route::put('/{visitor}', [VisitorLogController::class, 'update'])->name('update')->middleware('permission:security.visitor.log');
         Route::post('/{visitor}/check-out', [VisitorLogController::class, 'checkOut'])->name('check-out')->middleware('permission:security.visitor.log');
+    });
+
+    Route::prefix('patrols')->name('patrols.')->group(function () {
+        Route::get('/', [PatrolChecklistController::class, 'index'])->name('index')->middleware('permission:security.patrols.view');
+        Route::get('/export', [PatrolChecklistController::class, 'export'])->name('export')->middleware('permission:security.patrols.export');
+        Route::get('/create', [PatrolChecklistController::class, 'create'])->name('create')->middleware('permission:security.patrols.create');
+        Route::post('/', [PatrolChecklistController::class, 'store'])->name('store')->middleware('permission:security.patrols.create');
+        Route::get('/{patrol}', [PatrolChecklistController::class, 'show'])->name('show')->middleware('permission:security.patrols.view');
+        Route::get('/{patrol}/edit', [PatrolChecklistController::class, 'edit'])->name('edit')->middleware('permission:security.patrols.create');
+        Route::put('/{patrol}', [PatrolChecklistController::class, 'update'])->name('update')->middleware('permission:security.patrols.create');
+        Route::post('/{patrol}/start', [PatrolChecklistController::class, 'start'])->name('start')->middleware('permission:security.patrols.execute');
+        Route::post('/{patrol}/complete', [PatrolChecklistController::class, 'complete'])->name('complete')->middleware('permission:security.patrols.execute');
+        Route::put('/{patrol}/results/{result}', [PatrolResultController::class, 'store'])->name('results.store')->middleware('permission:security.patrols.execute');
     });
 });

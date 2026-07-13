@@ -17,7 +17,11 @@ class PatrolChecklistFactory extends Factory
     public function definition(): array
     {
         $status = fake()->randomElement(['scheduled', 'in_progress', 'completed']);
-        $scheduledAt = fake()->dateTimeBetween('-7 days', '+7 days');
+        $scheduledAt = match ($status) {
+            'completed' => fake()->dateTimeBetween('-7 days', '-3 hours'),
+            'in_progress' => fake()->dateTimeBetween('-7 days', '-1 hour'),
+            default => fake()->dateTimeBetween('-7 days', '+7 days'),
+        };
 
         $base = [
             'patrol_number' => 'SPL-'.now()->year.'-'.str_pad((string) fake()->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),

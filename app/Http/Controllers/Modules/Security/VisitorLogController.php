@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Modules\Security;
 
-use App\Core\Services\ListQueryService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Modules\Security\CreateVisitorLogRequest;
 use App\Http\Requests\Modules\Security\UpdateVisitorLogRequest;
-use App\Models\Core\MasterData\Employee;
 use App\Models\Core\MasterData\Site;
+use App\Models\Core\Users\Employee;
 use App\Models\Modules\Security\VisitorLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -18,10 +17,6 @@ use Inertia\Response;
 
 class VisitorLogController extends Controller
 {
-    public function __construct(
-        private readonly ListQueryService $listQuery
-    ) {}
-
     public function index(): Response
     {
         $this->authorize('viewAny', VisitorLog::class);
@@ -161,7 +156,7 @@ class VisitorLogController extends Controller
             ->with('success', 'Pengunjung berhasil di-check-out.');
     }
 
-    public function export(): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    public function export(): \Symfony\Component\HttpFoundation\StreamedResponse
     {
         $this->authorize('export', VisitorLog::class);
 

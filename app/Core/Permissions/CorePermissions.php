@@ -225,6 +225,10 @@ final class CorePermissions
             'security.incidents.export',
             'security.visitor.view',
             'security.visitor.log',
+            'security.patrols.view',
+            'security.patrols.create',
+            'security.patrols.execute',
+            'security.patrols.export',
             // Quality NCR
             'quality.ncrs.view',
             'quality.ncrs.create',
@@ -357,10 +361,11 @@ final class CorePermissions
         $environmentView = ['environment.records.view'];
         $environmentCreate = ['environment.records.view', 'environment.records.create', 'environment.records.update'];
 
-        $securityFull = ['security.incidents.view', 'security.incidents.create', 'security.incidents.update', 'security.incidents.close', 'security.incidents.export', 'security.visitor.view', 'security.visitor.log'];
-        $securityViewExport = ['security.incidents.view', 'security.incidents.export', 'security.visitor.view'];
+        $securityFull = ['security.incidents.view', 'security.incidents.create', 'security.incidents.update', 'security.incidents.close', 'security.incidents.export', 'security.visitor.view', 'security.visitor.log', 'security.patrols.view', 'security.patrols.create', 'security.patrols.execute', 'security.patrols.export'];
+        $securityOfficer = ['security.incidents.view', 'security.incidents.create', 'security.incidents.update', 'security.incidents.export', 'security.visitor.view', 'security.visitor.log', 'security.patrols.view', 'security.patrols.create', 'security.patrols.execute', 'security.patrols.export'];
+        $securityViewExport = ['security.incidents.view', 'security.incidents.export', 'security.visitor.view', 'security.patrols.view', 'security.patrols.export'];
         $securityView = ['security.incidents.view', 'security.visitor.view'];
-        $securityCreate = ['security.incidents.view', 'security.incidents.create', 'security.incidents.update', 'security.visitor.view', 'security.visitor.log'];
+        $securityCreate = ['security.incidents.view', 'security.incidents.create', 'security.incidents.update', 'security.visitor.view', 'security.visitor.log', 'security.patrols.view'];
 
         $qualityFull = ['quality.ncrs.view', 'quality.ncrs.create', 'quality.ncrs.update', 'quality.ncrs.close', 'quality.ncrs.export', 'quality.complaints.view'];
         $qualityViewExport = ['quality.ncrs.view', 'quality.ncrs.export', 'quality.complaints.view'];
@@ -394,6 +399,7 @@ final class CorePermissions
             'Admin' => self::all(),
             'QHSSE Manager' => [...$viewOnly, 'core.scope.all', ...$incidentFull, ...$investigationFull, ...$capaFull, ...$inspectionFull, ...$documentFull, ...$auditFull, ...$trainingFull, ...$riskFull, ...$legalFull, ...$emergencyFull, ...$permitFull, ...$environmentFull, ...$securityFull, ...$qualityFull, ...$contractorFull, ...$assetFull, ...$communicationFull, ...$reportingFull],
             'QHSSE Officer' => [...$viewOnly, 'core.scope.site', ...$incidentFull, ...$investigationFull, ...$capaFull, ...$inspectionFull, ...$documentCreate, ...$auditExecute, ...$trainingFull, ...$riskFull, ...$legalFull, ...$emergencyFull, ...$permitFull, ...$environmentFull, ...$securityFull, ...$qualityFull, ...$contractorFull, ...$assetFull, ...$communicationFull, ...$reportingGenerate],
+            'Security Officer' => ['core.scope.site', ...$securityOfficer],
             'Supervisor' => ['core.companies.view', 'core.employees.view', 'core.departments.view', 'core.positions.view', 'core.scope.department', ...$incidentSupervisor, ...$investigationView, ...$capaAssign, ...$inspectionView, ...$documentCreate, ...$auditView, ...$trainingViewExport, ...$riskCreate, ...$legalView, ...$emergencyCreate, ...$permitCreate, ...$environmentCreate, ...$securityCreate, ...$qualityCreate, ...$contractorCreate, ...$assetCreate, ...$communicationView, ...$reportingGenerate],
             'Department Head' => ['core.companies.view', 'core.employees.view', 'core.departments.view', 'core.positions.view', 'core.scope.department', ...$incidentSupervisor, ...$investigationView, ...$capaView, ...$inspectionView, ...$documentView, 'core.workflow.transition', 'document.control.submit_review', ...$auditView, ...$riskView, ...$legalView, ...$emergencyView, ...$permitView, ...$environmentView, ...$securityView, ...$qualityView, ...$assetViewExport, ...$communicationViewExport, ...$reportingViewDownload],
             'Employee / Reporter' => ['core.scope.own', ...$incidentBasic, ...$investigationView, ...$capaView, ...$inspectionView, ...$documentView, ...$auditView, ...$riskView, ...$legalView, ...$emergencyView, ...$permitView, ...$environmentView, ...$securityView, ...$qualityView, ...$assetView, ...$communicationView],

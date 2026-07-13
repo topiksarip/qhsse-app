@@ -41,6 +41,20 @@ class NotificationTemplateSeeder extends Seeder
                 'channels' => ['in_app'],
                 'is_active' => true,
             ],
+            [
+                'type' => 'security.patrol.executed',
+                'title_template' => 'Patroli Dimulai: {{patrol_number}}',
+                'message_template' => '{{actor_name}} memulai patroli {{patrol_number}} di {{site_name}}.',
+                'channels' => ['in_app'],
+                'is_active' => true,
+            ],
+            [
+                'type' => 'security.patrol.issue_found',
+                'title_template' => 'Temuan Patroli: {{patrol_number}}',
+                'message_template' => 'Issue ditemukan di checkpoint {{checkpoint}}: {{findings}}',
+                'channels' => ['in_app'],
+                'is_active' => true,
+            ],
         ];
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Modules\Quality;
 
-use App\Core\Services\NumberingService;
+use App\Core\Numbering\NumberingService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Modules\Quality\CreateCustomerComplaintRequest;
 use App\Http\Requests\Modules\Quality\UpdateCustomerComplaintRequest;
@@ -83,11 +83,11 @@ class CustomerComplaintController extends Controller
     {
         $this->authorize('create', CustomerComplaint::class);
 
-        $complaintNumber = $this->numbering->generate('customer_complaints', 'CCR');
+        $complaintNumber = $this->numbering->generate('quality_complaint', $request->user());
 
         $complaint = CustomerComplaint::create([
             ...$request->validated(),
-            'complaint_number' => $complaintNumber,
+            'complaint_number' => $complaintNumber->number,
             'status' => 'open',
         ]);
 
@@ -145,7 +145,7 @@ class CustomerComplaintController extends Controller
             ->with('success', 'Complaint berhasil ditutup.');
     }
 
-    public function export(): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    public function export(): \Symfony\Component\HttpFoundation\StreamedResponse
     {
         $this->authorize('export', CustomerComplaint::class);
 

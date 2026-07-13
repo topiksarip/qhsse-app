@@ -72,8 +72,13 @@ fresh: ## migrate:fresh --seed (HAPUS semua data!)
 	$(DC) exec app php artisan migrate:fresh --seed --force
 
 test: ## Jalankan test suite (SQLite in-memory, tidak butuh postgres)
-	$(DC) exec -e DB_CONNECTION=sqlite -e DB_DATABASE=:memory: app \
-	      php artisan test --parallel
+	@if [ -n "$$($(DC) ps --status running -q app 2>/dev/null)" ]; then \
+		$(DC) exec -e DB_CONNECTION=sqlite -e DB_DATABASE=:memory: app \
+			php artisan test --parallel; \
+	else \
+		echo "ℹ️  Container app tidak aktif; menjalankan test di host."; \
+		DB_CONNECTION=sqlite DB_DATABASE=:memory: php artisan test --parallel; \
+	fi
 
 tinker: ## Laravel Tinker REPL
 	$(DC) exec app php artisan tinker
