@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Modules\Quality;
 
+use App\Models\Modules\Quality\CustomerComplaint;
+use App\Modules\Quality\ComplaintAccess;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CreateCustomerComplaintRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('create', \App\Models\Modules\Quality\CustomerComplaint::class);
+        return $this->user()->can('create', CustomerComplaint::class);
     }
 
     public function rules(): array
@@ -24,6 +26,11 @@ class CreateCustomerComplaintRequest extends FormRequest
             'product_service' => ['nullable', 'string', 'max:255'],
             'severity_id' => ['required', 'integer', 'exists:severities,id'],
         ];
+    }
+
+    protected function passedValidation(): void
+    {
+        app(ComplaintAccess::class)->ensureSiteAllowed($this->user(), (int) $this->input('site_id'));
     }
 
     public function attributes(): array

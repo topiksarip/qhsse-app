@@ -6,6 +6,7 @@ namespace App\Policies\Modules\Quality;
 
 use App\Models\Modules\Quality\CustomerComplaint;
 use App\Models\User;
+use App\Modules\Quality\ComplaintAccess;
 
 class CustomerComplaintPolicy
 {
@@ -16,26 +17,31 @@ class CustomerComplaintPolicy
 
     public function view(User $user, CustomerComplaint $complaint): bool
     {
-        return $user->hasPermissionTo('quality.complaints.view');
+        return $user->hasPermissionTo('quality.complaints.view')
+            && app(ComplaintAccess::class)->canAccess($user, $complaint);
     }
 
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('quality.complaints.view');
+        return $user->hasPermissionTo('quality.complaints.create');
     }
 
     public function update(User $user, CustomerComplaint $complaint): bool
     {
-        return $user->hasPermissionTo('quality.complaints.view') && $complaint->isOpen();
+        return $user->hasPermissionTo('quality.complaints.update')
+            && app(ComplaintAccess::class)->canAccess($user, $complaint)
+            && $complaint->isOpen();
     }
 
     public function close(User $user, CustomerComplaint $complaint): bool
     {
-        return $user->hasPermissionTo('quality.complaints.view') && $complaint->isOpen();
+        return $user->hasPermissionTo('quality.complaints.close')
+            && app(ComplaintAccess::class)->canAccess($user, $complaint)
+            && $complaint->isOpen();
     }
 
     public function export(User $user): bool
     {
-        return $user->hasPermissionTo('quality.complaints.view');
+        return $user->hasPermissionTo('quality.complaints.export');
     }
 }

@@ -5,35 +5,33 @@ namespace App\Http\Controllers\Modules\Incident;
 use App\Core\Activity\ActivityService;
 use App\Core\Audit\AuditService;
 use App\Core\Export\CsvExporter;
-use App\Core\Files\FileReference;
-use App\Core\Files\ManagedFileService;
-use App\Core\Notifications\NotificationService;
 use App\Core\Numbering\NumberingService;
 use App\Core\Query\ListQuery;
 use App\Core\Workflow\WorkflowService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Modules\Incident\StoreIncidentReportRequest;
 use App\Http\Requests\Modules\Incident\UpdateIncidentReportRequest;
+use App\Models\Core\Activity\ActivityLog;
+use App\Models\Core\Comments\Comment;
 use App\Models\Core\Files\ManagedFile;
 use App\Models\Core\MasterData\Area;
 use App\Models\Core\MasterData\Department;
 use App\Models\Core\MasterData\Priority;
 use App\Models\Core\MasterData\Severity;
 use App\Models\Core\MasterData\Site;
-use App\Models\Core\Notifications\CoreNotification;
+use App\Models\Core\Users\Employee;
 use App\Models\Core\Workflow\WorkflowHistory;
 use App\Models\Core\Workflow\WorkflowInstance;
-use App\Models\Core\Comments\Comment;
-use App\Models\Core\Activity\ActivityLog;
 use App\Models\Modules\Incident\IncidentReport;
 use App\Models\User;
+use App\Modules\Incident\IncidentAccess;
+use App\Modules\Incident\IncidentLifecycle;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
-use Spatie\Permission\Models\Role;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class IncidentReportController extends Controller
@@ -43,14 +41,14 @@ class IncidentReportController extends Controller
         private readonly WorkflowService $workflowService,
         private readonly AuditService $auditService,
         private readonly ActivityService $activityService,
-        private readonly NotificationService $notificationService,
-        private readonly ManagedFileService $fileService,
+        private readonly IncidentAccess $access,
+        private readonly IncidentLifecycle $lifecycle,
     ) {}
 
-    public function index(ListQuery $listQuery): Response
+    public function index(Request $request, ListQuery $listQuery): Response
     {
         $items = $listQuery->paginate(
-            IncidentReport::query()->with(['site', 'area', 'severity', 'priority', 'reporter']),
+            $this->access->visibleQuery($request->user())->with(['site', 'area', 'severity', 'priority', 'reporter']),
             ['incident_number', 'title'],
             ['occurred_at', 'created_at', 'incident_number'],
             'occurred_at',
@@ -63,26 +61,20 @@ class IncidentReportController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        return Inertia::render('Modules/Incident/Form', [
-            'item' => null,
-            'sites' => Site::where('is_active', true)->orderBy('name')->get(['id', 'name']),
-            'areas' => Area::where('is_active', true)->orderBy('name')->get(['id', 'name', 'site_id']),
-            'departments' => Department::where('is_active', true)->orderBy('name')->get(['id', 'name', 'site_id']),
-            'severities' => Severity::where('is_active', true)->orderBy('level', 'desc')->get(['id', 'name', 'level', 'color']),
-            'priorities' => Priority::where('is_active', true)->orderBy('sla_days', 'desc')->get(['id', 'name', 'sla_days', 'color']),
-        ]);
+        return Inertia::render('Modules/Incident/Form', $this->formOptions($request->user()) + ['item' => null]);
     }
 
     public function store(StoreIncidentReportRequest $request): RedirectResponse
     {
         $actor = $request->user();
         $validated = $request->validated();
+        $this->access->ensureSiteAllowed($actor, (int) $validated['site_id']);
 
         $incident = DB::transaction(function () use ($validated, $actor) {
             $incident = IncidentReport::create([
-                'incident_number' => 'TEMP-' . uniqid(),
+                'incident_number' => 'TEMP-'.uniqid(),
                 'title' => $validated['title'],
                 'category' => $validated['category'],
                 'occurred_at' => $validated['occurred_at'],
@@ -120,15 +112,16 @@ class IncidentReportController extends Controller
         });
 
         if (($validated['action'] ?? 'draft') === 'submit') {
-            $this->doSubmit($incident, $actor);
+            $this->lifecycle->transition($incident, $actor, 'submit', 'submitted');
         }
 
         return redirect()->route('incident.reports.show', $incident)
             ->with('success', 'Laporan insiden berhasil dibuat.');
     }
 
-    public function show(IncidentReport $incidentReport): Response
+    public function show(Request $request, IncidentReport $incidentReport): Response
     {
+        $this->access->ensureVisible($request->user(), $incidentReport);
         $incidentReport->load(['site', 'area', 'department', 'reporter', 'severity', 'priority', 'involvedPersons']);
 
         $evidence = ManagedFile::query()
@@ -166,6 +159,7 @@ class IncidentReportController extends Controller
         $availableTransitions = [];
         if ($workflowInstance) {
             $availableTransitions = collect($this->workflowService->availableTransitions($workflowInstance))
+                ->whereIn('action_key', ['submit', 'review', 'reject', 'close'])
                 ->map(fn ($t) => [
                     'action_key' => $t->action_key,
                     'action_label' => $t->action_label,
@@ -185,28 +179,27 @@ class IncidentReportController extends Controller
         ]);
     }
 
-    public function edit(IncidentReport $incidentReport): Response
+    public function edit(Request $request, IncidentReport $incidentReport): Response
     {
+        $this->access->ensureVisible($request->user(), $incidentReport);
+        abort_unless($incidentReport->status === 'draft', 409);
         $incidentReport->load(['site', 'area', 'department', 'severity', 'priority', 'involvedPersons']);
 
-        return Inertia::render('Modules/Incident/Form', [
-            'item' => $incidentReport,
-            'sites' => Site::where('is_active', true)->orderBy('name')->get(['id', 'name']),
-            'areas' => Area::where('is_active', true)->orderBy('name')->get(['id', 'name', 'site_id']),
-            'departments' => Department::where('is_active', true)->orderBy('name')->get(['id', 'name', 'site_id']),
-            'severities' => Severity::where('is_active', true)->orderBy('level', 'desc')->get(['id', 'name', 'level', 'color']),
-            'priorities' => Priority::where('is_active', true)->orderBy('sla_days', 'desc')->get(['id', 'name', 'sla_days', 'color']),
-        ]);
+        return Inertia::render('Modules/Incident/Form', $this->formOptions($request->user()) + ['item' => $incidentReport]);
     }
 
     public function update(UpdateIncidentReportRequest $request, IncidentReport $incidentReport): RedirectResponse
     {
         $actor = $request->user();
         $validated = $request->validated();
+        $this->access->ensureVisible($actor, $incidentReport);
+        abort_unless($incidentReport->status === 'draft', 409);
+        $this->access->ensureSiteAllowed($actor, (int) ($validated['site_id'] ?? $incidentReport->site_id));
         $oldValues = $incidentReport->getAttributes();
+        $oldValues['involved_person_ids'] = $incidentReport->involvedPersons()->pluck('employees.id')->all();
 
         DB::transaction(function () use ($incidentReport, $validated, $actor, $oldValues) {
-            $incidentReport->update($validated);
+            $incidentReport->update(Arr::except($validated, ['involved_persons', 'action']));
 
             if (isset($validated['involved_persons'])) {
                 $sync = [];
@@ -216,112 +209,24 @@ class IncidentReportController extends Controller
                 $incidentReport->involvedPersons()->sync($sync);
             }
 
+            $incidentReport->refresh();
+            $incidentReport->setAttribute('involved_person_ids', $incidentReport->involvedPersons()->pluck('employees.id')->all());
             $this->auditService->updated($incidentReport, $oldValues, $actor, 'incident', $incidentReport->id);
             $this->activityService->log('incident', $incidentReport->id, 'incident.updated', 'Laporan insiden diperbarui', $actor);
         });
+
+        if (($validated['action'] ?? 'draft') === 'submit') {
+            $this->lifecycle->transition($incidentReport, $actor, 'submit', 'submitted');
+        }
 
         return redirect()->route('incident.reports.show', $incidentReport)
             ->with('success', 'Laporan insiden berhasil diperbarui.');
     }
 
-    public function submit(IncidentReport $incidentReport, Request $request): RedirectResponse
-    {
-        try {
-            $this->doSubmit($incidentReport, $request->user());
-        } catch (\RuntimeException $e) {
-            return back()->withErrors(['workflow' => $e->getMessage()]);
-        }
-        return redirect()->route('incident.reports.show', $incidentReport)
-            ->with('success', 'Laporan insiden telah disubmit untuk review.');
-    }
-
-    private function doSubmit(IncidentReport $incident, User $actor): void
-    {
-        DB::transaction(function () use ($incident, $actor) {
-            $this->workflowService->transition('incident', $incident->id, 'submit', $actor);
-            $incident->update(['status' => 'submitted']);
-            $this->activityService->log('incident', $incident->id, 'incident.submitted', 'Laporan disubmit untuk review', $actor);
-
-            $qhsseUsers = $this->getQhsseUsers();
-            if ($qhsseUsers->isNotEmpty()) {
-                $this->notificationService->notifyMany(
-                    $qhsseUsers,
-                    'incident.submitted',
-                    ['incident_number' => $incident->incident_number, 'title' => $incident->title, 'actor_name' => $actor->name],
-                    $actor,
-                    'incident',
-                    $incident->id,
-                    route('incident.reports.show', $incident),
-                );
-            }
-        });
-    }
-
-    public function review(IncidentReport $incidentReport, Request $request): RedirectResponse
-    {
-        $actor = $request->user();
-
-        try {
-            DB::transaction(function () use ($incidentReport, $actor) {
-                $this->workflowService->transition('incident', $incidentReport->id, 'review', $actor);
-                $incidentReport->update(['status' => 'under_review']);
-                $this->activityService->log('incident', $incidentReport->id, 'incident.reviewing', 'Laporan sedang direview', $actor);
-
-                if ($incidentReport->reporter) {
-                    $this->notificationService->notify(
-                        $incidentReport->reporter,
-                        'incident.reviewing',
-                        ['incident_number' => $incidentReport->incident_number, 'actor_name' => $actor->name],
-                        $actor,
-                        'incident',
-                        $incidentReport->id,
-                        route('incident.reports.show', $incidentReport),
-                    );
-                }
-            });
-        } catch (\RuntimeException $e) {
-            return back()->withErrors(['workflow' => $e->getMessage()]);
-        }
-
-        return redirect()->route('incident.reports.show', $incidentReport)
-            ->with('success', 'Laporan insiden sedang dalam review.');
-    }
-
-    public function close(IncidentReport $incidentReport, Request $request): RedirectResponse
-    {
-        $request->validate(['reason' => ['required', 'string', 'max:1000']]);
-        $actor = $request->user();
-
-        try {
-            DB::transaction(function () use ($incidentReport, $actor, $request) {
-                $this->workflowService->transition('incident', $incidentReport->id, 'close', $actor, $request->input('reason'));
-                $incidentReport->update(['status' => 'closed']);
-                $this->activityService->log('incident', $incidentReport->id, 'incident.closed', 'Laporan ditutup: ' . $request->input('reason'), $actor);
-
-                if ($incidentReport->reporter) {
-                    $this->notificationService->notify(
-                        $incidentReport->reporter,
-                        'incident.closed',
-                        ['incident_number' => $incidentReport->incident_number, 'reason' => $request->input('reason'), 'actor_name' => $actor->name],
-                        $actor,
-                        'incident',
-                        $incidentReport->id,
-                        route('incident.reports.show', $incidentReport),
-                    );
-                }
-            });
-        } catch (\RuntimeException $e) {
-            return back()->withErrors(['workflow' => $e->getMessage()]);
-        }
-
-        return redirect()->route('incident.reports.show', $incidentReport)
-            ->with('success', 'Laporan insiden telah ditutup.');
-    }
-
-    public function export(ListQuery $listQuery, CsvExporter $exporter): StreamedResponse
+    public function export(Request $request, ListQuery $listQuery, CsvExporter $exporter): StreamedResponse
     {
         $query = $listQuery->apply(
-            IncidentReport::query()->with(['site', 'severity', 'priority', 'reporter']),
+            $this->access->visibleQuery($request->user())->with(['site', 'severity', 'priority', 'reporter']),
             ['incident_number', 'title'],
             ['occurred_at', 'created_at'],
             'occurred_at',
@@ -340,19 +245,28 @@ class IncidentReportController extends Controller
         ], 'incidents-export.csv');
     }
 
-    private function getQhsseUsers()
+    private function formOptions(User $user): array
     {
-        $officerRole = Role::where('name', 'QHSSE Officer')->first();
-        $managerRole = Role::where('name', 'QHSSE Manager')->first();
+        $sites = Site::query()->where('is_active', true);
+        $areas = Area::query()->where('is_active', true);
+        $departments = Department::query()->where('is_active', true);
+        $employees = Employee::query()->where('is_active', true);
 
-        $userIds = collect();
-        if ($officerRole) {
-            $userIds = $userIds->merge($officerRole->users()->pluck('users.id'));
-        }
-        if ($managerRole) {
-            $userIds = $userIds->merge($managerRole->users()->pluck('users.id'));
+        if (! $user->can('core.scope.all') && $user->employee?->site_id) {
+            $siteId = $user->employee?->site_id;
+            $sites->whereKey($siteId ?? 0);
+            $areas->where('site_id', $siteId ?? 0);
+            $departments->where('site_id', $siteId ?? 0);
+            $employees->where('site_id', $siteId ?? 0);
         }
 
-        return User::whereIn('id', $userIds->unique())->where('is_active', true)->get();
+        return [
+            'sites' => $sites->orderBy('name')->get(['id', 'name']),
+            'areas' => $areas->orderBy('name')->get(['id', 'name', 'site_id']),
+            'departments' => $departments->orderBy('name')->get(['id', 'name', 'site_id']),
+            'employees' => $employees->orderBy('name')->get(['id', 'name', 'employee_no', 'site_id']),
+            'severities' => Severity::where('is_active', true)->orderBy('level', 'desc')->get(['id', 'name', 'level', 'color']),
+            'priorities' => Priority::where('is_active', true)->orderBy('sla_days', 'desc')->get(['id', 'name', 'sla_days', 'color']),
+        ];
     }
 }

@@ -88,6 +88,7 @@ final class CorePermissions
             'incident.reports.review',
             'incident.reports.close',
             'incident.reports.export',
+            'incident.reports.evidence',
             // Investigation & RCA
             'investigation.reports.view',
             'investigation.reports.create',
@@ -236,6 +237,10 @@ final class CorePermissions
             'quality.ncrs.close',
             'quality.ncrs.export',
             'quality.complaints.view',
+            'quality.complaints.create',
+            'quality.complaints.update',
+            'quality.complaints.close',
+            'quality.complaints.export',
         ];
     }
 
@@ -272,6 +277,7 @@ final class CorePermissions
             'incident.reports.review',
             'incident.reports.close',
             'incident.reports.export',
+            'incident.reports.evidence',
         ];
 
         $incidentViewExport = [
@@ -283,6 +289,7 @@ final class CorePermissions
             'incident.reports.view',
             'incident.reports.create',
             'incident.reports.submit',
+            'incident.reports.evidence',
         ];
 
         $incidentSupervisor = [
@@ -290,6 +297,7 @@ final class CorePermissions
             'incident.reports.create',
             'incident.reports.update',
             'incident.reports.submit',
+            'incident.reports.evidence',
         ];
 
         $investigationFull = [
@@ -367,10 +375,10 @@ final class CorePermissions
         $securityView = ['security.incidents.view', 'security.visitor.view'];
         $securityCreate = ['security.incidents.view', 'security.incidents.create', 'security.incidents.update', 'security.visitor.view', 'security.visitor.log', 'security.patrols.view'];
 
-        $qualityFull = ['quality.ncrs.view', 'quality.ncrs.create', 'quality.ncrs.update', 'quality.ncrs.close', 'quality.ncrs.export', 'quality.complaints.view'];
-        $qualityViewExport = ['quality.ncrs.view', 'quality.ncrs.export', 'quality.complaints.view'];
+        $qualityFull = ['quality.ncrs.view', 'quality.ncrs.create', 'quality.ncrs.update', 'quality.ncrs.close', 'quality.ncrs.export', 'quality.complaints.view', 'quality.complaints.create', 'quality.complaints.update', 'quality.complaints.close', 'quality.complaints.export'];
+        $qualityViewExport = ['quality.ncrs.view', 'quality.ncrs.export', 'quality.complaints.view', 'quality.complaints.export'];
         $qualityView = ['quality.ncrs.view', 'quality.complaints.view'];
-        $qualityCreate = ['quality.ncrs.view', 'quality.ncrs.create', 'quality.ncrs.update', 'quality.complaints.view'];
+        $qualityCreate = ['quality.ncrs.view', 'quality.ncrs.create', 'quality.ncrs.update', 'quality.complaints.view', 'quality.complaints.create', 'quality.complaints.update'];
 
         $contractorFull = ['contractor.management.view', 'contractor.management.create', 'contractor.management.update', 'contractor.management.delete', 'contractor.management.export', 'contractor.management.approve'];
         $contractorViewExport = ['contractor.management.view', 'contractor.management.export'];

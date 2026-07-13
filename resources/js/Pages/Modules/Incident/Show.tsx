@@ -26,6 +26,7 @@ type Comment = { id: number; body: string; created_at: string; author?: { name: 
 type Activity = { id: number; event: string; description: string | null; created_at: string; actor_name: string | null };
 type WorkflowHistory = { id: number; from_status: string | null; to_status: string; action_label: string; reason: string | null; created_at: string };
 type Transition = { action_key: string; action_label: string; requires_reason: boolean };
+type ReasonAction = 'reject' | 'close';
 
 const categoryLabels: Record<string, string> = {
     accident: 'Accident', incident: 'Incident', near_miss: 'Near Miss', unsafe_act: 'Unsafe Act',
@@ -49,21 +50,33 @@ export default function Show({ incident, evidence, comments, activities, workflo
     availableTransitions: Transition[];
 }>) {
     const permissions = new Set(auth.permissions ?? []);
-    const [showCloseModal, setShowCloseModal] = useState(false);
+    const [reasonAction, setReasonAction] = useState<ReasonAction | null>(null);
     const [commentBody, setCommentBody] = useState('');
-    const { data: closeData, setData: setCloseData, post: postClose, processing: closing, errors: closeErrors } = useForm({ reason: '' });
+    const { data: reasonData, setData: setReasonData, post: postReason, processing: transitioning, errors: reasonErrors, reset: resetReason } = useForm({ reason: '' });
 
     function doAction(action: string, requiresReason = false) {
-        if (action === 'close') {
-            setShowCloseModal(true);
+        if (requiresReason && (action === 'close' || action === 'reject')) {
+            setReasonAction(action);
             return;
         }
         router.post(route(`incident.reports.${action}`, incident.id));
     }
 
-    function submitClose(e: FormEvent) {
+    function submitReason(e: FormEvent) {
         e.preventDefault();
-        postClose(route('incident.reports.close', incident.id), { onSuccess: () => setShowCloseModal(false) });
+        if (!reasonAction) return;
+        postReason(route(`incident.reports.${reasonAction}`, incident.id), {
+            onSuccess: () => { setReasonAction(null); resetReason(); },
+        });
+    }
+
+    function submitEvidence(e: FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        const form = e.currentTarget;
+        router.post(route('incident.reports.evidence.store', incident.id), new FormData(form), {
+            forceFormData: true,
+            onSuccess: () => form.reset(),
+        });
     }
 
     function submitComment(e: FormEvent) {
@@ -102,10 +115,12 @@ export default function Show({ incident, evidence, comments, activities, workflo
                     <div className="flex flex-wrap gap-2">
                         <Link href={route('incident.reports.index')} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">Kembali</Link>
                         {canEdit && <Link href={route('incident.reports.edit', incident.id)} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">Edit</Link>}
+                        {permissions.has('incident.reports.export') && <a href={route('incident.reports.print', incident.id)} target="_blank" rel="noreferrer" className="rounded-md bg-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Cetak / PDF</a>}
                         {availableTransitions.map((t) => {
-                            const canDo = permissions.has(`incident.reports.${t.action_key === 'submit' ? 'submit' : t.action_key === 'review' ? 'review' : t.action_key === 'close' ? 'close' : 'submit'}`);
+                            const actionPermissions: Record<string, string> = { submit: 'submit', review: 'review', reject: 'review', close: 'close' };
+                            const canDo = permissions.has(`incident.reports.${actionPermissions[t.action_key]}`);
                             if (!canDo) return null;
-                            const colors: Record<string, string> = { submit: 'bg-indigo-600 hover:bg-indigo-700', review: 'bg-blue-600 hover:bg-blue-700', close: 'bg-green-600 hover:bg-green-700' };
+                            const colors: Record<string, string> = { submit: 'bg-indigo-600 hover:bg-indigo-700', review: 'bg-blue-600 hover:bg-blue-700', reject: 'bg-red-600 hover:bg-red-700', close: 'bg-green-600 hover:bg-green-700' };
                             return (
                                 <button key={t.action_key} onClick={() => doAction(t.action_key, t.requires_reason)} className={`rounded-md px-4 py-2 text-sm font-medium text-white ${colors[t.action_key] ?? 'bg-gray-600 hover:bg-gray-700'}`}>
                                     {t.action_label}
@@ -141,6 +156,12 @@ export default function Show({ incident, evidence, comments, activities, workflo
                     {/* Evidence */}
                     <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
                         <h3 className="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">Evidence</h3>
+                        {permissions.has('incident.reports.evidence') && !['closed', 'rejected'].includes(incident.status) && (
+                            <form onSubmit={submitEvidence} className="mb-4 flex flex-col gap-2 rounded-lg border border-dashed border-gray-300 p-4 sm:flex-row sm:items-center dark:border-gray-600">
+                                <input type="file" name="file" required accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" className="min-w-0 flex-1 text-sm text-gray-600 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:font-semibold file:text-indigo-700 dark:text-gray-300" />
+                                <button type="submit" className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">Unggah Evidence</button>
+                            </form>
+                        )}
                         {evidence.length === 0 ? (
                             <p className="text-sm text-gray-500 dark:text-gray-400">Belum ada evidence file.</p>
                         ) : (
@@ -148,7 +169,7 @@ export default function Show({ incident, evidence, comments, activities, workflo
                                 {evidence.map((f) => (
                                     <li key={f.id} className="flex items-center justify-between text-sm">
                                         <span className="text-gray-700 dark:text-gray-300">📎 {f.original_name} ({(f.size / 1024).toFixed(0)}KB)</span>
-                                        <Link href={`/core/files/${f.id}/download`} className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400">Download</Link>
+                                        <a href={route('incident.reports.evidence.download', [incident.id, f.id])} className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400">Download</a>
                                     </li>
                                 ))}
                             </ul>
@@ -206,18 +227,18 @@ export default function Show({ incident, evidence, comments, activities, workflo
                 </div>
             </div>
 
-            {/* Close Modal */}
-            {showCloseModal && (
+            {/* Reason Modal */}
+            {reasonAction && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800">
-                        <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Tutup Laporan Insiden</h3>
-                        <form onSubmit={submitClose}>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Alasan Penutupan *</label>
-                            <textarea value={closeData.reason} onChange={(e) => setCloseData('reason', e.target.value)} rows={3} autoFocus className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
-                            {closeErrors.reason && <p className="mt-1 text-sm text-red-600">{closeErrors.reason}</p>}
+                        <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{reasonAction === 'reject' ? 'Tolak' : 'Tutup'} Laporan Insiden</h3>
+                        <form onSubmit={submitReason}>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Alasan *</label>
+                            <textarea value={reasonData.reason} onChange={(e) => setReasonData('reason', e.target.value)} rows={3} autoFocus className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
+                            {reasonErrors.reason && <p className="mt-1 text-sm text-red-600">{reasonErrors.reason}</p>}
                             <div className="mt-4 flex justify-end gap-2">
-                                <button type="button" onClick={() => setShowCloseModal(false)} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">Batal</button>
-                                <button type="submit" disabled={closing} className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">Tutup</button>
+                                <button type="button" onClick={() => setReasonAction(null)} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">Batal</button>
+                                <button type="submit" disabled={transitioning} className={`rounded-md px-4 py-2 text-sm font-medium text-white ${reasonAction === 'reject' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}>{reasonAction === 'reject' ? 'Tolak' : 'Tutup'}</button>
                             </div>
                         </form>
                     </div>

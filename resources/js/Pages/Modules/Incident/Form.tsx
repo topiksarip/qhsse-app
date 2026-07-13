@@ -9,6 +9,9 @@ type MasterData = {
     [key: string]: unknown;
 };
 
+type EmployeeOption = MasterData & { employee_no: string; site_id: number };
+type InvolvedPerson = { employee_id: number | ''; note: string };
+
 type Props = {
     item: {
         id: number;
@@ -24,12 +27,14 @@ type Props = {
         description: string;
         immediate_action: string | null;
         status: string;
+        involved_persons?: { id: number; pivot?: { note: string | null } }[];
     } | null;
     sites: MasterData[];
     areas: (MasterData & { site_id: number })[];
     departments: (MasterData & { site_id: number })[];
     severities: (MasterData & { level: number; color: string })[];
     priorities: (MasterData & { level: number; color: string })[];
+    employees: EmployeeOption[];
 };
 
 const categories = [
@@ -42,11 +47,11 @@ const categories = [
     { value: 'security_breach', label: 'Security Breach' },
 ];
 
-export default function Form({ item, sites, areas, departments, severities, priorities }: PageProps<Props>) {
+export default function Form({ item, sites, areas, departments, severities, priorities, employees }: PageProps<Props>) {
     const isEdit = item !== null;
     const isDraft = !item || item.status === 'draft';
 
-    const { data, setData, post, put, processing, errors } = useForm({
+    const { data, setData, transform, post, put, processing, errors } = useForm({
         title: item?.title ?? '',
         category: item?.category ?? '',
         occurred_at: item?.occurred_at ?? '',
@@ -57,17 +62,37 @@ export default function Form({ item, sites, areas, departments, severities, prio
         priority_id: item?.priority_id ?? '',
         description: item?.description ?? '',
         immediate_action: item?.immediate_action ?? '',
+        involved_persons: item?.involved_persons?.map((person) => ({
+            employee_id: person.id,
+            note: person.pivot?.note ?? '',
+        })) ?? [] as InvolvedPerson[],
         action: 'draft' as 'draft' | 'submit',
     });
 
     function submit(e: FormEvent, action: 'draft' | 'submit') {
         e.preventDefault();
-        setData('action', action);
+        transform((formData) => ({ ...formData, action }));
         if (isEdit) {
             put(route('incident.reports.update', item!.id));
         } else {
             post(route('incident.reports.store'));
         }
+    }
+
+    function changeSite(siteId: string) {
+        setData((current) => ({
+            ...current,
+            site_id: siteId,
+            area_id: '',
+            department_id: '',
+            involved_persons: [],
+        }));
+    }
+
+    function updatePerson(index: number, field: keyof InvolvedPerson, value: string) {
+        setData('involved_persons', data.involved_persons.map((person, personIndex) => personIndex === index
+            ? { ...person, [field]: field === 'employee_id' ? Number(value) || '' : value }
+            : person));
     }
 
     return (
@@ -114,7 +139,7 @@ export default function Form({ item, sites, areas, departments, severities, prio
                         <div className="grid gap-4 md:grid-cols-3">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Site *</label>
-                                <select value={data.site_id} onChange={(e) => setData('site_id', e.target.value as unknown as number)} disabled={!isDraft} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200">
+                                <select value={data.site_id} onChange={(e) => changeSite(e.target.value)} disabled={!isDraft} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200">
                                     <option value="">Pilih Site</option>
                                     {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                                 </select>
@@ -157,6 +182,39 @@ export default function Form({ item, sites, areas, departments, severities, prio
                                 </select>
                                 {errors.priority_id && <p className="mt-1 text-sm text-red-600">{errors.priority_id}</p>}
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Orang Terlibat */}
+                    <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
+                        <div className="flex items-center justify-between gap-4">
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Orang Terlibat</h3>
+                                <p className="mt-1 text-sm text-gray-500">Tambahkan karyawan dari site kejadian bila relevan.</p>
+                            </div>
+                            {isDraft && (
+                                <button type="button" onClick={() => setData('involved_persons', [...data.involved_persons, { employee_id: '', note: '' }])} disabled={!data.site_id} className="rounded-md bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 disabled:opacity-50">
+                                    Tambah Orang
+                                </button>
+                            )}
+                        </div>
+                        <div className="mt-4 space-y-3">
+                            {data.involved_persons.length === 0 && <p className="text-sm text-gray-500">Belum ada orang terlibat.</p>}
+                            {data.involved_persons.map((person, index) => (
+                                <div key={index} className="grid gap-3 rounded-lg border border-gray-200 p-3 md:grid-cols-[1fr_1fr_auto] dark:border-gray-700">
+                                    <div>
+                                        <select value={person.employee_id} onChange={(event) => updatePerson(index, 'employee_id', event.target.value)} disabled={!isDraft} className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200">
+                                            <option value="">Pilih Karyawan</option>
+                                            {employees.filter((employee) => employee.site_id === Number(data.site_id)).map((employee) => (
+                                                <option key={employee.id} value={employee.id}>{employee.employee_no} — {employee.name}</option>
+                                            ))}
+                                        </select>
+                                        {errors[`involved_persons.${index}.employee_id`] && <p className="mt-1 text-sm text-red-600">{errors[`involved_persons.${index}.employee_id`]}</p>}
+                                    </div>
+                                    <input type="text" value={person.note} onChange={(event) => updatePerson(index, 'note', event.target.value)} disabled={!isDraft} placeholder="Catatan keterlibatan" className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
+                                    {isDraft && <button type="button" onClick={() => setData('involved_persons', data.involved_persons.filter((_, personIndex) => personIndex !== index))} className="rounded-md px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50">Hapus</button>}
+                                </div>
+                            ))}
                         </div>
                     </div>
 

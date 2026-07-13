@@ -1,21 +1,22 @@
 <?php
 
-use App\Http\Controllers\Core\CategoryController;
-use App\Http\Controllers\Core\PriorityController;
-use App\Http\Controllers\Core\RiskMatrixLevelController;
-use App\Http\Controllers\Core\SeverityController;
-use App\Http\Controllers\Core\StatusController;
 use App\Http\Controllers\Core\AreaController;
 use App\Http\Controllers\Core\AuditLogController;
-use App\Http\Controllers\Core\DepartmentController;
-use App\Http\Controllers\Core\PositionController;
-use App\Http\Controllers\Core\SiteController;
+use App\Http\Controllers\Core\CategoryController;
 use App\Http\Controllers\Core\CommentActivityController;
 use App\Http\Controllers\Core\CompanyController;
+use App\Http\Controllers\Core\DepartmentController;
 use App\Http\Controllers\Core\EmployeeController;
 use App\Http\Controllers\Core\ManagedFileController;
 use App\Http\Controllers\Core\NotificationController;
 use App\Http\Controllers\Core\NumberingFormatController;
+use App\Http\Controllers\Core\PositionController;
+use App\Http\Controllers\Core\PriorityController;
+use App\Http\Controllers\Core\RiskMatrixLevelController;
+use App\Http\Controllers\Core\RolePermissionController;
+use App\Http\Controllers\Core\SeverityController;
+use App\Http\Controllers\Core\SiteController;
+use App\Http\Controllers\Core\StatusController;
 use App\Http\Controllers\Core\UserAdminController;
 use App\Http\Controllers\Core\WorkflowController;
 use Illuminate\Support\Facades\Route;
@@ -30,12 +31,11 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware(['auth', 'verified'])->prefix('core')->name('core.')->group(function (): void {
+Route::middleware(['auth', 'verified', 'active'])->prefix('core')->name('core.')->group(function (): void {
     Route::get('/health', fn () => response()->json([
         'status' => 'ok',
         'scope' => 'core-foundation',
     ]))->name('health');
-
 
     foreach ([
         'severities' => [SeverityController::class, 'severity'],
@@ -150,4 +150,9 @@ Route::middleware(['auth', 'verified'])->prefix('core')->name('core.')->group(fu
     Route::delete('users/{user}', [UserAdminController::class, 'destroy'])
         ->middleware('permission:core.users.deactivate')
         ->name('users.destroy');
+
+    Route::middleware('permission:core.roles.manage')->group(function (): void {
+        Route::get('roles', [RolePermissionController::class, 'index'])->name('roles.index');
+        Route::put('roles/{role}/permissions', [RolePermissionController::class, 'update'])->name('roles.permissions.update');
+    });
 });

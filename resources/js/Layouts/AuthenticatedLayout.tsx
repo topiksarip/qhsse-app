@@ -73,9 +73,12 @@ const menuGroups: { label: string; items: MenuItem[] }[] = [
     {
         label: 'System Admin',
         items: [
+            { label: 'Admin Dashboard', routeName: 'admin.dashboard', active: 'admin.dashboard', permission: 'core.sites.view' },
+            { label: 'Bulk Import', routeName: 'admin.import.create', active: 'admin.import.*', permission: 'core.employees.create' },
             { label: 'Companies', routeName: 'core.companies.index', active: 'core.companies.*', permission: 'core.companies.view' },
             { label: 'Employees', routeName: 'core.employees.index', active: 'core.employees.*', permission: 'core.employees.view' },
             { label: 'Users', routeName: 'core.users.index', active: 'core.users.*', permission: 'core.users.view' },
+            { label: 'Role & Permission', routeName: 'core.roles.index', active: 'core.roles.*', permission: 'core.roles.manage' },
             { label: 'Numbering', routeName: 'core.numbering.index', active: 'core.numbering.*', permission: 'core.numbering.view' },
             { label: 'Workflow', routeName: 'core.workflow.index', active: 'core.workflow.*', permission: 'core.workflow.view' },
             { label: 'Audit Logs', routeName: 'core.audit-logs.index', active: 'core.audit-logs.*', permission: 'core.audit.view' },

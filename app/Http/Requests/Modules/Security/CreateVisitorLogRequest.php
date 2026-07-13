@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Modules\Security;
 
+use App\Models\Core\Users\Employee;
+use App\Models\Modules\Security\VisitorLog;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class CreateVisitorLogRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('create', \App\Models\Modules\Security\VisitorLog::class);
+        return $this->user()->can('create', VisitorLog::class);
     }
 
     public function rules(): array
@@ -28,6 +31,17 @@ class CreateVisitorLogRequest extends FormRequest
             'checked_in_at' => ['required', 'date'],
             'notes' => ['nullable', 'string'],
         ];
+    }
+
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            $siteId = (int) $this->input('site_id');
+            $hostId = (int) $this->input('host_employee_id');
+            if ($hostId && ! Employee::query()->whereKey($hostId)->where('site_id', $siteId)->where('is_active', true)->exists()) {
+                $validator->errors()->add('host_employee_id', 'Host harus karyawan aktif pada site yang dipilih.');
+            }
+        }];
     }
 
     public function attributes(): array

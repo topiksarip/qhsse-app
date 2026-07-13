@@ -4,25 +4,36 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Modules\Security;
 
+use App\Core\Activity\ActivityService;
+use App\Core\Audit\AuditService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Modules\Security\CreateVisitorLogRequest;
 use App\Http\Requests\Modules\Security\UpdateVisitorLogRequest;
 use App\Models\Core\MasterData\Site;
 use App\Models\Core\Users\Employee;
 use App\Models\Modules\Security\VisitorLog;
+use App\Modules\Security\VisitorAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class VisitorLogController extends Controller
 {
+    public function __construct(
+        private readonly VisitorAccess $access,
+        private readonly AuditService $audit,
+        private readonly ActivityService $activity,
+    ) {}
+
     public function index(): Response
     {
         $this->authorize('viewAny', VisitorLog::class);
 
-        $query = VisitorLog::query()
-            ->with(['site', 'hostEmployee', 'checkedInBy', 'checkedOutBy']);
+        $query = $this->access->scope(Auth::user(), VisitorLog::query()
+            ->with(['site', 'hostEmployee', 'checkedInBy', 'checkedOutBy']));
 
         // Search
         if ($search = request('search')) {
@@ -30,7 +41,7 @@ class VisitorLogController extends Controller
                 $q->where('visitor_name', 'like', "%{$search}%")
                     ->orWhere('visitor_company', 'like', "%{$search}%")
                     ->orWhere('visitor_id_number', 'like', "%{$search}%")
-                    ->orWhereHas('hostEmployee', fn($q) => $q->where('name', 'like', "%{$search}%"));
+                    ->orWhereHas('hostEmployee', fn ($q) => $q->where('name', 'like', "%{$search}%"));
             });
         }
 
@@ -73,7 +84,7 @@ class VisitorLogController extends Controller
                 'from' => request('from'),
                 'to' => request('to'),
             ],
-            'sites' => Site::orderBy('name')->get(['id', 'name']),
+            'sites' => $this->sites(),
             'can' => [
                 'create' => Auth::user()->can('create', VisitorLog::class),
                 'export' => Auth::user()->can('export', VisitorLog::class),
@@ -87,8 +98,8 @@ class VisitorLogController extends Controller
 
         return Inertia::render('Modules/Security/VisitorLog/Form', [
             'visitor' => null,
-            'sites' => Site::orderBy('name')->get(['id', 'name']),
-            'employees' => Employee::with('user')->orderBy('name')->get(['id', 'name', 'user_id']),
+            'sites' => $this->sites(),
+            'employees' => $this->employees(),
         ]);
     }
 
@@ -96,11 +107,18 @@ class VisitorLogController extends Controller
     {
         $this->authorize('create', VisitorLog::class);
 
-        $visitor = VisitorLog::create([
-            ...$request->validated(),
-            'checked_in_by' => Auth::id(),
-            'status' => 'checked_in',
-        ]);
+        $this->access->ensureSiteAllowed($request->user(), (int) $request->validated('site_id'));
+        $visitor = DB::transaction(function () use ($request): VisitorLog {
+            $visitor = VisitorLog::create([
+                ...$request->validated(),
+                'checked_in_by' => Auth::id(),
+                'status' => 'checked_in',
+            ]);
+            $this->audit->created($visitor, $request->user(), 'security_visitor', $visitor->id);
+            $this->activity->log('security_visitor', $visitor->id, 'checked_in', 'Pengunjung di-check-in.', $request->user());
+
+            return $visitor;
+        });
 
         return redirect()->route('security.visitors.show', $visitor)
             ->with('success', 'Pengunjung berhasil di-check-in.');
@@ -127,8 +145,8 @@ class VisitorLogController extends Controller
 
         return Inertia::render('Modules/Security/VisitorLog/Form', [
             'visitor' => $visitor->load(['site', 'hostEmployee']),
-            'sites' => Site::orderBy('name')->get(['id', 'name']),
-            'employees' => Employee::with('user')->orderBy('name')->get(['id', 'name', 'user_id']),
+            'sites' => $this->sites(),
+            'employees' => $this->employees(),
         ]);
     }
 
@@ -136,7 +154,11 @@ class VisitorLogController extends Controller
     {
         $this->authorize('update', $visitor);
 
+        $this->access->ensureSiteAllowed($request->user(), (int) $request->validated('site_id'));
+        $old = $visitor->getOriginal();
         $visitor->update($request->validated());
+        $this->audit->updated($visitor, $old, $request->user(), 'security_visitor', $visitor->id);
+        $this->activity->log('security_visitor', $visitor->id, 'updated', 'Data pengunjung diperbarui.', $request->user());
 
         return redirect()->route('security.visitors.show', $visitor)
             ->with('success', 'Data pengunjung berhasil diperbarui.');
@@ -146,22 +168,29 @@ class VisitorLogController extends Controller
     {
         $this->authorize('checkOut', $visitor);
 
-        $visitor->update([
-            'checked_out_at' => now(),
-            'checked_out_by' => Auth::id(),
-            'status' => 'checked_out',
-        ]);
+        DB::transaction(function () use ($visitor): void {
+            $locked = VisitorLog::query()->lockForUpdate()->findOrFail($visitor->id);
+            abort_unless($locked->status === 'checked_in' && $locked->checked_out_at === null, 409, 'Pengunjung sudah di-check-out.');
+            $old = $locked->getOriginal();
+            $locked->update([
+                'checked_out_at' => now(),
+                'checked_out_by' => Auth::id(),
+                'status' => 'checked_out',
+            ]);
+            $this->audit->updated($locked, $old, Auth::user(), 'security_visitor', $locked->id);
+            $this->activity->log('security_visitor', $locked->id, 'checked_out', 'Pengunjung di-check-out.', Auth::user());
+        });
 
         return redirect()->route('security.visitors.show', $visitor)
             ->with('success', 'Pengunjung berhasil di-check-out.');
     }
 
-    public function export(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function export(): StreamedResponse
     {
         $this->authorize('export', VisitorLog::class);
 
-        $query = VisitorLog::query()
-            ->with(['site', 'hostEmployee', 'checkedInBy', 'checkedOutBy']);
+        $query = $this->access->scope(Auth::user(), VisitorLog::query()
+            ->with(['site', 'hostEmployee', 'checkedInBy', 'checkedOutBy']));
 
         // Apply same filters as index
         if ($search = request('search')) {
@@ -169,7 +198,7 @@ class VisitorLogController extends Controller
                 $q->where('visitor_name', 'like', "%{$search}%")
                     ->orWhere('visitor_company', 'like', "%{$search}%")
                     ->orWhere('visitor_id_number', 'like', "%{$search}%")
-                    ->orWhereHas('hostEmployee', fn($q) => $q->where('name', 'like', "%{$search}%"));
+                    ->orWhereHas('hostEmployee', fn ($q) => $q->where('name', 'like', "%{$search}%"));
             });
         }
 
@@ -216,7 +245,7 @@ class VisitorLogController extends Controller
             'Petugas Check-Out',
         ];
 
-        $data = $visitors->map(fn($v) => [
+        $data = $visitors->map(fn ($v) => [
             $v->visitor_name,
             $v->visitor_company ?? '—',
             $v->visitor_type,
@@ -233,7 +262,7 @@ class VisitorLogController extends Controller
             $v->checkedOutBy->name ?? '—',
         ]);
 
-        $filename = 'visitor_logs_' . now()->format('Ymd_His') . '.csv';
+        $filename = 'visitor_logs_'.now()->format('Ymd_His').'.csv';
 
         return response()->streamDownload(function () use ($headers, $data) {
             $handle = fopen('php://output', 'w');
@@ -246,5 +275,23 @@ class VisitorLogController extends Controller
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
+    }
+
+    private function sites()
+    {
+        $ids = $this->access->allowedSiteIds(Auth::user());
+
+        return Site::query()->where('is_active', true)
+            ->when($ids !== null, fn ($query) => $query->whereIn('id', $ids))
+            ->orderBy('name')->get(['id', 'name']);
+    }
+
+    private function employees()
+    {
+        $ids = $this->access->allowedSiteIds(Auth::user());
+
+        return Employee::query()->where('is_active', true)
+            ->when($ids !== null, fn ($query) => $query->whereIn('site_id', $ids))
+            ->orderBy('name')->get(['id', 'name', 'site_id']);
     }
 }

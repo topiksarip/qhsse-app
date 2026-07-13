@@ -84,7 +84,7 @@ class IncidentReport extends Model
     /** @return BelongsToMany<Employee> */
     public function involvedPersons(): BelongsToMany
     {
-        return $this->belongsToMany(Employee::class, 'incident_involved_persons')
+        return $this->belongsToMany(Employee::class, 'incident_involved_persons', 'incident_id', 'employee_id')
             ->withPivot('note')
             ->withTimestamps();
     }

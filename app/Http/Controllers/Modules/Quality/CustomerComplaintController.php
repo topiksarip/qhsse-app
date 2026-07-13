@@ -4,29 +4,38 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Modules\Quality;
 
+use App\Core\Activity\ActivityService;
+use App\Core\Audit\AuditService;
 use App\Core\Numbering\NumberingService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Modules\Quality\CloseCustomerComplaintRequest;
 use App\Http\Requests\Modules\Quality\CreateCustomerComplaintRequest;
 use App\Http\Requests\Modules\Quality\UpdateCustomerComplaintRequest;
 use App\Models\Core\MasterData\Severity;
 use App\Models\Core\MasterData\Site;
 use App\Models\Modules\Quality\CustomerComplaint;
+use App\Modules\Quality\ComplaintAccess;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CustomerComplaintController extends Controller
 {
     public function __construct(
-        private readonly NumberingService $numbering
+        private readonly NumberingService $numbering,
+        private readonly ComplaintAccess $access,
+        private readonly AuditService $audit,
+        private readonly ActivityService $activity,
     ) {}
 
     public function index(): Response
     {
         $this->authorize('viewAny', CustomerComplaint::class);
 
-        $query = CustomerComplaint::query()->with(['site', 'severity']);
+        $query = $this->access->scope(Auth::user(), CustomerComplaint::query()->with(['site', 'severity']));
 
         if ($search = request('search')) {
             $query->where(function ($q) use ($search) {
@@ -59,7 +68,7 @@ class CustomerComplaintController extends Controller
                 'status' => request('status'),
                 'severity_id' => request('severity_id'),
             ],
-            'sites' => Site::orderBy('name')->get(['id', 'name']),
+            'sites' => $this->sites(),
             'severities' => Severity::orderBy('name')->get(['id', 'name', 'color']),
             'can' => [
                 'create' => Auth::user()->can('create', CustomerComplaint::class),
@@ -74,7 +83,7 @@ class CustomerComplaintController extends Controller
 
         return Inertia::render('Modules/Quality/CustomerComplaint/Form', [
             'complaint' => null,
-            'sites' => Site::orderBy('name')->get(['id', 'name']),
+            'sites' => $this->sites(),
             'severities' => Severity::orderBy('name')->get(['id', 'name', 'color']),
         ]);
     }
@@ -85,11 +94,17 @@ class CustomerComplaintController extends Controller
 
         $complaintNumber = $this->numbering->generate('quality_complaint', $request->user());
 
-        $complaint = CustomerComplaint::create([
-            ...$request->validated(),
-            'complaint_number' => $complaintNumber->number,
-            'status' => 'open',
-        ]);
+        $complaint = DB::transaction(function () use ($request, $complaintNumber): CustomerComplaint {
+            $complaint = CustomerComplaint::create([
+                ...$request->validated(),
+                'complaint_number' => $complaintNumber->number,
+                'status' => 'open',
+            ]);
+            $this->audit->created($complaint, $request->user(), 'quality_complaint', $complaint->id);
+            $this->activity->log('quality_complaint', $complaint->id, 'created', 'Complaint customer dicatat.', $request->user());
+
+            return $complaint;
+        });
 
         return redirect()->route('quality.complaints.show', $complaint)
             ->with('success', 'Complaint berhasil dicatat.');
@@ -116,7 +131,7 @@ class CustomerComplaintController extends Controller
 
         return Inertia::render('Modules/Quality/CustomerComplaint/Form', [
             'complaint' => $complaint->load('site'),
-            'sites' => Site::orderBy('name')->get(['id', 'name']),
+            'sites' => $this->sites(),
             'severities' => Severity::orderBy('name')->get(['id', 'name', 'color']),
         ]);
     }
@@ -125,31 +140,41 @@ class CustomerComplaintController extends Controller
     {
         $this->authorize('update', $complaint);
 
+        $old = $complaint->getOriginal();
         $complaint->update($request->validated());
+        $this->audit->updated($complaint, $old, $request->user(), 'quality_complaint', $complaint->id);
+        $this->activity->log('quality_complaint', $complaint->id, 'updated', 'Complaint customer diperbarui.', $request->user());
 
         return redirect()->route('quality.complaints.show', $complaint)
             ->with('success', 'Complaint berhasil diperbarui.');
     }
 
-    public function close(CustomerComplaint $complaint): RedirectResponse
+    public function close(CloseCustomerComplaintRequest $request, CustomerComplaint $complaint): RedirectResponse
     {
         $this->authorize('close', $complaint);
 
-        $complaint->update([
-            'status' => 'closed',
-            'closed_at' => now(),
-            'resolution' => request('resolution'),
-        ]);
+        DB::transaction(function () use ($request, $complaint): void {
+            $locked = CustomerComplaint::query()->lockForUpdate()->findOrFail($complaint->id);
+            abort_unless($locked->isOpen(), 409, 'Complaint sudah ditutup.');
+            $old = $locked->getOriginal();
+            $locked->update([
+                'status' => 'closed',
+                'closed_at' => now(),
+                'resolution' => $request->validated('resolution'),
+            ]);
+            $this->audit->updated($locked, $old, $request->user(), 'quality_complaint', $locked->id);
+            $this->activity->log('quality_complaint', $locked->id, 'closed', 'Complaint customer ditutup.', $request->user());
+        });
 
         return redirect()->route('quality.complaints.show', $complaint)
             ->with('success', 'Complaint berhasil ditutup.');
     }
 
-    public function export(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function export(): StreamedResponse
     {
         $this->authorize('export', CustomerComplaint::class);
 
-        $query = CustomerComplaint::query()->with(['site', 'severity']);
+        $query = $this->access->scope(Auth::user(), CustomerComplaint::query()->with(['site', 'severity']));
 
         if ($search = request('search')) {
             $query->where(function ($q) use ($search) {
@@ -171,7 +196,7 @@ class CustomerComplaintController extends Controller
 
         $headers = ['Nomor', 'Nama Customer', 'Kontak', 'Judul', 'Produk/Layanan', 'Site', 'Severity', 'Status', 'Tanggal'];
 
-        $data = $complaints->map(fn($c) => [
+        $data = $complaints->map(fn ($c) => [
             $c->complaint_number,
             $c->customer_name,
             $c->customer_contact,
@@ -183,7 +208,7 @@ class CustomerComplaintController extends Controller
             $c->created_at->format('d/m/Y'),
         ]);
 
-        $filename = 'customer_complaints_' . now()->format('Ymd_His') . '.csv';
+        $filename = 'customer_complaints_'.now()->format('Ymd_His').'.csv';
 
         return response()->streamDownload(function () use ($headers, $data) {
             $handle = fopen('php://output', 'w');
@@ -196,5 +221,14 @@ class CustomerComplaintController extends Controller
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
+    }
+
+    private function sites()
+    {
+        $ids = $this->access->allowedSiteIds(Auth::user());
+
+        return Site::query()->where('is_active', true)
+            ->when($ids !== null, fn ($query) => $query->whereIn('id', $ids))
+            ->orderBy('name')->get(['id', 'name']);
     }
 }

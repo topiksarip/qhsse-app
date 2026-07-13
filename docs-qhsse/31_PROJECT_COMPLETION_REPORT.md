@@ -4,6 +4,8 @@
 **Project:** QHSSE App v3  
 **Analysis:** Full module/entity inventory
 
+> **Verification update — 2026-07-13:** canonical regression is now **403 tests / 1,737 assertions passing**, focused P1 acceptance is **59 tests / 284 assertions passing**, frontend build and temporary SQLite fresh migration/seed pass. The historical percentages and entity counts below remain a 2026-07-12 snapshot and must not be interpreted as production UAT evidence for every module. Current release gates are tracked in module handoffs and `docs-qhsse/04_MODULE_REGISTER.md`.
+
 ---
 
 ## 📊 MODULE/ENTITY INVENTORY: 20 TOTAL
@@ -190,7 +192,7 @@
 | Feature Implementation | ✅ All working | 100% |
 | Authorization | ✅ RBAC complete | 100% |
 | Database Compatibility | ✅ PostgreSQL + SQLite | 100% |
-| Unit/Feature Tests | ⚠️ 253/298 passing | 85% |
+| Unit/Feature Tests | ✅ 403/403 passing (1,737 assertions) | 100% |
 | Documentation | ✅ Complete | 100% |
 
 ---
@@ -232,7 +234,7 @@
 - ✅ File Management: **100%**
 - ✅ Numbering: **100%**
 - ✅ UI Complete: **100%** (55 pages)
-- ⚠️ Testing: **85%** (45 failures remain)
+- ✅ Automated regression: **100%** (403 tests passing on 2026-07-13)
 - ⚠️ Production Config: **90%** (debug mode, minor polish)
 
 ### **PRODUCTION READINESS: 90%**
@@ -245,7 +247,6 @@
 - ✅ Full stack implemented
 
 **Needs Work:**
-- ⚠️ Fix 45 test failures (scope/seed issues)
 - ⚠️ Set APP_DEBUG=false
 - ⚠️ UAT with real company data
 - ⚠️ Performance optimization (N+1 queries)

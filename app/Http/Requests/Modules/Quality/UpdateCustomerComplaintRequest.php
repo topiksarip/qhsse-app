@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Modules\Quality;
 
+use App\Modules\Quality\ComplaintAccess;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateCustomerComplaintRequest extends FormRequest
@@ -11,6 +12,7 @@ class UpdateCustomerComplaintRequest extends FormRequest
     public function authorize(): bool
     {
         $complaint = $this->route('complaint');
+
         return $this->user()->can('update', $complaint);
     }
 
@@ -25,6 +27,11 @@ class UpdateCustomerComplaintRequest extends FormRequest
             'product_service' => ['nullable', 'string', 'max:255'],
             'severity_id' => ['required', 'integer', 'exists:severities,id'],
         ];
+    }
+
+    protected function passedValidation(): void
+    {
+        app(ComplaintAccess::class)->ensureSiteAllowed($this->user(), (int) $this->input('site_id'));
     }
 
     public function attributes(): array

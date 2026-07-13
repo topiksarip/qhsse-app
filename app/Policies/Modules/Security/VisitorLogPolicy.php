@@ -6,6 +6,7 @@ namespace App\Policies\Modules\Security;
 
 use App\Models\Modules\Security\VisitorLog;
 use App\Models\User;
+use App\Modules\Security\VisitorAccess;
 
 class VisitorLogPolicy
 {
@@ -22,7 +23,8 @@ class VisitorLogPolicy
      */
     public function view(User $user, VisitorLog $visitor): bool
     {
-        return $user->hasPermissionTo('security.visitor.view');
+        return $user->hasPermissionTo('security.visitor.view')
+            && app(VisitorAccess::class)->canAccess($user, $visitor);
     }
 
     /**
@@ -40,6 +42,7 @@ class VisitorLogPolicy
     public function update(User $user, VisitorLog $visitor): bool
     {
         return $user->hasPermissionTo('security.visitor.log')
+            && app(VisitorAccess::class)->canAccess($user, $visitor)
             && $visitor->checked_out_at === null;
     }
 
@@ -50,6 +53,7 @@ class VisitorLogPolicy
     public function checkOut(User $user, VisitorLog $visitor): bool
     {
         return $user->hasPermissionTo('security.visitor.log')
+            && app(VisitorAccess::class)->canAccess($user, $visitor)
             && $visitor->status === 'checked_in'
             && $visitor->checked_out_at === null;
     }

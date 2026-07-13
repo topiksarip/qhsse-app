@@ -2,8 +2,8 @@
 
 namespace Database\Factories\Modules\Security;
 
-use App\Models\Core\MasterData\Employee;
 use App\Models\Core\MasterData\Site;
+use App\Models\Core\Users\Employee;
 use App\Models\Modules\Security\VisitorLog;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -17,7 +17,7 @@ class VisitorLogFactory extends Factory
 
     public function definition(): array
     {
-        $type = fake()->randomElement(['vendor', 'contractor', 'guest', 'government', 'other']);
+        $type = fake()->randomElement(['KTP', 'SIM', 'Passport', 'Lainnya']);
         $status = fake()->randomElement(['checked_in', 'checked_out']);
         $checkedIn = fake()->dateTimeBetween('-7 days', 'now');
 
@@ -25,7 +25,7 @@ class VisitorLogFactory extends Factory
             'visitor_name' => fake()->name(),
             'visitor_type' => $type,
             'visitor_id_number' => fake()->numerify('################'),
-            'visitor_company' => $type === 'guest' ? null : fake()->company(),
+            'visitor_company' => fake()->optional()->company(),
             'visitor_phone' => fake()->phoneNumber(),
             'host_employee_id' => Employee::factory(),
             'site_id' => Site::factory(),

@@ -2,7 +2,11 @@
 
 use App\Http\Controllers\Modules\Audit\AuditController;
 use App\Http\Controllers\Modules\DocumentControl\DocumentControlController;
+use App\Http\Controllers\Modules\Incident\IncidentEvidenceController;
 use App\Http\Controllers\Modules\Incident\IncidentReportController;
+use App\Http\Controllers\Modules\Incident\IncidentReportPrintController;
+use App\Http\Controllers\Modules\Incident\IncidentWorkflowController;
+
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->prefix('modules')->name('modules.')->group(function (): void {
@@ -13,7 +17,7 @@ Route::middleware(['auth', 'verified'])->prefix('modules')->name('modules.')->gr
 });
 
 // Incident Reporting Module
-Route::middleware(['auth', 'verified'])
+Route::middleware(['auth', 'verified', 'active'])
     ->prefix('incident-reports')
     ->name('incident.reports.')
     ->group(function (): void {
@@ -33,6 +37,10 @@ Route::middleware(['auth', 'verified'])
             ->name('export')
             ->middleware('permission:incident.reports.export');
 
+        Route::get('/{incidentReport}/print', IncidentReportPrintController::class)
+            ->name('print')
+            ->middleware('permission:incident.reports.export');
+
         Route::get('/{incidentReport}', [IncidentReportController::class, 'show'])
             ->name('show')
             ->middleware('permission:incident.reports.view');
@@ -45,17 +53,29 @@ Route::middleware(['auth', 'verified'])
             ->name('update')
             ->middleware('permission:incident.reports.update');
 
-        Route::post('/{incidentReport}/submit', [IncidentReportController::class, 'submit'])
+        Route::post('/{incidentReport}/submit', [IncidentWorkflowController::class, 'submit'])
             ->name('submit')
             ->middleware('permission:incident.reports.submit');
 
-        Route::post('/{incidentReport}/review', [IncidentReportController::class, 'review'])
+        Route::post('/{incidentReport}/review', [IncidentWorkflowController::class, 'review'])
             ->name('review')
             ->middleware('permission:incident.reports.review');
 
-        Route::post('/{incidentReport}/close', [IncidentReportController::class, 'close'])
+        Route::post('/{incidentReport}/reject', [IncidentWorkflowController::class, 'reject'])
+            ->name('reject')
+            ->middleware('permission:incident.reports.review');
+
+        Route::post('/{incidentReport}/close', [IncidentWorkflowController::class, 'close'])
             ->name('close')
             ->middleware('permission:incident.reports.close');
+
+        Route::post('/{incidentReport}/evidence', [IncidentEvidenceController::class, 'store'])
+            ->name('evidence.store')
+            ->middleware('permission:incident.reports.evidence');
+
+        Route::get('/{incidentReport}/evidence/{file}/download', [IncidentEvidenceController::class, 'download'])
+            ->name('evidence.download')
+            ->middleware('permission:incident.reports.view');
     });
 
 // Investigation & RCA Module

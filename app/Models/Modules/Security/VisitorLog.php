@@ -2,8 +2,8 @@
 
 namespace App\Models\Modules\Security;
 
-use App\Models\Core\MasterData\Employee;
 use App\Models\Core\MasterData\Site;
+use App\Models\Core\Users\Employee;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -92,11 +92,10 @@ class VisitorLog extends Model
     public static function getVisitorTypes(): array
     {
         return [
-            'vendor' => 'Vendor',
-            'contractor' => 'Contractor',
-            'guest' => 'Guest',
-            'government' => 'Government',
-            'other' => 'Other',
+            'KTP' => 'KTP',
+            'SIM' => 'SIM',
+            'Passport' => 'Passport',
+            'Lainnya' => 'Lainnya',
         ];
     }
 

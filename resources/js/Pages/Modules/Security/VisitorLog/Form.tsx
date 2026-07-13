@@ -10,7 +10,7 @@ import { PageProps } from '@/types';
 interface Employee {
     id: number;
     name: string;
-    user_id: number | null;
+    site_id: number;
 }
 
 interface Site {
@@ -53,6 +53,7 @@ export default function Form({ visitor, sites, employees }: Props) {
         checked_in_at: visitor?.checked_in_at || new Date().toISOString().slice(0, 16),
         notes: visitor?.notes || '',
     });
+    const availableEmployees = employees.filter((employee) => !data.site_id || employee.site_id === Number(data.site_id));
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -168,7 +169,10 @@ export default function Form({ visitor, sites, employees }: Props) {
                                 <select
                                     id="site_id"
                                     value={data.site_id}
-                                    onChange={(e) => setData('site_id', e.target.value)}
+                                    onChange={(e) => {
+                                        setData('site_id', e.target.value);
+                                        setData('host_employee_id', '');
+                                    }}
                                     className="mt-1 block w-full border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:border-blue-500 dark:focus:border-blue-600 focus:ring-blue-500 dark:focus:ring-blue-600 rounded-lg shadow-sm"
                                     required
                                 >
@@ -190,7 +194,7 @@ export default function Form({ visitor, sites, employees }: Props) {
                                     required
                                 >
                                     <option value="">Pilih Host</option>
-                                    {employees.map((emp) => (
+                                    {availableEmployees.map((emp) => (
                                         <option key={emp.id} value={emp.id}>{emp.name}</option>
                                     ))}
                                 </select>
