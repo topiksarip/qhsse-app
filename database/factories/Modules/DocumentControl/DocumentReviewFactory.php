@@ -17,7 +17,7 @@ class DocumentReviewFactory extends Factory
             'document_id' => ControlledDocument::factory(),
             'reviewer_id' => null,
             'review_date' => null,
-            'review_notes' => fake()->optional()->paragraph(),
+            'review_notes' => $this->faker->optional()->paragraph(),
             'decision' => 'pending',
         ];
     }

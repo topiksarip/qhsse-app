@@ -26,10 +26,10 @@ class EmergencyContactFactory extends Factory
         ];
 
         return [
-            'name' => fake()->name(),
-            'role' => fake()->randomElement($roles),
-            'phone' => fake()->phoneNumber(),
-            'email' => fake()->optional(0.7)->safeEmail(),
+            'name' => $this->faker->name(),
+            'role' => $this->faker->randomElement($roles),
+            'phone' => $this->faker->phoneNumber(),
+            'email' => $this->faker->optional(0.7)->safeEmail(),
             'site_id' => Site::factory(),
             'is_active' => true,
         ];

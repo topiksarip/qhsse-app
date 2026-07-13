@@ -23,7 +23,7 @@ class PermitChecklistFactory extends Factory
     {
         return [
             'permit_id' => Permit::factory(),
-            'item_text' => fake()->sentence(8),
+            'item_text' => $this->faker->sentence(8),
             'is_checked' => false,
             'checked_by' => null,
             'checked_at' => null,
@@ -34,10 +34,11 @@ class PermitChecklistFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             $checker = User::factory()->create();
+
             return [
                 'is_checked' => true,
                 'checked_by' => $checker->id,
-                'checked_at' => now()->subMinutes(fake()->numberBetween(5, 120)),
+                'checked_at' => now()->subMinutes($this->faker->numberBetween(5, 120)),
             ];
         });
     }

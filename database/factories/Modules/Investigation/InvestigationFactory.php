@@ -13,9 +13,9 @@ class InvestigationFactory extends Factory
     public function definition(): array
     {
         return [
-            'investigation_number' => 'INV-' . now()->year . '-' . str_pad((string) fake()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
+            'investigation_number' => 'INV-'.now()->year.'-'.str_pad((string) $this->faker->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
             'incident_id' => IncidentReport::factory(),
-            'title' => fake()->sentence(6),
+            'title' => $this->faker->sentence(6),
             'status' => 'draft',
             'root_cause' => null,
             'five_whys' => null,

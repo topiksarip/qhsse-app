@@ -21,27 +21,27 @@ class PermitFactory extends Factory
      */
     public function definition(): array
     {
-        $startDatetime = fake()->dateTimeBetween('-1 month', '+2 weeks');
-        $validityHours = fake()->randomElement([8, 12, 24, 48, 72]);
+        $startDatetime = $this->faker->dateTimeBetween('-1 month', '+2 weeks');
+        $validityHours = $this->faker->randomElement([8, 12, 24, 48, 72]);
         $endDatetime = (clone $startDatetime)->modify("+{$validityHours} hours");
 
         return [
-            'permit_number' => 'PTW-'.now()->year.'-'.str_pad((string) fake()->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
-            'type' => fake()->randomElement(['hot_work', 'working_at_height', 'confined_space', 'electrical', 'excavation', 'lifting', 'other']),
-            'title' => fake()->sentence(5),
-            'description' => fake()->paragraph(3),
+            'permit_number' => 'PTW-'.now()->year.'-'.str_pad((string) $this->faker->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
+            'type' => $this->faker->randomElement(['hot_work', 'working_at_height', 'confined_space', 'electrical', 'excavation', 'lifting', 'other']),
+            'title' => $this->faker->sentence(5),
+            'description' => $this->faker->paragraph(3),
             'site_id' => Site::factory(),
             'area_id' => null,
             'department_id' => null,
             'contractor_id' => null,
-            'work_location' => fake()->randomElement(['Building A', 'Warehouse 2', 'Production Floor', 'Outdoor Area', 'Maintenance Shop']),
-            'work_description' => fake()->paragraph(5),
+            'work_location' => $this->faker->randomElement(['Building A', 'Warehouse 2', 'Production Floor', 'Outdoor Area', 'Maintenance Shop']),
+            'work_description' => $this->faker->paragraph(5),
             'start_datetime' => $startDatetime,
             'end_datetime' => $endDatetime,
             'validity_hours' => $validityHours,
             'status' => 'draft',
-            'risk_level' => fake()->randomElement(['low', 'medium', 'high']),
-            'jsa_reference' => fake()->optional(0.3)->bothify('JSA-####'),
+            'risk_level' => $this->faker->randomElement(['low', 'medium', 'high']),
+            'jsa_reference' => $this->faker->optional(0.3)->bothify('JSA-####'),
             'approved_by' => null,
             'approved_at' => null,
             'closed_by' => null,
@@ -62,6 +62,7 @@ class PermitFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             $approver = User::factory()->create();
+
             return [
                 'status' => 'approved',
                 'approved_by' => $approver->id,
@@ -74,6 +75,7 @@ class PermitFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             $approver = User::factory()->create();
+
             return [
                 'status' => 'active',
                 'approved_by' => $approver->id,
@@ -89,6 +91,7 @@ class PermitFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             $approver = User::factory()->create();
+
             return [
                 'status' => 'active',
                 'approved_by' => $approver->id,

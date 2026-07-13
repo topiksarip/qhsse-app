@@ -18,12 +18,12 @@ class CompanyFactory extends Factory
     public function definition(): array
     {
         return [
-            'code' => fake()->unique()->bothify('CMP-####'),
-            'name' => fake()->company(),
+            'code' => $this->faker->unique()->bothify('CMP-####'),
+            'name' => $this->faker->company(),
             'type' => 'internal',
-            'email' => fake()->companyEmail(),
-            'phone' => fake()->phoneNumber(),
-            'address' => fake()->address(),
+            'email' => $this->faker->companyEmail(),
+            'phone' => $this->faker->phoneNumber(),
+            'address' => $this->faker->address(),
             'is_active' => true,
         ];
     }

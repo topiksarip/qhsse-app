@@ -11,9 +11,9 @@ class SiteFactory extends Factory
     public function definition(): array
     {
         return [
-            'code' => fake()->unique()->bothify('SITE-###'),
-            'name' => fake()->city().' Site',
-            'address' => fake()->address(),
+            'code' => $this->faker->unique()->bothify('SITE-###'),
+            'name' => $this->faker->city().' Site',
+            'address' => $this->faker->address(),
             'is_active' => true,
         ];
     }

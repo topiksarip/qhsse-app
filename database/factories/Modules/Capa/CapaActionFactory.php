@@ -14,19 +14,20 @@ class CapaActionFactory extends Factory
     public function definition(): array
     {
         $assigner = User::factory()->create();
+
         return [
-            'action_number' => 'ACT-' . now()->year . '-' . str_pad((string) fake()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
-            'title' => fake()->sentence(5),
-            'description' => fake()->paragraph(3),
-            'source_module' => fake()->randomElement(['incident', 'inspection', 'audit', 'manual']),
+            'action_number' => 'ACT-'.now()->year.'-'.str_pad((string) $this->faker->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
+            'title' => $this->faker->sentence(5),
+            'description' => $this->faker->paragraph(3),
+            'source_module' => $this->faker->randomElement(['incident', 'inspection', 'audit', 'manual']),
             'source_reference_id' => null,
-            'source_type' => fake()->randomElement(['corrective', 'preventive']),
+            'source_type' => $this->faker->randomElement(['corrective', 'preventive']),
             'site_id' => Site::factory(),
             'department_id' => null,
             'assigned_to' => User::factory(),
             'assigned_by' => $assigner->id,
             'assigned_at' => now(),
-            'due_date' => fake()->optional(0.7)->dateTimeBetween('+1 week', '+1 month'),
+            'due_date' => $this->faker->optional(0.7)->dateTimeBetween('+1 week', '+1 month'),
             'severity_id' => null,
             'priority_id' => Priority::factory(),
             'status' => 'open',

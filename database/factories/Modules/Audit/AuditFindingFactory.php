@@ -19,10 +19,10 @@ class AuditFindingFactory extends Factory
     {
         return [
             'audit_id' => Audit::factory(),
-            'finding_number' => 'AUD-' . now()->year . '-0001-F01',
-            'classification' => fake()->randomElement(['major', 'minor', 'observation']),
-            'description' => fake()->paragraph(3),
-            'recommendation' => fake()->optional(0.7)->paragraph(2),
+            'finding_number' => 'AUD-'.now()->year.'-0001-F01',
+            'classification' => $this->faker->randomElement(['major', 'minor', 'observation']),
+            'description' => $this->faker->paragraph(3),
+            'recommendation' => $this->faker->optional(0.7)->paragraph(2),
             'capa_action_id' => null,
             'status' => 'open',
             'due_date' => null,

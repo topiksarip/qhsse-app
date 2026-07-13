@@ -16,29 +16,29 @@ class EmergencyPlanFactory extends Factory
     public function definition(): array
     {
         $types = ['fire', 'medical', 'spill', 'evacuation', 'natural_disaster', 'security', 'other'];
-        
+
         return [
-            'plan_number' => 'EMG-' . date('Y') . '-' . str_pad((string) fake()->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
-            'name' => fake()->sentence(4),
-            'type' => fake()->randomElement($types),
+            'plan_number' => 'EMG-'.date('Y').'-'.str_pad((string) $this->faker->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
+            'name' => $this->faker->sentence(4),
+            'type' => $this->faker->randomElement($types),
             'site_id' => Site::factory(),
-            'description' => fake()->paragraph(3),
-            'response_procedure' => fake()->paragraphs(5, true),
-            'escalation_procedure' => fake()->paragraphs(3, true),
+            'description' => $this->faker->paragraph(3),
+            'response_procedure' => $this->faker->paragraphs(5, true),
+            'escalation_procedure' => $this->faker->paragraphs(3, true),
             'contact_person_id' => User::factory(),
-            'emergency_contacts' => fake()->optional(0.6)->passthrough([
+            'emergency_contacts' => $this->faker->optional(0.6)->passthrough([
                 [
-                    'name' => fake()->name(),
-                    'role' => fake()->jobTitle(),
-                    'phone' => fake()->phoneNumber(),
+                    'name' => $this->faker->name(),
+                    'role' => $this->faker->jobTitle(),
+                    'phone' => $this->faker->phoneNumber(),
                 ],
                 [
-                    'name' => fake()->name(),
-                    'role' => fake()->jobTitle(),
-                    'phone' => fake()->phoneNumber(),
+                    'name' => $this->faker->name(),
+                    'role' => $this->faker->jobTitle(),
+                    'phone' => $this->faker->phoneNumber(),
                 ],
             ]),
-            'equipment_needed' => fake()->optional(0.7)->paragraph(2),
+            'equipment_needed' => $this->faker->optional(0.7)->paragraph(2),
         ];
     }
 

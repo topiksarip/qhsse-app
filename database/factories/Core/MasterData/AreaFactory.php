@@ -13,9 +13,9 @@ class AreaFactory extends Factory
     {
         return [
             'site_id' => Site::factory(),
-            'code' => fake()->unique()->bothify('AREA-###'),
-            'name' => fake()->streetName(),
-            'type' => fake()->randomElement(['office', 'workshop', 'warehouse', 'field']),
+            'code' => $this->faker->unique()->bothify('AREA-###'),
+            'name' => $this->faker->streetName(),
+            'type' => $this->faker->randomElement(['office', 'workshop', 'warehouse', 'field']),
             'is_active' => true,
         ];
     }

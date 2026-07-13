@@ -19,21 +19,21 @@ class LegalRegisterFactory extends Factory
     {
         $categories = ['national', 'regional', 'industry', 'internal'];
         $complianceStatuses = ['compliant', 'non_compliant', 'in_progress', 'not_applicable'];
-        
+
         return [
-            'register_number' => 'LEG-' . date('Y') . '-' . str_pad((string) fake()->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
-            'title' => fake()->sentence(6),
-            'regulation_name' => fake()->sentence(8),
-            'regulation_number' => 'UU No. ' . fake()->numberBetween(1, 50) . ' Tahun ' . fake()->year(),
-            'issuing_body' => fake()->randomElement(['Pemerintah RI', 'Kemenaker', 'Kementerian ESDM', 'Kementerian LHK', 'Pemerintah Daerah']),
-            'category' => fake()->randomElement($categories),
-            'compliance_status' => fake()->randomElement($complianceStatuses),
+            'register_number' => 'LEG-'.date('Y').'-'.str_pad((string) $this->faker->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
+            'title' => $this->faker->sentence(6),
+            'regulation_name' => $this->faker->sentence(8),
+            'regulation_number' => 'UU No. '.$this->faker->numberBetween(1, 50).' Tahun '.$this->faker->year(),
+            'issuing_body' => $this->faker->randomElement(['Pemerintah RI', 'Kemenaker', 'Kementerian ESDM', 'Kementerian LHK', 'Pemerintah Daerah']),
+            'category' => $this->faker->randomElement($categories),
+            'compliance_status' => $this->faker->randomElement($complianceStatuses),
             'site_id' => Site::factory(),
             'department_id' => Department::factory(),
             'owner_id' => User::factory(),
-            'next_review_date' => fake()->optional(0.7)->dateTimeBetween('now', '+1 year'),
-            'document_id' => fake()->optional(0.5)->randomElement([null, Document::factory()]),
-            'notes' => fake()->optional(0.6)->paragraph(),
+            'next_review_date' => $this->faker->optional(0.7)->dateTimeBetween('now', '+1 year'),
+            'document_id' => $this->faker->optional(0.5)->randomElement([null, Document::factory()]),
+            'notes' => $this->faker->optional(0.6)->paragraph(),
             'status' => 'active',
         ];
     }

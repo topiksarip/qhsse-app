@@ -13,8 +13,8 @@ class PositionFactory extends Factory
     {
         return [
             'department_id' => Department::factory(),
-            'code' => fake()->unique()->bothify('POS-###'),
-            'name' => fake()->jobTitle(),
+            'code' => $this->faker->unique()->bothify('POS-###'),
+            'name' => $this->faker->jobTitle(),
             'is_active' => true,
         ];
     }

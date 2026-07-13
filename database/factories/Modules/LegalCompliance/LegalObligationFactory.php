@@ -16,16 +16,16 @@ class LegalObligationFactory extends Factory
     public function definition(): array
     {
         $frequencies = ['monthly', 'quarterly', 'annual'];
-        $frequency = fake()->randomElement($frequencies);
-        
+        $frequency = $this->faker->randomElement($frequencies);
+
         return [
             'legal_register_id' => LegalRegister::factory(),
-            'obligation_description' => fake()->sentence(12),
+            'obligation_description' => $this->faker->sentence(12),
             'frequency' => $frequency,
-            'last_completed' => fake()->optional(0.6)->dateTimeBetween('-3 months', 'now'),
-            'next_due' => fake()->optional(0.8)->dateTimeBetween('-30 days', '+90 days'),
-            'evidence_file_id' => fake()->optional(0.4)->randomElement([null, ManagedFile::factory()]),
-            'status' => fake()->randomElement(['pending', 'completed']),
+            'last_completed' => $this->faker->optional(0.6)->dateTimeBetween('-3 months', 'now'),
+            'next_due' => $this->faker->optional(0.8)->dateTimeBetween('-30 days', '+90 days'),
+            'evidence_file_id' => $this->faker->optional(0.4)->randomElement([null, ManagedFile::factory()]),
+            'status' => $this->faker->randomElement(['pending', 'completed']),
         ];
     }
 

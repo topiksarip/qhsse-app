@@ -17,17 +17,17 @@ class SecurityIncidentFactory extends Factory
 
     public function definition(): array
     {
-        $type = fake()->randomElement(['unauthorized_access', 'theft', 'vandalism', 'trespass', 'suspicious_activity', 'other']);
-        $status = fake()->randomElement(['reported', 'under_investigation', 'closed']);
+        $type = $this->faker->randomElement(['unauthorized_access', 'theft', 'vandalism', 'trespass', 'suspicious_activity', 'other']);
+        $status = $this->faker->randomElement(['reported', 'under_investigation', 'closed']);
 
         $base = [
-            'security_number' => 'SEC-'.now()->year.'-'.str_pad((string) fake()->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
+            'security_number' => 'SEC-'.now()->year.'-'.str_pad((string) $this->faker->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
             'type' => $type,
-            'title' => fake()->sentence(5),
-            'description' => fake()->paragraph(3),
+            'title' => $this->faker->sentence(5),
+            'description' => $this->faker->paragraph(3),
             'site_id' => Site::factory(),
             'area_id' => null,
-            'occurred_at' => fake()->dateTimeBetween('-30 days', 'now'),
+            'occurred_at' => $this->faker->dateTimeBetween('-30 days', 'now'),
             'reported_by' => User::factory(),
             'severity_id' => Severity::factory(),
             'status' => $status,
@@ -36,8 +36,8 @@ class SecurityIncidentFactory extends Factory
         ];
 
         if ($status === 'closed') {
-            $base['resolution'] = fake()->paragraph(2);
-            $base['resolved_at'] = fake()->dateTimeBetween('-15 days', 'now');
+            $base['resolution'] = $this->faker->paragraph(2);
+            $base['resolved_at'] = $this->faker->dateTimeBetween('-15 days', 'now');
         }
 
         return $base;
@@ -47,8 +47,8 @@ class SecurityIncidentFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'closed',
-            'resolution' => fake()->paragraph(2),
-            'resolved_at' => fake()->dateTimeBetween('-15 days', 'now'),
+            'resolution' => $this->faker->paragraph(2),
+            'resolved_at' => $this->faker->dateTimeBetween('-15 days', 'now'),
         ]);
     }
 

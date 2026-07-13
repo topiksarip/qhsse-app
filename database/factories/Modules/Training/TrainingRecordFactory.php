@@ -21,23 +21,23 @@ class TrainingRecordFactory extends Factory
      */
     public function definition(): array
     {
-        $startDate = fake()->dateTimeBetween('-6 months', '+1 month');
-        $endDate = fake()->optional(0.8)->dateTimeBetween($startDate, '+7 days');
+        $startDate = $this->faker->dateTimeBetween('-6 months', '+1 month');
+        $endDate = $this->faker->optional(0.8)->dateTimeBetween($startDate, '+7 days');
 
         return [
-            'training_number' => 'TRN-'.now()->year.'-'.str_pad((string) fake()->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
+            'training_number' => 'TRN-'.now()->year.'-'.str_pad((string) $this->faker->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
             'employee_id' => Employee::factory(),
             'training_program_id' => TrainingProgram::factory(),
-            'provider' => fake()->optional(0.6)->company(),
+            'provider' => $this->faker->optional(0.6)->company(),
             'start_date' => $startDate,
             'end_date' => $endDate,
-            'status' => fake()->randomElement(['scheduled', 'in_progress', 'completed']),
-            'score' => fake()->optional(0.5)->randomFloat(2, 60, 100),
-            'result' => fake()->optional(0.5)->randomElement(['pass', 'fail', 'pending']),
-            'certificate_number' => fake()->optional(0.4)->bothify('CERT-####-????'),
+            'status' => $this->faker->randomElement(['scheduled', 'in_progress', 'completed']),
+            'score' => $this->faker->optional(0.5)->randomFloat(2, 60, 100),
+            'result' => $this->faker->optional(0.5)->randomElement(['pass', 'fail', 'pending']),
+            'certificate_number' => $this->faker->optional(0.4)->bothify('CERT-####-????'),
             'certificate_file_id' => null,
             'expiry_date' => null,
-            'notes' => fake()->optional(0.3)->sentence(10),
+            'notes' => $this->faker->optional(0.3)->sentence(10),
         ];
     }
 
@@ -51,7 +51,7 @@ class TrainingRecordFactory extends Factory
                 'status' => 'completed',
                 'start_date' => $endDate->copy()->subDays(3),
                 'end_date' => $endDate,
-                'score' => fake()->randomFloat(2, 75, 100),
+                'score' => $this->faker->randomFloat(2, 75, 100),
                 'result' => 'pass',
                 'expiry_date' => $program->validity_months ? $endDate->copy()->addMonths($program->validity_months) : null,
             ];

@@ -17,30 +17,30 @@ class VisitorLogFactory extends Factory
 
     public function definition(): array
     {
-        $type = fake()->randomElement(['KTP', 'SIM', 'Passport', 'Lainnya']);
-        $status = fake()->randomElement(['checked_in', 'checked_out']);
-        $checkedIn = fake()->dateTimeBetween('-7 days', 'now');
+        $type = $this->faker->randomElement(['KTP', 'SIM', 'Passport', 'Lainnya']);
+        $status = $this->faker->randomElement(['checked_in', 'checked_out']);
+        $checkedIn = $this->faker->dateTimeBetween('-7 days', 'now');
 
         $base = [
-            'visitor_name' => fake()->name(),
+            'visitor_name' => $this->faker->name(),
             'visitor_type' => $type,
-            'visitor_id_number' => fake()->numerify('################'),
-            'visitor_company' => fake()->optional()->company(),
-            'visitor_phone' => fake()->phoneNumber(),
+            'visitor_id_number' => $this->faker->numerify('################'),
+            'visitor_company' => $this->faker->optional()->company(),
+            'visitor_phone' => $this->faker->phoneNumber(),
             'host_employee_id' => Employee::factory(),
             'site_id' => Site::factory(),
-            'purpose' => fake()->randomElement(['Meeting', 'Delivery', 'Installation', 'Inspection', 'Training']),
-            'vehicle_number' => fake()->optional()->regexify('[A-Z]{2} [0-9]{4} [A-Z]{2}'),
+            'purpose' => $this->faker->randomElement(['Meeting', 'Delivery', 'Installation', 'Inspection', 'Training']),
+            'vehicle_number' => $this->faker->optional()->regexify('[A-Z]{2} [0-9]{4} [A-Z]{2}'),
             'checked_in_at' => $checkedIn,
             'checked_in_by' => User::factory(),
             'checked_out_at' => null,
             'checked_out_by' => null,
             'status' => $status,
-            'notes' => fake()->optional()->sentence(),
+            'notes' => $this->faker->optional()->sentence(),
         ];
 
         if ($status === 'checked_out') {
-            $base['checked_out_at'] = fake()->dateTimeBetween($checkedIn, 'now');
+            $base['checked_out_at'] = $this->faker->dateTimeBetween($checkedIn, 'now');
             $base['checked_out_by'] = User::factory();
         }
 
@@ -60,7 +60,7 @@ class VisitorLogFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'checked_out',
-            'checked_out_at' => fake()->dateTimeBetween($attributes['checked_in_at'] ?? '-3 hours', 'now'),
+            'checked_out_at' => $this->faker->dateTimeBetween($attributes['checked_in_at'] ?? '-3 hours', 'now'),
             'checked_out_by' => User::factory(),
         ]);
     }

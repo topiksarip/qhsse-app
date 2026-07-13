@@ -11,10 +11,10 @@ class InspectionTemplateFactory extends Factory
     public function definition(): array
     {
         return [
-            'code' => fake()->unique()->bothify('TPL-###'),
-            'name' => fake()->sentence(3) . ' Checklist',
-            'description' => fake()->optional(0.7)->paragraph(),
-            'category' => fake()->randomElement(['safety', 'environment', 'equipment', 'fire', 'housekeeping', 'security', 'quality', 'compliance']),
+            'code' => $this->faker->unique()->bothify('TPL-###'),
+            'name' => $this->faker->sentence(3).' Checklist',
+            'description' => $this->faker->optional(0.7)->paragraph(),
+            'category' => $this->faker->randomElement(['safety', 'environment', 'equipment', 'fire', 'housekeeping', 'security', 'quality', 'compliance']),
             'is_active' => true,
         ];
     }

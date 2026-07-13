@@ -17,13 +17,13 @@ class AuditFactory extends Factory
     public function definition(): array
     {
         return [
-            'audit_number' => 'AUD-' . now()->year . '-' . str_pad((string) fake()->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
-            'title' => fake()->sentence(6),
-            'audit_type' => fake()->randomElement(['internal', 'external', 'supplier', 'regulatory']),
-            'scope' => fake()->paragraph(2),
+            'audit_number' => 'AUD-'.now()->year.'-'.str_pad((string) $this->faker->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
+            'title' => $this->faker->sentence(6),
+            'audit_type' => $this->faker->randomElement(['internal', 'external', 'supplier', 'regulatory']),
+            'scope' => $this->faker->paragraph(2),
             'department_id' => Department::factory(),
             'lead_auditor_id' => User::factory(),
-            'scheduled_date' => fake()->dateTimeBetween('now', '+1 month'),
+            'scheduled_date' => $this->faker->dateTimeBetween('now', '+1 month'),
             'start_date' => null,
             'end_date' => null,
             'report_date' => null,
@@ -53,7 +53,7 @@ class AuditFactory extends Factory
             'status' => 'report_ready',
             'start_date' => now()->subDays(5),
             'report_date' => now()->subDay(),
-            'summary' => fake()->paragraph(3),
+            'summary' => $this->faker->paragraph(3),
         ]);
     }
 
@@ -64,7 +64,7 @@ class AuditFactory extends Factory
             'start_date' => now()->subDays(10),
             'report_date' => now()->subDays(3),
             'close_date' => now()->subDay(),
-            'summary' => fake()->paragraph(3),
+            'summary' => $this->faker->paragraph(3),
         ]);
     }
 }

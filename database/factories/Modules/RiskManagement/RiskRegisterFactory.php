@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Database\Factories\Modules\RiskManagement;
 
-use App\Models\Core\MasterData\Area;
-use App\Models\Core\MasterData\Department;
 use App\Models\Core\MasterData\RiskMatrixLevel;
 use App\Models\Core\MasterData\Severity;
 use App\Models\Core\MasterData\Site;
@@ -23,9 +21,9 @@ class RiskRegisterFactory extends Factory
     public function definition(): array
     {
         return [
-            'register_number' => 'RSK-' . now()->year . '-' . str_pad((string) fake()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
-            'title' => fake()->sentence(6),
-            'type' => fake()->randomElement([
+            'register_number' => 'RSK-'.now()->year.'-'.str_pad((string) $this->faker->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
+            'title' => $this->faker->sentence(6),
+            'type' => $this->faker->randomElement([
                 'hazard_identification',
                 'jsa',
                 'hiradc',
@@ -34,9 +32,9 @@ class RiskRegisterFactory extends Factory
             'site_id' => Site::factory(),
             'area_id' => null,
             'department_id' => null,
-            'activity' => fake()->sentence(8),
-            'hazard' => fake()->paragraph(2),
-            'existing_controls' => fake()->optional(0.7)->paragraph(2),
+            'activity' => $this->faker->sentence(8),
+            'hazard' => $this->faker->paragraph(2),
+            'existing_controls' => $this->faker->optional(0.7)->paragraph(2),
             'severity_id' => null,
             'probability_id' => null,
             'risk_level_id' => null,
@@ -46,7 +44,7 @@ class RiskRegisterFactory extends Factory
             'residual_risk_level_id' => null,
             'owner_id' => User::factory(),
             'status' => 'identified',
-            'review_date' => fake()->optional()->dateTimeBetween('+1 month', '+6 months'),
+            'review_date' => $this->faker->optional()->dateTimeBetween('+1 month', '+6 months'),
         ];
     }
 
@@ -54,7 +52,7 @@ class RiskRegisterFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             $severity = Severity::inRandomOrder()->first() ?? Severity::factory()->create();
-            $probabilityLevel = fake()->numberBetween(1, 5);
+            $probabilityLevel = $this->faker->numberBetween(1, 5);
             $riskLevel = RiskMatrixLevel::where('severity_level', $severity->level)
                 ->where('probability_level', $probabilityLevel)
                 ->where('is_active', true)
@@ -73,14 +71,14 @@ class RiskRegisterFactory extends Factory
     {
         return $this->withRiskAssessment()->state(function (array $attributes) {
             $residualSeverity = Severity::inRandomOrder()->first() ?? Severity::factory()->create();
-            $residualProbabilityLevel = fake()->numberBetween(1, 5);
+            $residualProbabilityLevel = $this->faker->numberBetween(1, 5);
             $residualRiskLevel = RiskMatrixLevel::where('severity_level', $residualSeverity->level)
                 ->where('probability_level', $residualProbabilityLevel)
                 ->where('is_active', true)
                 ->first();
 
             return [
-                'additional_controls' => fake()->paragraph(3),
+                'additional_controls' => $this->faker->paragraph(3),
                 'residual_severity_id' => $residualSeverity->id,
                 'residual_probability_id' => $residualProbabilityLevel,
                 'residual_risk_level_id' => $residualRiskLevel?->id,

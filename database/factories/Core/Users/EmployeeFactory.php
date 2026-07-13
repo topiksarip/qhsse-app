@@ -29,10 +29,10 @@ class EmployeeFactory extends Factory
             'site_id' => $department->site_id,
             'department_id' => $department->id,
             'position_id' => $position->id,
-            'employee_no' => fake()->unique()->bothify('EMP-#####'),
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'phone' => fake()->phoneNumber(),
+            'employee_no' => $this->faker->unique()->bothify('EMP-#####'),
+            'name' => $this->faker->name(),
+            'email' => $this->faker->unique()->safeEmail(),
+            'phone' => $this->faker->phoneNumber(),
             'is_active' => true,
         ];
     }

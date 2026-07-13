@@ -20,11 +20,11 @@ class TrainingProgramFactory extends Factory
     public function definition(): array
     {
         $categories = ['safety', 'technical', 'compliance', 'soft_skill', 'environment', 'security', 'quality', 'first_aid'];
-        $isCertification = fake()->boolean(60);
+        $isCertification = $this->faker->boolean(60);
 
         return [
-            'code' => fake()->unique()->bothify('TRN-###'),
-            'name' => fake()->randomElement([
+            'code' => $this->faker->unique()->bothify('TRN-###'),
+            'name' => $this->faker->randomElement([
                 'HSE Induction',
                 'Fire Safety Training',
                 'Forklift Operation',
@@ -36,11 +36,11 @@ class TrainingProgramFactory extends Factory
                 'Lock Out Tag Out',
                 'Scaffolding Safety',
             ]),
-            'description' => fake()->paragraph(3),
-            'category' => fake()->randomElement($categories),
-            'duration_hours' => fake()->randomElement([4, 8, 16, 24, 40]),
+            'description' => $this->faker->paragraph(3),
+            'category' => $this->faker->randomElement($categories),
+            'duration_hours' => $this->faker->randomElement([4, 8, 16, 24, 40]),
             'is_certification' => $isCertification,
-            'validity_months' => $isCertification ? fake()->randomElement([12, 24, 36]) : null,
+            'validity_months' => $isCertification ? $this->faker->randomElement([12, 24, 36]) : null,
             'is_active' => true,
         ];
     }

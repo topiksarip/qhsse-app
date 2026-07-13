@@ -21,16 +21,16 @@ class EnvironmentalRecordFactory extends Factory
      */
     public function definition(): array
     {
-        $type = fake()->randomElement(['waste', 'spill', 'emission', 'noise', 'water_monitoring', 'other']);
+        $type = $this->faker->randomElement(['waste', 'spill', 'emission', 'noise', 'water_monitoring', 'other']);
 
         $base = [
-            'record_number' => 'ENV-'.now()->year.'-'.str_pad((string) fake()->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
+            'record_number' => 'ENV-'.now()->year.'-'.str_pad((string) $this->faker->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
             'type' => $type,
-            'title' => fake()->sentence(5),
-            'description' => fake()->paragraph(3),
+            'title' => $this->faker->sentence(5),
+            'description' => $this->faker->paragraph(3),
             'site_id' => Site::factory(),
             'area_id' => null,
-            'occurred_at' => fake()->dateTimeBetween('-30 days', 'now'),
+            'occurred_at' => $this->faker->dateTimeBetween('-30 days', 'now'),
             'reporter_id' => User::factory(),
             'status' => 'recorded',
             'capa_action_id' => null,
@@ -43,31 +43,31 @@ class EnvironmentalRecordFactory extends Factory
     {
         return match ($type) {
             'waste' => [
-                'waste_type' => fake()->randomElement(['B3', 'Non-B3', 'Medis']),
-                'quantity' => fake()->randomFloat(2, 10, 1000),
-                'disposal_method' => fake()->randomElement(['Incinerator', 'TPA', 'Pihak Ketiga']),
+                'waste_type' => $this->faker->randomElement(['B3', 'Non-B3', 'Medis']),
+                'quantity' => $this->faker->randomFloat(2, 10, 1000),
+                'disposal_method' => $this->faker->randomElement(['Incinerator', 'TPA', 'Pihak Ketiga']),
             ],
             'spill' => [
-                'material' => fake()->randomElement(['Oil', 'Chemical', 'Fuel']),
-                'volume' => fake()->randomFloat(2, 1, 100),
-                'containment' => fake()->randomElement(['Boom oil', 'Absorbent', 'Sand bags']),
+                'material' => $this->faker->randomElement(['Oil', 'Chemical', 'Fuel']),
+                'volume' => $this->faker->randomFloat(2, 1, 100),
+                'containment' => $this->faker->randomElement(['Boom oil', 'Absorbent', 'Sand bags']),
             ],
             'emission' => [
-                'parameter' => fake()->randomElement(['SOx', 'NOx', 'PM10', 'CO']),
-                'measured_value' => fake()->randomFloat(2, 50, 200),
+                'parameter' => $this->faker->randomElement(['SOx', 'NOx', 'PM10', 'CO']),
+                'measured_value' => $this->faker->randomFloat(2, 50, 200),
                 'unit' => 'mg/m³',
                 'limit_value' => 150,
             ],
             'noise' => [
-                'location' => fake()->randomElement(['Production Area', 'Warehouse', 'Loading Dock']),
-                'measured_value' => fake()->randomFloat(1, 70, 95),
+                'location' => $this->faker->randomElement(['Production Area', 'Warehouse', 'Loading Dock']),
+                'measured_value' => $this->faker->randomFloat(1, 70, 95),
                 'unit' => 'dB',
                 'limit_value' => 85,
             ],
             'water_monitoring' => [
-                'parameter' => fake()->randomElement(['pH', 'TSS', 'BOD', 'COD']),
-                'measured_value' => fake()->randomFloat(2, 5, 15),
-                'unit' => fake()->randomElement(['pH', 'mg/L']),
+                'parameter' => $this->faker->randomElement(['pH', 'TSS', 'BOD', 'COD']),
+                'measured_value' => $this->faker->randomFloat(2, 5, 15),
+                'unit' => $this->faker->randomElement(['pH', 'mg/L']),
                 'limit_value' => 10,
             ],
             default => [],

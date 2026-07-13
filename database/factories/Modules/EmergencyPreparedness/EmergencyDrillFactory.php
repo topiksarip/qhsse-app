@@ -17,9 +17,9 @@ class EmergencyDrillFactory extends Factory
     public function definition(): array
     {
         return [
-            'drill_number' => 'EMG-' . date('Y') . '-' . str_pad((string) fake()->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
+            'drill_number' => 'EMG-'.date('Y').'-'.str_pad((string) $this->faker->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
             'emergency_plan_id' => EmergencyPlan::factory(),
-            'scheduled_date' => fake()->dateTimeBetween('-30 days', '+90 days'),
+            'scheduled_date' => $this->faker->dateTimeBetween('-30 days', '+90 days'),
             'executed_date' => null,
             'site_id' => Site::factory(),
             'participants_count' => null,
@@ -47,11 +47,11 @@ class EmergencyDrillFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'executed',
-            'executed_date' => now()->subDays(fake()->numberBetween(1, 30)),
-            'result' => fake()->randomElement(['pass', 'fail', 'needs_improvement']),
-            'findings' => fake()->paragraph(3),
-            'recommendations' => fake()->paragraph(2),
-            'participants_count' => fake()->numberBetween(10, 100),
+            'executed_date' => now()->subDays($this->faker->numberBetween(1, 30)),
+            'result' => $this->faker->randomElement(['pass', 'fail', 'needs_improvement']),
+            'findings' => $this->faker->paragraph(3),
+            'recommendations' => $this->faker->paragraph(2),
+            'participants_count' => $this->faker->numberBetween(10, 100),
         ]);
     }
 
@@ -59,11 +59,11 @@ class EmergencyDrillFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'executed',
-            'executed_date' => now()->subDays(fake()->numberBetween(1, 30)),
+            'executed_date' => now()->subDays($this->faker->numberBetween(1, 30)),
             'result' => 'pass',
-            'findings' => fake()->paragraph(3),
-            'recommendations' => fake()->paragraph(2),
-            'participants_count' => fake()->numberBetween(10, 100),
+            'findings' => $this->faker->paragraph(3),
+            'recommendations' => $this->faker->paragraph(2),
+            'participants_count' => $this->faker->numberBetween(10, 100),
         ]);
     }
 
@@ -71,11 +71,11 @@ class EmergencyDrillFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'executed',
-            'executed_date' => now()->subDays(fake()->numberBetween(1, 30)),
+            'executed_date' => now()->subDays($this->faker->numberBetween(1, 30)),
             'result' => 'fail',
-            'findings' => fake()->paragraph(3),
-            'recommendations' => fake()->paragraph(2),
-            'participants_count' => fake()->numberBetween(10, 100),
+            'findings' => $this->faker->paragraph(3),
+            'recommendations' => $this->faker->paragraph(2),
+            'participants_count' => $this->faker->numberBetween(10, 100),
         ]);
     }
 
@@ -83,11 +83,11 @@ class EmergencyDrillFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'executed',
-            'executed_date' => now()->subDays(fake()->numberBetween(1, 30)),
+            'executed_date' => now()->subDays($this->faker->numberBetween(1, 30)),
             'result' => 'needs_improvement',
-            'findings' => fake()->paragraph(3),
-            'recommendations' => fake()->paragraph(2),
-            'participants_count' => fake()->numberBetween(10, 100),
+            'findings' => $this->faker->paragraph(3),
+            'recommendations' => $this->faker->paragraph(2),
+            'participants_count' => $this->faker->numberBetween(10, 100),
         ]);
     }
 
@@ -95,7 +95,7 @@ class EmergencyDrillFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'scheduled',
-            'scheduled_date' => now()->addDays(fake()->numberBetween(1, 30)),
+            'scheduled_date' => now()->addDays($this->faker->numberBetween(1, 30)),
         ]);
     }
 
@@ -103,7 +103,7 @@ class EmergencyDrillFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => 'scheduled',
-            'scheduled_date' => now()->subDays(fake()->numberBetween(1, 30)),
+            'scheduled_date' => now()->subDays($this->faker->numberBetween(1, 30)),
         ]);
     }
 }

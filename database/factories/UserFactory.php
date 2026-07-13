@@ -29,8 +29,8 @@ class UserFactory extends Factory
         return [
             'company_id' => null,
             'employee_id' => null,
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
+            'name' => $this->faker->name(),
+            'email' => $this->faker->unique()->safeEmail(),
             'email_verified_at' => now(),
             'is_active' => true,
             'password' => static::$password ??= Hash::make('password'),
@@ -67,7 +67,7 @@ class UserFactory extends Factory
                 'company_id' => $employee->company_id,
                 'employee_id' => $employee->id,
                 'name' => $employee->name,
-                'email' => $employee->email ?? fake()->unique()->safeEmail(),
+                'email' => $employee->email ?? $this->faker->unique()->safeEmail(),
             ];
         });
     }

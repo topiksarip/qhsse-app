@@ -15,21 +15,21 @@ class IncidentReportFactory extends Factory
     public function definition(): array
     {
         return [
-            'incident_number' => 'INC-' . now()->year . '-' . str_pad((string) fake()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
-            'title' => fake()->sentence(6),
-            'category' => fake()->randomElement([
+            'incident_number' => 'INC-'.now()->year.'-'.str_pad((string) $this->faker->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),
+            'title' => $this->faker->sentence(6),
+            'category' => $this->faker->randomElement([
                 'accident', 'incident', 'near_miss', 'unsafe_act',
                 'unsafe_condition', 'environmental_spill', 'security_breach',
             ]),
-            'occurred_at' => fake()->dateTimeBetween('-1 month', 'now'),
+            'occurred_at' => $this->faker->dateTimeBetween('-1 month', 'now'),
             'site_id' => Site::factory(),
             'area_id' => null,
             'department_id' => null,
             'reporter_id' => User::factory(),
             'severity_id' => Severity::factory(),
             'priority_id' => Priority::factory(),
-            'description' => fake()->paragraph(3),
-            'immediate_action' => fake()->optional(0.7)->paragraph(2),
+            'description' => $this->faker->paragraph(3),
+            'immediate_action' => $this->faker->optional(0.7)->paragraph(2),
             'status' => 'draft',
         ];
     }

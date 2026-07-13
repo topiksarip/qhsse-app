@@ -13,8 +13,8 @@ class DepartmentFactory extends Factory
     {
         return [
             'site_id' => Site::factory(),
-            'code' => fake()->unique()->bothify('DEPT-###'),
-            'name' => fake()->randomElement(['QHSSE', 'Operations', 'Maintenance', 'Security', 'Quality']),
+            'code' => $this->faker->unique()->bothify('DEPT-###'),
+            'name' => $this->faker->randomElement(['QHSSE', 'Operations', 'Maintenance', 'Security', 'Quality']),
             'is_active' => true,
         ];
     }
