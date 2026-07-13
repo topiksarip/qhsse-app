@@ -7,6 +7,7 @@ use App\Models\Core\MasterData\Department;
 use App\Models\Core\MasterData\Position;
 use App\Models\Core\MasterData\Site;
 use App\Models\User;
+use Database\Factories\Core\Users\EmployeeFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Employee extends Model
 {
-    /** @use HasFactory<\Database\Factories\Core\Users\EmployeeFactory> */
+    /** @use HasFactory<EmployeeFactory> */
     use HasFactory;
 
     protected $fillable = [
