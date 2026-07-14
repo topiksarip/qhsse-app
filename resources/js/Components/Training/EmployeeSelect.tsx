@@ -37,7 +37,7 @@ const EmployeeSelect = forwardRef<HTMLSelectElement, EmployeeSelectProps>(
                     
                     {employees.map(employee => (
                         <option key={employee.id} value={employee.id}>
-                            {employee.name} ({employee.employee_number})
+                            {employee.name} ({employee.employee_no})
                             {employee.site && ` - ${employee.site.name}`}
                         </option>
                     ))}

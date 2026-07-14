@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Modules\Training;
 
 use App\Http\Controllers\Controller;
+use App\Models\Core\MasterData\Department;
+use App\Models\Core\MasterData\Site;
 use App\Models\Core\Users\Employee;
 use App\Models\Modules\Training\TrainingProgram;
 use App\Models\Modules\Training\TrainingRecord;
@@ -47,48 +49,47 @@ class TrainingMatrixController extends Controller
             $employeesQuery->where('department_id', $request->get('department_id'));
         }
 
+        if ($request->get('site_id')) {
+            $employeesQuery->where('site_id', $request->get('site_id'));
+        }
+
         $employees = $employeesQuery->orderBy('name')->get();
 
         // Get active programs
         $programs = TrainingProgram::active()
-            ->when($request->get('category'), fn ($q, $category) => $q->where('category', $category))
+            ->when($request->get('program_category'), fn ($q, $category) => $q->where('category', $category))
             ->orderBy('name')
             ->get();
 
-        // Build matrix data
+        $latestRecords = TrainingRecord::query()
+            ->whereIn('employee_id', $employees->pluck('id'))
+            ->whereIn('training_program_id', $programs->pluck('id'))
+            ->latest('created_at')
+            ->get()
+            ->unique(fn (TrainingRecord $record) => $record->employee_id.':'.$record->training_program_id)
+            ->keyBy(fn (TrainingRecord $record) => $record->employee_id.':'.$record->training_program_id);
+
+        // Build the keyed shape consumed directly by the React matrix.
         $matrix = [];
         foreach ($employees as $employee) {
-            $row = [
-                'employee_id' => $employee->id,
-                'employee_name' => $employee->name,
-                'employee_no' => $employee->employee_no,
-                'department' => $employee->department?->name,
-                'programs' => [],
-            ];
+            $employeeKey = 'emp_'.$employee->id;
+            $matrix[$employeeKey] = [];
 
             foreach ($programs as $program) {
-                // Get latest training record for this employee-program combination
-                $record = TrainingRecord::where('employee_id', $employee->id)
-                    ->where('training_program_id', $program->id)
-                    ->orderBy('created_at', 'desc')
-                    ->first();
-
-                $row['programs'][$program->id] = [
-                    'status' => $record?->status,
-                    'expiry_date' => $record?->expiry_date,
-                    'is_expired' => $record?->isExpired() ?? false,
-                    'is_expiry_near' => $record?->isExpiryNear() ?? false,
-                    'record_id' => $record?->id,
-                ];
+                $record = $latestRecords->get($employee->id.':'.$program->id);
+                if ($record) {
+                    $matrix[$employeeKey]['prog_'.$program->id] = $record;
+                }
             }
-
-            $matrix[] = $row;
         }
 
         return Inertia::render('Modules/Training/Matrix/Index', [
             'matrix' => $matrix,
             'programs' => $programs,
-            'filters' => $request->only(['department_id', 'category']),
+            'employees' => $employees,
+            'sites' => Site::active()->orderBy('name')->get(['id', 'name']),
+            'departments' => Department::active()->orderBy('name')->get(['id', 'name', 'site_id']),
+            'filters' => $request->only(['site_id', 'department_id', 'program_category']),
             'categories' => TrainingProgram::getCategories(),
         ]);
     }

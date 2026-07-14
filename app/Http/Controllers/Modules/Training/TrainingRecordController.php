@@ -75,7 +75,7 @@ class TrainingRecordController extends Controller
         $records = $listQuery->paginate(
             $query,
             ['training_number', 'provider'],
-            ['training_number', 'training_date', 'created_at'],
+            ['training_number', 'start_date', 'created_at'],
             'created_at',
             (int) $request->get('per_page', 15)
         );
@@ -85,6 +85,11 @@ class TrainingRecordController extends Controller
             'filters' => $request->only(['search', 'status', 'program_id', 'employee_id', 'expired_only']),
             'statuses' => TrainingRecord::getStatuses(),
             'programs' => TrainingProgram::active()->get(['id', 'name', 'code']),
+            'can' => [
+                'create' => $user->can('training.records.create'),
+                'update' => $user->can('training.records.update'),
+                'view' => $user->can('training.records.view'),
+            ],
         ]);
     }
 
@@ -95,10 +100,25 @@ class TrainingRecordController extends Controller
     {
         $this->authorize('training.records.create');
 
+        $user = auth()->user();
+        $employeeQuery = Employee::where('is_active', true);
+
+        // Apply organizational scope based on user role
+        if ($user->hasRole(['Super Admin', 'Admin', 'QHSSE Manager'])) {
+            // Can create records for any employee
+        } elseif ($user->hasRole('QHSSE Officer') && $user->employee) {
+            $employeeQuery->where('site_id', $user->employee->site_id);
+        } elseif ($user->hasRole(['Supervisor', 'Department Head']) && $user->employee) {
+            $employeeQuery->where('department_id', $user->employee->department_id);
+        } else {
+            // Fail closed - no employees visible for other roles
+            $employeeQuery->whereRaw('1 = 0');
+        }
+
         return Inertia::render('Modules/Training/Records/CreateOrEdit', [
             'record' => null,
             'programs' => TrainingProgram::active()->get(['id', 'name', 'code', 'duration_hours', 'is_certification', 'validity_months']),
-            'employees' => Employee::where('is_active', true)->get(['id', 'name', 'employee_no']),
+            'employees' => $employeeQuery->get(['id', 'name', 'employee_no']),
             'statuses' => TrainingRecord::getStatuses(),
             'results' => TrainingRecord::getResults(),
         ]);
@@ -152,12 +172,18 @@ class TrainingRecordController extends Controller
      */
     public function show(TrainingRecord $record): Response
     {
-        $this->authorize('training.records.view');
+        $this->authorize('view', $record);
 
         $record->load(['employee', 'trainingProgram', 'certificateFile']);
 
+        $user = auth()->user();
+
         return Inertia::render('Modules/Training/Records/Show', [
             'record' => $record,
+            'can' => [
+                'update' => $user->can('update', $record),
+                'delete' => $user->can('delete', $record),
+            ],
         ]);
     }
 
@@ -166,14 +192,29 @@ class TrainingRecordController extends Controller
      */
     public function edit(TrainingRecord $record): Response
     {
-        $this->authorize('training.records.update');
+        $this->authorize('update', $record);
 
         $record->load(['employee', 'trainingProgram']);
+
+        $user = auth()->user();
+        $employeeQuery = Employee::where('is_active', true);
+
+        // Apply organizational scope based on user role
+        if ($user->hasRole(['Super Admin', 'Admin', 'QHSSE Manager'])) {
+            // Can edit records for any employee
+        } elseif ($user->hasRole('QHSSE Officer') && $user->employee) {
+            $employeeQuery->where('site_id', $user->employee->site_id);
+        } elseif ($user->hasRole(['Supervisor', 'Department Head']) && $user->employee) {
+            $employeeQuery->where('department_id', $user->employee->department_id);
+        } else {
+            // Fail closed - no employees visible for other roles
+            $employeeQuery->whereRaw('1 = 0');
+        }
 
         return Inertia::render('Modules/Training/Records/CreateOrEdit', [
             'record' => $record,
             'programs' => TrainingProgram::active()->get(['id', 'name', 'code', 'duration_hours', 'is_certification', 'validity_months']),
-            'employees' => Employee::where('is_active', true)->get(['id', 'name', 'employee_no']),
+            'employees' => $employeeQuery->get(['id', 'name', 'employee_no']),
             'statuses' => TrainingRecord::getStatuses(),
             'results' => TrainingRecord::getResults(),
         ]);
@@ -184,6 +225,8 @@ class TrainingRecordController extends Controller
      */
     public function update(UpdateTrainingRecordRequest $request, TrainingRecord $record): RedirectResponse
     {
+        $this->authorize('update', $record);
+
         return DB::transaction(function () use ($request, $record) {
             $oldData = $record->toArray();
             $data = $request->validated();
@@ -249,12 +292,27 @@ class TrainingRecordController extends Controller
     {
         $this->authorize('training.records.export');
 
+        $user = auth()->user();
         $query = TrainingRecord::query()
             ->with(['employee', 'trainingProgram'])
             ->when($request->get('status'), fn ($q, $status) => $q->where('status', $status))
-            ->when($request->get('program_id'), fn ($q, $programId) => $q->where('training_program_id', $programId))
-            ->orderBy('created_at', 'desc');
+            ->when($request->get('program_id'), fn ($q, $programId) => $q->where('training_program_id', $programId));
 
+        // Apply organizational scope based on user role (same as index)
+        if (! $user->hasRole(['Super Admin', 'Admin', 'QHSSE Manager', 'Auditor'])) {
+            if ($user->hasRole('QHSSE Officer') && $user->employee) {
+                $query->whereHas('employee', fn ($q) => $q->where('site_id', $user->employee->site_id));
+            } elseif ($user->hasRole(['Supervisor', 'Department Head']) && $user->employee) {
+                $query->whereHas('employee', fn ($q) => $q->where('department_id', $user->employee->department_id));
+            } elseif ($user->employee) {
+                $query->where('employee_id', $user->employee->id);
+            } else {
+                // Fail closed - no records for users without employee relation
+                $query->whereRaw('1 = 0');
+            }
+        }
+
+        $query->orderBy('created_at', 'desc');
         $records = $query->get();
 
         $data = $records->map(function ($record) {

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class SavedReport extends Model
 {
@@ -139,7 +140,7 @@ class SavedReport extends Model
 
     public function getFileSizeHumanAttribute(): ?string
     {
-        if (!$this->file_size) {
+        if (! $this->file_size) {
             return null;
         }
 
@@ -152,7 +153,7 @@ class SavedReport extends Model
             $unit++;
         }
 
-        return round($size, 2) . ' ' . $units[$unit];
+        return round($size, 2).' '.$units[$unit];
     }
 
     public function getDateRangeAttribute(): string
@@ -161,16 +162,16 @@ class SavedReport extends Model
         $from = $params['date_from'] ?? null;
         $to = $params['date_to'] ?? null;
 
-        if (!$from || !$to) {
+        if (! $from || ! $to) {
             return '-';
         }
 
-        return date('d/m/Y', strtotime($from)) . ' - ' . date('d/m/Y', strtotime($to));
+        return date('d/m/Y', strtotime($from)).' - '.date('d/m/Y', strtotime($to));
     }
 
     public function getGenerationDurationAttribute(): ?int
     {
-        if (!$this->generated_at || !$this->completed_at) {
+        if (! $this->generated_at || ! $this->completed_at) {
             return null;
         }
 
@@ -200,7 +201,9 @@ class SavedReport extends Model
 
     public function canDownload(): bool
     {
-        return $this->isCompleted() && $this->file_path && file_exists(storage_path('app/' . $this->file_path));
+        return $this->isCompleted()
+            && $this->file_path
+            && Storage::exists($this->file_path);
     }
 
     public function canRegenerate(): bool
@@ -266,6 +269,6 @@ class SavedReport extends Model
             default => 'txt',
         };
 
-        return str_replace(' ', '_', $this->name) . '_' . $timestamp . '.' . $extension;
+        return str_replace(' ', '_', $this->name).'_'.$timestamp.'.'.$extension;
     }
 }

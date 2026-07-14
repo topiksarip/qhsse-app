@@ -83,7 +83,7 @@ export default function Show({ auth, record, can }: ShowProps) {
                                 <div>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">NIK</p>
                                     <p className="text-base font-mono text-gray-900 dark:text-gray-100 mt-1">
-                                        {record.employee?.employee_number || 'N/A'}
+                                        {record.employee?.employee_no || 'N/A'}
                                     </p>
                                 </div>
                                 <div>
@@ -104,25 +104,25 @@ export default function Show({ auth, record, can }: ShowProps) {
                                 <div>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">Nama Program</p>
                                     <p className="text-base font-medium text-gray-900 dark:text-gray-100 mt-1">
-                                        {record.program?.name || 'N/A'}
+                                        {record.training_program?.name || 'N/A'}
                                     </p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">Kode</p>
                                     <p className="text-base font-mono text-gray-900 dark:text-gray-100 mt-1">
-                                        {record.program?.code || 'N/A'}
+                                        {record.training_program?.code || 'N/A'}
                                     </p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">Kategori</p>
                                     <p className="text-base text-gray-900 dark:text-gray-100 mt-1">
-                                        {record.program?.category || 'N/A'}
+                                        {record.training_program?.category || 'N/A'}
                                     </p>
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">Durasi</p>
                                     <p className="text-base text-gray-900 dark:text-gray-100 mt-1">
-                                        {record.program?.duration_hours || 0} jam
+                                        {record.training_program?.duration_hours || 0} jam
                                     </p>
                                 </div>
                             </div>

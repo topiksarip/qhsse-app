@@ -28,7 +28,13 @@ interface Filters {
 }
 
 export default function Index({ auth, assets, filters, sites, categories, statuses, can }: PageProps<{
-    assets: { data: Asset[]; links: any[]; meta: any };
+    assets: {
+        data: Asset[];
+        links: any[];
+        from: number | null;
+        to: number | null;
+        total: number;
+    };
     filters: Filters;
     sites: Array<{ id: number; name: string }>;
     categories: Record<string, string>;
@@ -243,7 +249,7 @@ export default function Index({ auth, assets, filters, sites, categories, status
                             <div className="px-6 py-4 border-t border-gray-200">
                                 <div className="flex justify-between items-center">
                                     <div className="text-sm text-gray-700">
-                                        Showing {assets.meta.from} to {assets.meta.to} of {assets.meta.total} results
+                                        Showing {assets.from ?? 0} to {assets.to ?? 0} of {assets.total} results
                                     </div>
                                     <div className="flex space-x-1">
                                         {assets.links.map((link: any, index: number) => (

@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { PageProps, TrainingProgram, Employee, TrainingRecord } from '@/types';
 import { useState } from 'react';
 import MatrixCell from '@/Components/Training/MatrixCell';
@@ -9,6 +9,8 @@ interface MatrixIndexProps extends PageProps {
     programs: TrainingProgram[];
     employees: Employee[];
     matrix: Record<string, Record<string, TrainingRecord | undefined>>;
+    sites: Array<{ id: number; name: string }>;
+    departments: Array<{ id: number; name: string; site_id: number }>;
     filters: {
         site_id?: string;
         department_id?: string;
@@ -16,7 +18,7 @@ interface MatrixIndexProps extends PageProps {
     };
 }
 
-export default function Index({ auth, programs, employees, matrix, filters }: MatrixIndexProps) {
+export default function Index({ auth, programs, employees, matrix, sites, departments, filters }: MatrixIndexProps) {
     const [selectedSite, setSelectedSite] = useState(filters.site_id || '');
     const [selectedDepartment, setSelectedDepartment] = useState(filters.department_id || '');
     const [selectedCategory, setSelectedCategory] = useState(filters.program_category || '');
@@ -31,6 +33,14 @@ export default function Index({ auth, programs, employees, matrix, filters }: Ma
         { value: 'quality', label: 'Quality' },
         { value: 'first_aid', label: 'First Aid' },
     ];
+
+    const applyFilters = () => {
+        router.get(route('training.matrix.index'), {
+            site_id: selectedSite || undefined,
+            department_id: selectedDepartment || undefined,
+            program_category: selectedCategory || undefined,
+        }, { preserveState: true });
+    };
 
     return (
         <AuthenticatedLayout
@@ -62,7 +72,9 @@ export default function Index({ auth, programs, employees, matrix, filters }: Ma
                                     className="w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 >
                                     <option value="">Semua Site</option>
-                                    {/* Sites will be loaded from backend */}
+                                    {sites.map((site) => (
+                                        <option key={site.id} value={site.id}>{site.name}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>
@@ -75,7 +87,11 @@ export default function Index({ auth, programs, employees, matrix, filters }: Ma
                                     className="w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 >
                                     <option value="">Semua Department</option>
-                                    {/* Departments will be loaded from backend */}
+                                    {departments
+                                        .filter((department) => !selectedSite || department.site_id === Number(selectedSite))
+                                        .map((department) => (
+                                            <option key={department.id} value={department.id}>{department.name}</option>
+                                        ))}
                                 </select>
                             </div>
                             <div>
@@ -93,6 +109,15 @@ export default function Index({ auth, programs, employees, matrix, filters }: Ma
                                     ))}
                                 </select>
                             </div>
+                        </div>
+                        <div className="mt-4 flex justify-end">
+                            <button
+                                type="button"
+                                onClick={applyFilters}
+                                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                            >
+                                Terapkan Filter
+                            </button>
                         </div>
                     </div>
 
@@ -241,7 +266,7 @@ export default function Index({ auth, programs, employees, matrix, filters }: Ma
                                                             {employee.name}
                                                         </div>
                                                         <div className="text-gray-500 dark:text-gray-400 text-xs">
-                                                            {employee.employee_number}
+                                                            {employee.employee_no}
                                                         </div>
                                                     </div>
                                                 </td>

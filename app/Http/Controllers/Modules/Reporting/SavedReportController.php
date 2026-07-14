@@ -9,9 +9,13 @@ use App\Http\Requests\Modules\Reporting\GenerateReportRequest;
 use App\Jobs\Modules\Reporting\GenerateReportJob;
 use App\Models\Modules\Reporting\ReportTemplate;
 use App\Models\Modules\Reporting\SavedReport;
+use App\Models\User;
+use App\Services\Modules\Reporting\ReportingScopeService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -19,20 +23,24 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class SavedReportController extends Controller
 {
-    use \Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+    use AuthorizesRequests;
 
     public function __construct(
-        protected ActivityService $activityService
+        protected ActivityService $activityService,
+        protected ReportingScopeService $reportingScope,
     ) {}
 
     public function index(Request $request): Response
     {
         $this->authorize('viewAny', SavedReport::class);
 
-        $query = SavedReport::with(['template', 'generatedBy']);
+        $query = $this->reportingScope->scopeReports(
+            SavedReport::with(['template', 'generatedBy']),
+            $request->user(),
+        );
 
         $filters = $request->only(['search', 'status', 'format', 'template_id']);
-        
+
         $listQuery = ListQuery::for($query, $request);
         $listQuery->search(['name'], $filters['search'] ?? null);
         $listQuery->filter('status', $filters['status'] ?? null);
@@ -79,8 +87,8 @@ class SavedReportController extends Controller
         }
 
         $templates = ReportTemplate::active()->get(['id', 'name', 'type', 'description']);
-        $sites = \App\Models\Core\MasterData\Site::active()->get(['id', 'name', 'code']);
-        $departments = \App\Models\Core\MasterData\Department::active()->get(['id', 'name', 'code']);
+        $sites = $this->reportingScope->availableSites($request->user());
+        $departments = $this->reportingScope->availableDepartments($request->user());
 
         return Inertia::render('Modules/Reporting/SavedReport/Generate', [
             'templates' => $templates,
@@ -92,44 +100,45 @@ class SavedReportController extends Controller
 
     public function store(GenerateReportRequest $request): RedirectResponse
     {
-        DB::beginTransaction();
+        $user = $request->user();
+        $validated = $request->validated();
+        $validated['parameters'] = $this->reportingScope->scopedParameters($user, $validated['parameters']);
+        $report = null;
+
         try {
-            $user = $request->user();
-            $validated = $request->validated();
+            $report = DB::transaction(function () use ($validated, $user): SavedReport {
+                $report = SavedReport::create([
+                    'name' => $validated['name'],
+                    'template_id' => $validated['template_id'],
+                    'status' => 'pending',
+                    'parameters' => $validated['parameters'],
+                    'format' => $validated['format'],
+                    'generated_by' => $user->id,
+                    'generated_at' => now(),
+                    'created_by' => $user->id,
+                    'updated_by' => $user->id,
+                ]);
 
-            // Create saved_report record with status 'pending'
-            $report = SavedReport::create([
-                'name' => $validated['name'],
-                'template_id' => $validated['template_id'],
-                'status' => 'pending',
-                'parameters' => $validated['parameters'],
-                'format' => $validated['format'],
-                'generated_by' => $user->id,
-                'generated_at' => now(),
-                'created_by' => $user->id,
-                'updated_by' => $user->id,
-            ]);
+                $this->activityService->log(
+                    moduleName: 'reporting',
+                    action: 'report.generated',
+                    description: "Report generation started: {$report->name}",
+                    referenceId: $report->id,
+                    referenceType: SavedReport::class,
+                    metadata: ['template_id' => $report->template_id, 'format' => $report->format]
+                );
 
-            // Dispatch async job
-            GenerateReportJob::dispatch($report, $user);
+                return $report;
+            });
 
-            $this->activityService->log(
-                moduleName: 'reporting',
-                action: 'report.generated',
-                description: "Report generation started: {$report->name}",
-                referenceId: $report->id,
-                referenceType: SavedReport::class,
-                metadata: ['template_id' => $report->template_id, 'format' => $report->format]
-            );
-
-            DB::commit();
+            // The queue only receives a model that has been committed successfully.
+            $this->dispatchReport($report, $user);
 
             return redirect()
                 ->route('saved-reports.show', $report)
                 ->with('success', 'Laporan sedang di-generate. Anda akan menerima notifikasi saat selesai.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->withInput()->with('error', 'Gagal memulai generate laporan: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', 'Gagal memulai generate laporan: '.$e->getMessage());
         }
     }
 
@@ -137,13 +146,13 @@ class SavedReportController extends Controller
     {
         $this->authorize('download', $savedReport);
 
-        if (!$savedReport->canDownload()) {
+        if (! $savedReport->canDownload()) {
             return back()->with('error', 'Laporan belum selesai di-generate atau file tidak ditemukan.');
         }
 
-        $filePath = storage_path('app/' . $savedReport->file_path);
+        $filePath = Storage::path($savedReport->file_path);
 
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             return back()->with('error', 'File laporan tidak ditemukan.');
         }
 
@@ -175,43 +184,41 @@ class SavedReportController extends Controller
     {
         $this->authorize('regenerate', $savedReport);
 
-        DB::beginTransaction();
         try {
             $user = auth()->user();
 
-            // Create new report with same parameters
-            $newReport = SavedReport::create([
-                'name' => $savedReport->name . ' (regenerated)',
-                'template_id' => $savedReport->template_id,
-                'status' => 'pending',
-                'parameters' => $savedReport->parameters,
-                'format' => $savedReport->format,
-                'generated_by' => $user->id,
-                'generated_at' => now(),
-                'created_by' => $user->id,
-                'updated_by' => $user->id,
-            ]);
+            $newReport = DB::transaction(function () use ($savedReport, $user): SavedReport {
+                $newReport = SavedReport::create([
+                    'name' => $savedReport->name.' (regenerated)',
+                    'template_id' => $savedReport->template_id,
+                    'status' => 'pending',
+                    'parameters' => $savedReport->parameters,
+                    'format' => $savedReport->format,
+                    'generated_by' => $user->id,
+                    'generated_at' => now(),
+                    'created_by' => $user->id,
+                    'updated_by' => $user->id,
+                ]);
 
-            // Dispatch async job
-            GenerateReportJob::dispatch($newReport, $user);
+                $this->activityService->log(
+                    moduleName: 'reporting',
+                    action: 'report.regenerated',
+                    description: "Report regenerated: {$newReport->name}",
+                    referenceId: $newReport->id,
+                    referenceType: SavedReport::class,
+                    metadata: ['original_report_id' => $savedReport->id]
+                );
 
-            $this->activityService->log(
-                moduleName: 'reporting',
-                action: 'report.regenerated',
-                description: "Report regenerated: {$newReport->name}",
-                referenceId: $newReport->id,
-                referenceType: SavedReport::class,
-                metadata: ['original_report_id' => $savedReport->id]
-            );
+                return $newReport;
+            });
 
-            DB::commit();
+            $this->dispatchReport($newReport, $user);
 
             return redirect()
                 ->route('saved-reports.show', $newReport)
                 ->with('success', 'Laporan sedang di-generate ulang.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Gagal regenerate laporan: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal regenerate laporan: '.$e->getMessage());
         }
     }
 
@@ -219,37 +226,51 @@ class SavedReportController extends Controller
     {
         $this->authorize('delete', $savedReport);
 
-        if (!$savedReport->canDelete()) {
+        if (! $savedReport->canDelete()) {
             return back()->with('error', 'Laporan sedang diproses dan tidak dapat dihapus.');
         }
 
-        DB::beginTransaction();
+        $filePath = $savedReport->file_path;
+
         try {
             $reportName = $savedReport->name;
+            DB::transaction(function () use ($savedReport, $reportName): void {
+                $savedReport->delete();
 
-            // Delete file from disk if exists
-            if ($savedReport->file_path && Storage::exists($savedReport->file_path)) {
-                Storage::delete($savedReport->file_path);
+                $this->activityService->log(
+                    moduleName: 'reporting',
+                    action: 'report.deleted',
+                    description: "Report deleted: {$reportName}",
+                    referenceId: $savedReport->id,
+                    referenceType: SavedReport::class
+                );
+            });
+
+            if ($filePath && Storage::exists($filePath) && ! Storage::delete($filePath)) {
+                Log::warning('Deleted report metadata but could not remove its private artifact.', [
+                    'report_id' => $savedReport->id,
+                    'file_path' => $filePath,
+                ]);
             }
-
-            $savedReport->delete();
-
-            $this->activityService->log(
-                moduleName: 'reporting',
-                action: 'report.deleted',
-                description: "Report deleted: {$reportName}",
-                referenceId: $savedReport->id,
-                referenceType: SavedReport::class
-            );
-
-            DB::commit();
 
             return redirect()
                 ->route('saved-reports.index')
                 ->with('success', 'Laporan berhasil dihapus.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Gagal menghapus laporan: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal menghapus laporan: '.$e->getMessage());
+        }
+    }
+
+    private function dispatchReport(SavedReport $report, User $user): void
+    {
+        try {
+            GenerateReportJob::dispatch($report, $user);
+        } catch (\Throwable $e) {
+            if ($report->exists && $report->isPending()) {
+                $report->markAsFailed('Report generation could not be queued.');
+            }
+
+            throw $e;
         }
     }
 }

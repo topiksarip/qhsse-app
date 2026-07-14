@@ -117,7 +117,7 @@ export interface Comment {
 
 export interface Employee {
     id: number;
-    employee_number: string;
+    employee_no: string;
     name: string;
     site_id: number;
     department_id: number;
@@ -179,7 +179,7 @@ export interface TrainingRecord {
     created_at: string;
     updated_at: string;
     employee?: Employee;
-    program?: TrainingProgram;
+    training_program?: TrainingProgram;
     certificate_file?: ManagedFile;
 }
 

@@ -22,7 +22,8 @@ class TrainingRecordFactory extends Factory
     public function definition(): array
     {
         $startDate = $this->faker->dateTimeBetween('-6 months', '+1 month');
-        $endDate = $this->faker->optional(0.8)->dateTimeBetween($startDate, '+7 days');
+        $latestEndDate = (clone $startDate)->modify('+7 days');
+        $endDate = $this->faker->optional(0.8)->dateTimeBetween($startDate, $latestEndDate);
 
         return [
             'training_number' => 'TRN-'.now()->year.'-'.str_pad((string) $this->faker->unique()->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT),

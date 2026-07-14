@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Fixed
+- Restored the Training Records, Training Matrix, and Asset index runtime contracts by aligning canonical `employee_no`/`training_program` fields, completing matrix props, exposing backend authorization props, and consuming Laravel paginator metadata from the root payload.
+- Rebuilt queue-backed Reporting generation against the released schemas for all seven predefined templates. CSV remains canonical, PDF artifacts now contain a real PDF structure, and Excel artifacts are OOXML ZIP workbooks instead of plain text with misleading extensions.
+- Made report persistence transactional, dispatched generation only after the report transaction succeeds, corrected the shared activity/notification contracts, used private filesystem downloads, and removed stale generator paths.
+- Fixed the Training Record factory's nondeterministic end-date range by calculating the upper bound from the generated start date.
+
+### Security
+- Added a dedicated fail-closed Reporting scope service shared by controllers and policy checks. Site/department scope is injected from the authenticated employee, list/detail/download/regenerate/delete access is organization-scoped, and generated artifacts filter source records by the same backend-enforced scope.
+- Added artifact-isolation regressions for indirect Audit (`department.site_id`) and Inspection (`inspector.employee.department_id`) organization relationships.
+
+### Changed
+- Raised the default database and Redis queue `retry_after` to 660 seconds so it remains above the Reporting job timeout of 600 seconds.
+
 ## [P1 - Production Deployment] - 2026-07-13
 
 **Status:** ✅ PRODUCTION READY - All 40 tests passed (237 assertions)

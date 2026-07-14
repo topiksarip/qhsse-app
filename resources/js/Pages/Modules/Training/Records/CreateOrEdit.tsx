@@ -31,7 +31,7 @@ export default function CreateOrEdit({ auth, record, programs, employees }: Crea
     });
 
     const [selectedProgram, setSelectedProgram] = useState<TrainingProgram | null>(
-        record?.program || null
+        record?.training_program || null
     );
 
     const handleProgramChange = (programId: string) => {

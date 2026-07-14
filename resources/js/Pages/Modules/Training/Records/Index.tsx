@@ -248,17 +248,17 @@ export default function Index({ auth, records, filters, can }: RecordsIndexProps
                                                             {record.employee?.name || 'N/A'}
                                                         </div>
                                                         <div className="text-gray-500 dark:text-gray-400 text-xs">
-                                                            {record.employee?.employee_number || '-'}
+                                                            {record.employee?.employee_no || '-'}
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <div className="text-sm max-w-xs truncate">
                                                         <div className="font-medium text-gray-900 dark:text-gray-100">
-                                                            {record.program?.name || 'N/A'}
+                                                            {record.training_program?.name || 'N/A'}
                                                         </div>
                                                         <div className="text-gray-500 dark:text-gray-400 text-xs">
-                                                            {record.program?.code || '-'}
+                                                            {record.training_program?.code || '-'}
                                                         </div>
                                                     </div>
                                                 </td>

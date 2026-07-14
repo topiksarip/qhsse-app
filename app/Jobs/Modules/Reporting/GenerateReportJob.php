@@ -2,18 +2,14 @@
 
 namespace App\Jobs\Modules\Reporting;
 
-use App\Core\Activity\ActivityService;
-use App\Core\Notification\NotificationService;
-use App\Models\Modules\Reporting\SavedReport;
-use App\Models\User;
-use App\Models\Modules\Incident\IncidentReport;
-use App\Models\Modules\Capa\CapaAction;
-use App\Models\Modules\Inspection\Inspection;
+use App\Core\Notifications\NotificationService;
 use App\Models\Modules\Audit\Audit;
-use App\Models\Modules\Audit\AuditFinding;
+use App\Models\Modules\Capa\CapaAction;
+use App\Models\Modules\Incident\IncidentReport;
+use App\Models\Modules\Inspection\Inspection;
+use App\Models\Modules\Reporting\SavedReport;
 use App\Models\Modules\Training\TrainingRecord;
-use App\Models\Modules\RiskManagement\RiskRegister;
-use App\Models\Modules\LegalCompliance\LegalRequirement;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -21,14 +17,16 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB;
+use RuntimeException;
+use ZipArchive;
 
 class GenerateReportJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 600; // 10 minutes
-    public $tries = 1; // Don't retry automatically
+    public int $timeout = 600;
+
+    public int $tries = 1;
 
     public function __construct(
         public SavedReport $report,
@@ -43,7 +41,6 @@ class GenerateReportJob implements ShouldQueue
             // Mark as processing
             $this->report->markAsProcessing();
 
-            // Simulate report generation
             $this->generateReport();
 
             // Mark as completed
@@ -78,9 +75,6 @@ class GenerateReportJob implements ShouldQueue
             'parameters' => $params,
         ]);
 
-        // Simulate processing time (remove in production)
-        sleep(2);
-
         // Generate file based on format
         $filePath = $this->createReportFile();
 
@@ -101,12 +95,13 @@ class GenerateReportJob implements ShouldQueue
         $filename = $this->report->getDownloadFileName();
         $filePath = "{$directory}/{$filename}";
 
-        // Generate content based on format
+        $csvContent = $this->generateCsvContent();
+
         $content = match ($this->report->format) {
-            'csv' => $this->generateCsvContent(),
-            'pdf' => $this->generatePdfContent(),
-            'excel' => $this->generateExcelContent(),
-            default => 'Unknown format',
+            'csv' => $csvContent,
+            'pdf' => $this->generatePdfContent($csvContent),
+            'excel' => $this->generateExcelContent($csvContent),
+            default => throw new RuntimeException("Unsupported report format: {$this->report->format}"),
         };
 
         Storage::put($filePath, $content);
@@ -122,37 +117,128 @@ class GenerateReportJob implements ShouldQueue
         // Dispatch to specific report type generator
         return match ($template->type) {
             'incident_summary' => $this->generateIncidentSummaryCsv($params),
-            'safety_metrics' => $this->generateSafetyMetricsCsv($params),
-            'compliance_status' => $this->generateComplianceStatusCsv($params),
-            'audit_findings' => $this->generateAuditFindingsCsv($params),
-            'risk_assessment' => $this->generateRiskAssessmentCsv($params),
-            'training_records' => $this->generateTrainingRecordsCsv($params),
-            'capa_effectiveness' => $this->generateCapaEffectivenessCsv($params),
+            'capa_summary' => $this->generateCapaEffectivenessCsv($params),
+            'inspection_summary' => $this->generateInspectionSummaryCsv($params),
+            'audit_summary' => $this->generateAuditFindingsCsv($params),
+            'training_compliance' => $this->generateTrainingRecordsCsv($params),
+            'monthly_qhsse', 'annual_qhsse' => $this->generateSafetyMetricsCsv($params),
             'custom' => $this->generateCustomCsv($params),
-            default => "Report type not implemented: {$template->type}\n",
+            default => throw new RuntimeException("Unsupported report type: {$template->type}"),
         };
     }
 
-    protected function generatePdfContent(): string
+    protected function generatePdfContent(string $csvContent): string
     {
-        // STUB: For now, return text content
-        // In production, use Dompdf or similar
-        $params = $this->report->parameters;
-        $template = $this->report->template;
+        $lines = [];
+        foreach ($this->parseCsvRows($csvContent) as $row) {
+            $wrapped = wordwrap(implode(' | ', $row), 105, "\n", true);
+            array_push($lines, ...explode("\n", $wrapped));
+        }
 
-        return "QHSSE REPORT\n\n" .
-               "Template: {$template->name}\n" .
-               "Generated: " . now()->format('Y-m-d H:i:s') . "\n" .
-               "Period: {$params['date_from']} to {$params['date_to']}\n\n" .
-               "Note: This is a stub implementation. PDF generation will be implemented with Dompdf.\n\n" .
-               "Sample report content...";
+        $pages = array_chunk($lines ?: ['QHSSE Report'], 58);
+        $fontObjectId = 3 + (count($pages) * 2);
+        $pageReferences = array_map(
+            fn (int $index): string => (3 + ($index * 2)).' 0 R',
+            array_keys($pages)
+        );
+        $objects = [
+            1 => '<< /Type /Catalog /Pages 2 0 R >>',
+            2 => '<< /Type /Pages /Kids ['.implode(' ', $pageReferences).'] /Count '.count($pages).' >>',
+        ];
+
+        foreach ($pages as $index => $pageLines) {
+            $pageId = 3 + ($index * 2);
+            $contentId = $pageId + 1;
+            $stream = "BT\n/F1 9 Tf\n40 800 Td\n11 TL\n";
+            foreach ($pageLines as $line) {
+                $escaped = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $line);
+                $stream .= "({$escaped}) Tj\nT*\n";
+            }
+            $stream .= "ET\n";
+
+            $objects[$pageId] = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 {$fontObjectId} 0 R >> >> /Contents {$contentId} 0 R >>";
+            $objects[$contentId] = '<< /Length '.strlen($stream).">>\nstream\n{$stream}endstream";
+        }
+        $objects[$fontObjectId] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
+        ksort($objects);
+
+        $pdf = "%PDF-1.4\n%\xE2\xE3\xCF\xD3\n";
+        $offsets = [0];
+        foreach ($objects as $id => $object) {
+            $offsets[$id] = strlen($pdf);
+            $pdf .= "{$id} 0 obj\n{$object}\nendobj\n";
+        }
+
+        $xrefOffset = strlen($pdf);
+        $pdf .= "xref\n0 ".(count($objects) + 1)."\n0000000000 65535 f \n";
+        foreach (array_keys($objects) as $id) {
+            $pdf .= sprintf("%010d 00000 n \n", $offsets[$id]);
+        }
+
+        return $pdf."trailer\n<< /Size ".(count($objects) + 1)." /Root 1 0 R >>\nstartxref\n{$xrefOffset}\n%%EOF\n";
     }
 
-    protected function generateExcelContent(): string
+    protected function generateExcelContent(string $csvContent): string
     {
-        // STUB: For now, return CSV-like content
-        // In production, use Laravel Excel (Maatwebsite/Laravel-Excel)
-        return $this->generateCsvContent();
+        if (! class_exists(ZipArchive::class)) {
+            throw new RuntimeException('PHP Zip extension is required to generate Excel reports.');
+        }
+
+        $sheetRows = '';
+        foreach ($this->parseCsvRows($csvContent) as $rowIndex => $row) {
+            $cells = '';
+            foreach ($row as $value) {
+                $escaped = htmlspecialchars($value, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+                $cells .= '<c t="inlineStr"><is><t xml:space="preserve">'.$escaped.'</t></is></c>';
+            }
+            $sheetRows .= '<row r="'.($rowIndex + 1).'">'.$cells.'</row>';
+        }
+
+        $temporaryPath = tempnam(sys_get_temp_dir(), 'qhsse-xlsx-');
+        if ($temporaryPath === false) {
+            throw new RuntimeException('Unable to allocate temporary Excel file.');
+        }
+
+        $zip = new ZipArchive;
+        if ($zip->open($temporaryPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            @unlink($temporaryPath);
+            throw new RuntimeException('Unable to create Excel archive.');
+        }
+
+        $zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>');
+        $zip->addFromString('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
+        $zip->addFromString('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="QHSSE Report" sheetId="1" r:id="rId1"/></sheets></workbook>');
+        $zip->addFromString('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>');
+        $zip->addFromString('xl/worksheets/sheet1.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'.$sheetRows.'</sheetData></worksheet>');
+        $zip->close();
+
+        $content = file_get_contents($temporaryPath);
+        @unlink($temporaryPath);
+
+        if ($content === false) {
+            throw new RuntimeException('Unable to read generated Excel archive.');
+        }
+
+        return $content;
+    }
+
+    /** @return list<list<string>> */
+    protected function parseCsvRows(string $csvContent): array
+    {
+        $stream = fopen('php://temp', 'r+');
+        if ($stream === false) {
+            throw new RuntimeException('Unable to parse generated report data.');
+        }
+
+        fwrite($stream, $csvContent);
+        rewind($stream);
+        $rows = [];
+        while (($row = fgetcsv($stream, escape: '')) !== false) {
+            $rows[] = array_map(static fn ($value): string => (string) $value, $row);
+        }
+        fclose($stream);
+
+        return $rows;
     }
 
     protected function sendCompletedNotification(): void
@@ -161,14 +247,17 @@ class GenerateReportJob implements ShouldQueue
             $notificationService = app(NotificationService::class);
 
             $notificationService->notify(
-                users: [$this->user],
+                recipient: $this->user,
                 type: 'report.completed',
-                title: "Laporan Selesai: {$this->report->name}",
-                message: "Laporan {$this->report->name} telah selesai di-generate. Format: {$this->report->format_label}. Anda dapat mengunduh laporan sekarang.",
+                context: [
+                    'title' => "Laporan Selesai: {$this->report->name}",
+                    'message' => "Laporan {$this->report->name} telah selesai di-generate. Format: {$this->report->format_label}. Anda dapat mengunduh laporan sekarang.",
+                ],
+                actor: $this->user,
                 actionUrl: route('saved-reports.show', $this->report->id),
                 moduleName: 'reporting',
                 referenceId: $this->report->id,
-                referenceType: SavedReport::class
+                idempotencyKey: 'report.completed:'.$this->report->id,
             );
 
             Log::info("Completion notification sent for report ID: {$this->report->id}");
@@ -185,14 +274,17 @@ class GenerateReportJob implements ShouldQueue
             $notificationService = app(NotificationService::class);
 
             $notificationService->notify(
-                users: [$this->user],
+                recipient: $this->user,
                 type: 'report.failed',
-                title: "Laporan Gagal: {$this->report->name}",
-                message: "Laporan {$this->report->name} gagal di-generate. Error: {$errorMessage}. Silakan coba lagi atau hubungi administrator.",
+                context: [
+                    'title' => "Laporan Gagal: {$this->report->name}",
+                    'message' => "Laporan {$this->report->name} gagal di-generate. Error: {$errorMessage}. Silakan coba lagi atau hubungi administrator.",
+                ],
+                actor: $this->user,
                 actionUrl: route('saved-reports.show', $this->report->id),
                 moduleName: 'reporting',
                 referenceId: $this->report->id,
-                referenceType: SavedReport::class
+                idempotencyKey: 'report.failed:'.$this->report->id,
             );
 
             Log::info("Failure notification sent for report ID: {$this->report->id}");
@@ -228,44 +320,37 @@ class GenerateReportJob implements ShouldQueue
         $dateFrom = $params['date_from'] ?? null;
         $dateTo = $params['date_to'] ?? null;
 
-        // Query incidents within date range
         $query = IncidentReport::query()
-            ->with(['severity', 'priority', 'status', 'site', 'area', 'reporter', 'investigator'])
-            ->orderBy('incident_date', 'desc');
-
-        if ($dateFrom) {
-            $query->where('incident_date', '>=', $dateFrom);
-        }
-        if ($dateTo) {
-            $query->where('incident_date', '<=', $dateTo);
-        }
+            ->with(['severity', 'priority', 'site', 'area', 'department', 'reporter'])
+            ->when($dateFrom, fn ($builder) => $builder->whereDate('occurred_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($builder) => $builder->whereDate('occurred_at', '<=', $dateTo))
+            ->when($params['site_id'] ?? null, fn ($builder, $siteId) => $builder->where('site_id', $siteId))
+            ->when($params['department_id'] ?? null, fn ($builder, $departmentId) => $builder->where('department_id', $departmentId))
+            ->orderByDesc('occurred_at');
 
         $incidents = $query->get();
 
-        // Build CSV
         $csv = "INCIDENT SUMMARY REPORT\n";
-        $csv .= "Generated: " . now()->format('Y-m-d H:i:s') . "\n";
-        $csv .= "Period: " . ($dateFrom ?? 'All') . " to " . ($dateTo ?? 'All') . "\n";
-        $csv .= "Total Incidents: " . $incidents->count() . "\n";
-        $csv .= "\n";
+        $csv .= 'Generated: '.now()->format('Y-m-d H:i:s')."\n";
+        $csv .= 'Period: '.($dateFrom ?? 'All').' to '.($dateTo ?? 'All')."\n";
+        $csv .= 'Total Incidents: '.$incidents->count()."\n\n";
+        $csv .= "Incident Number,Occurred At,Category,Title,Severity,Priority,Status,Site,Area,Department,Reporter,Description\n";
 
-        // Headers
-        $csv .= "Report Number,Incident Date,Type,Title,Severity,Priority,Status,Site,Area,Reporter,Investigator,Description\n";
-
-        // Data rows
         foreach ($incidents as $incident) {
-            $csv .= $this->escapeCsv($incident->report_number) . ",";
-            $csv .= $this->escapeCsv($incident->incident_date?->format('Y-m-d') ?? '') . ",";
-            $csv .= $this->escapeCsv($incident->type_label ?? '') . ",";
-            $csv .= $this->escapeCsv($incident->title ?? '') . ",";
-            $csv .= $this->escapeCsv($incident->severity?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($incident->priority?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($incident->status?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($incident->site?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($incident->area?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($incident->reporter?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($incident->investigator?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($incident->description ?? '') . "\n";
+            $csv .= implode(',', array_map($this->escapeCsv(...), [
+                $incident->incident_number,
+                $incident->occurred_at?->format('Y-m-d H:i'),
+                $incident->category,
+                $incident->title,
+                $incident->severity?->name,
+                $incident->priority?->name,
+                $incident->status,
+                $incident->site?->name,
+                $incident->area?->name,
+                $incident->department?->name,
+                $incident->reporter?->name,
+                $incident->description,
+            ]))."\n";
         }
 
         return $csv;
@@ -278,65 +363,90 @@ class GenerateReportJob implements ShouldQueue
     {
         $dateFrom = $params['date_from'] ?? null;
         $dateTo = $params['date_to'] ?? null;
+        $siteId = $params['site_id'] ?? null;
+        $departmentId = $params['department_id'] ?? null;
 
-        // Get incidents within period
-        $incidentsQuery = IncidentReport::query();
-        if ($dateFrom) {
-            $incidentsQuery->where('incident_date', '>=', $dateFrom);
+        $incidents = IncidentReport::query()
+            ->when($dateFrom, fn ($query) => $query->whereDate('occurred_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($query) => $query->whereDate('occurred_at', '<=', $dateTo))
+            ->when($siteId, fn ($query) => $query->where('site_id', $siteId))
+            ->when($departmentId, fn ($query) => $query->where('department_id', $departmentId));
+        $capas = CapaAction::query()
+            ->when($dateFrom, fn ($query) => $query->whereDate('created_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($query) => $query->whereDate('created_at', '<=', $dateTo))
+            ->when($siteId, fn ($query) => $query->where('site_id', $siteId))
+            ->when($departmentId, fn ($query) => $query->where('department_id', $departmentId));
+        $inspections = Inspection::query()
+            ->when($dateFrom, fn ($query) => $query->whereDate('scheduled_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($query) => $query->whereDate('scheduled_at', '<=', $dateTo))
+            ->when($siteId, fn ($query) => $query->where('site_id', $siteId))
+            ->when($departmentId, fn ($query) => $query->whereHas(
+                'inspector.employee',
+                fn ($employee) => $employee->where('department_id', $departmentId),
+            ));
+        $audits = Audit::query()
+            ->when($dateFrom, fn ($query) => $query->whereDate('scheduled_date', '>=', $dateFrom))
+            ->when($dateTo, fn ($query) => $query->whereDate('scheduled_date', '<=', $dateTo))
+            ->when($siteId, fn ($query) => $query->whereHas(
+                'department',
+                fn ($department) => $department->where('site_id', $siteId),
+            ))
+            ->when($departmentId, fn ($query) => $query->where('department_id', $departmentId));
+        $training = TrainingRecord::query()
+            ->when($dateFrom, fn ($query) => $query->whereDate('start_date', '>=', $dateFrom))
+            ->when($dateTo, fn ($query) => $query->whereDate('start_date', '<=', $dateTo))
+            ->when($siteId || $departmentId, fn ($query) => $query->whereHas('employee', function ($employeeQuery) use ($siteId, $departmentId): void {
+                $employeeQuery
+                    ->when($siteId, fn ($builder) => $builder->where('site_id', $siteId))
+                    ->when($departmentId, fn ($builder) => $builder->where('department_id', $departmentId));
+            }));
+
+        $csv = "QHSSE OVERVIEW REPORT\n";
+        $csv .= 'Generated: '.now()->format('Y-m-d H:i:s')."\n";
+        $csv .= 'Period: '.($dateFrom ?? 'All').' to '.($dateTo ?? 'All')."\n\n";
+        $csv .= "Module,Total,Completed or Closed,Open or Pending\n";
+        $csv .= 'Incidents,'.(clone $incidents)->count().','.(clone $incidents)->where('status', 'closed')->count().','.(clone $incidents)->whereNotIn('status', ['closed', 'rejected'])->count()."\n";
+        $csv .= 'CAPA,'.(clone $capas)->count().','.(clone $capas)->where('status', 'closed')->count().','.(clone $capas)->whereNotIn('status', ['closed', 'rejected'])->count()."\n";
+        $csv .= 'Inspections,'.(clone $inspections)->count().','.(clone $inspections)->where('status', 'completed')->count().','.(clone $inspections)->where('status', '!=', 'completed')->count()."\n";
+        $csv .= 'Audits,'.(clone $audits)->count().','.(clone $audits)->where('status', 'closed')->count().','.(clone $audits)->where('status', '!=', 'closed')->count()."\n";
+        $csv .= 'Training,'.(clone $training)->count().','.(clone $training)->where('status', 'completed')->count().','.(clone $training)->where('status', '!=', 'completed')->count()."\n";
+
+        return $csv;
+    }
+
+    protected function generateInspectionSummaryCsv(array $params): string
+    {
+        $dateFrom = $params['date_from'] ?? null;
+        $dateTo = $params['date_to'] ?? null;
+        $query = Inspection::query()
+            ->with(['template', 'site', 'area', 'inspector'])
+            ->when($dateFrom, fn ($builder) => $builder->whereDate('scheduled_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($builder) => $builder->whereDate('scheduled_at', '<=', $dateTo))
+            ->when($params['site_id'] ?? null, fn ($builder, $siteId) => $builder->where('site_id', $siteId))
+            ->when($params['department_id'] ?? null, fn ($builder, $departmentId) => $builder->whereHas(
+                'inspector.employee',
+                fn ($employee) => $employee->where('department_id', $departmentId),
+            ))
+            ->orderByDesc('scheduled_at');
+
+        $inspections = $query->get();
+        $csv = "INSPECTION SUMMARY REPORT\n";
+        $csv .= 'Generated: '.now()->format('Y-m-d H:i:s')."\n";
+        $csv .= 'Period: '.($dateFrom ?? 'All').' to '.($dateTo ?? 'All')."\n";
+        $csv .= 'Total Inspections: '.$inspections->count()."\n\n";
+        $csv .= "Inspection Number,Template,Scheduled Date,Site,Area,Inspector,Status,Overall Result\n";
+        foreach ($inspections as $inspection) {
+            $csv .= implode(',', array_map($this->escapeCsv(...), [
+                $inspection->inspection_number,
+                $inspection->template?->name,
+                $inspection->scheduled_at?->format('Y-m-d'),
+                $inspection->site?->name,
+                $inspection->area?->name,
+                $inspection->inspector?->name,
+                $inspection->status,
+                $inspection->overall_result,
+            ]))."\n";
         }
-        if ($dateTo) {
-            $incidentsQuery->where('incident_date', '<=', $dateTo);
-        }
-
-        $totalIncidents = $incidentsQuery->count();
-        $incidentsBySeverity = $incidentsQuery->select('severity_id', DB::raw('count(*) as count'))
-            ->groupBy('severity_id')
-            ->with('severity')
-            ->get();
-
-        $incidentsByType = $incidentsQuery->select('type', DB::raw('count(*) as count'))
-            ->groupBy('type')
-            ->get();
-
-        // Get inspections
-        $inspectionsQuery = Inspection::query();
-        if ($dateFrom) {
-            $inspectionsQuery->where('scheduled_date', '>=', $dateFrom);
-        }
-        if ($dateTo) {
-            $inspectionsQuery->where('scheduled_date', '<=', $dateTo);
-        }
-        $totalInspections = $inspectionsQuery->count();
-        $completedInspections = $inspectionsQuery->whereIn('status', ['completed'])->count();
-
-        // Build CSV
-        $csv = "SAFETY METRICS REPORT\n";
-        $csv .= "Generated: " . now()->format('Y-m-d H:i:s') . "\n";
-        $csv .= "Period: " . ($dateFrom ?? 'All') . " to " . ($dateTo ?? 'All') . "\n";
-        $csv .= "\n";
-
-        $csv .= "INCIDENT SUMMARY\n";
-        $csv .= "Total Incidents," . $totalIncidents . "\n";
-        $csv .= "\n";
-
-        $csv .= "Incidents by Severity\n";
-        $csv .= "Severity,Count\n";
-        foreach ($incidentsBySeverity as $row) {
-            $csv .= $this->escapeCsv($row->severity?->name ?? 'Unknown') . "," . $row->count . "\n";
-        }
-        $csv .= "\n";
-
-        $csv .= "Incidents by Type\n";
-        $csv .= "Type,Count\n";
-        foreach ($incidentsByType as $row) {
-            $csv .= $this->escapeCsv($row->type ?? 'Unknown') . "," . $row->count . "\n";
-        }
-        $csv .= "\n";
-
-        $csv .= "INSPECTION SUMMARY\n";
-        $csv .= "Total Inspections," . $totalInspections . "\n";
-        $csv .= "Completed Inspections," . $completedInspections . "\n";
-        $csv .= "Completion Rate," . ($totalInspections > 0 ? round(($completedInspections / $totalInspections) * 100, 1) : 0) . "%\n";
 
         return $csv;
     }
@@ -350,9 +460,14 @@ class GenerateReportJob implements ShouldQueue
             return '';
         }
 
+        // Neutralize spreadsheet formula injection
+        if (preg_match('/^[=+\-@]/', $value) === 1) {
+            $value = "'{$value}";
+        }
+
         // Escape quotes and wrap in quotes if contains comma, quote, or newline
         if (str_contains($value, ',') || str_contains($value, '"') || str_contains($value, "\n")) {
-            return '"' . str_replace('"', '""', $value) . '"';
+            return '"'.str_replace('"', '""', $value).'"';
         }
 
         return $value;
@@ -366,97 +481,35 @@ class GenerateReportJob implements ShouldQueue
         $dateFrom = $params['date_from'] ?? null;
         $dateTo = $params['date_to'] ?? null;
 
-        // Query audit findings
-        $query = AuditFinding::query()
-            ->with(['audit', 'audit.site', 'severity', 'status', 'assignedTo'])
-            ->orderBy('created_at', 'desc');
+        $audits = Audit::query()
+            ->with(['department', 'leadAuditor', 'findings'])
+            ->when($dateFrom, fn ($query) => $query->whereDate('scheduled_date', '>=', $dateFrom))
+            ->when($dateTo, fn ($query) => $query->whereDate('scheduled_date', '<=', $dateTo))
+            ->when($params['site_id'] ?? null, fn ($query, $siteId) => $query->whereHas(
+                'department',
+                fn ($department) => $department->where('site_id', $siteId),
+            ))
+            ->when($params['department_id'] ?? null, fn ($query, $departmentId) => $query->where('department_id', $departmentId))
+            ->orderByDesc('scheduled_date')
+            ->get();
 
-        if ($dateFrom) {
-            $query->whereHas('audit', function ($q) use ($dateFrom) {
-                $q->where('audit_date', '>=', $dateFrom);
-            });
-        }
-        if ($dateTo) {
-            $query->whereHas('audit', function ($q) use ($dateTo) {
-                $q->where('audit_date', '<=', $dateTo);
-            });
-        }
-
-        $findings = $query->get();
-
-        // Build CSV
-        $csv = "AUDIT FINDINGS REPORT\n";
-        $csv .= "Generated: " . now()->format('Y-m-d H:i:s') . "\n";
-        $csv .= "Period: " . ($dateFrom ?? 'All') . " to " . ($dateTo ?? 'All') . "\n";
-        $csv .= "Total Findings: " . $findings->count() . "\n";
-        $csv .= "\n";
-
-        // Headers
-        $csv .= "Finding Number,Audit Title,Audit Date,Site,Finding Description,Severity,Status,Assigned To,Due Date,Root Cause,Corrective Action\n";
-
-        // Data rows
-        foreach ($findings as $finding) {
-            $csv .= $this->escapeCsv($finding->finding_number ?? '') . ",";
-            $csv .= $this->escapeCsv($finding->audit?->title ?? '') . ",";
-            $csv .= $this->escapeCsv($finding->audit?->audit_date?->format('Y-m-d') ?? '') . ",";
-            $csv .= $this->escapeCsv($finding->audit?->site?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($finding->description ?? '') . ",";
-            $csv .= $this->escapeCsv($finding->severity?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($finding->status?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($finding->assignedTo?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($finding->due_date?->format('Y-m-d') ?? '') . ",";
-            $csv .= $this->escapeCsv($finding->root_cause ?? '') . ",";
-            $csv .= $this->escapeCsv($finding->corrective_action ?? '') . "\n";
-        }
-
-        return $csv;
-    }
-
-    /**
-     * Generate Risk Assessment Report (CSV)
-     */
-    protected function generateRiskAssessmentCsv(array $params): string
-    {
-        $dateFrom = $params['date_from'] ?? null;
-        $dateTo = $params['date_to'] ?? null;
-
-        // Query risk registers
-        $query = RiskRegister::query()
-            ->with(['site', 'department', 'owner', 'riskLevel'])
-            ->orderBy('risk_score', 'desc');
-
-        if ($dateFrom) {
-            $query->where('created_at', '>=', $dateFrom);
-        }
-        if ($dateTo) {
-            $query->where('created_at', '<=', $dateTo);
-        }
-
-        $risks = $query->get();
-
-        // Build CSV
-        $csv = "RISK ASSESSMENT REPORT\n";
-        $csv .= "Generated: " . now()->format('Y-m-d H:i:s') . "\n";
-        $csv .= "Period: " . ($dateFrom ?? 'All') . " to " . ($dateTo ?? 'All') . "\n";
-        $csv .= "Total Risks: " . $risks->count() . "\n";
-        $csv .= "\n";
-
-        // Headers
-        $csv .= "Risk ID,Title,Site,Department,Owner,Likelihood,Consequence,Risk Score,Risk Level,Control Measures,Status\n";
-
-        // Data rows
-        foreach ($risks as $risk) {
-            $csv .= $this->escapeCsv($risk->risk_id ?? '') . ",";
-            $csv .= $this->escapeCsv($risk->title ?? '') . ",";
-            $csv .= $this->escapeCsv($risk->site?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($risk->department?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($risk->owner?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($risk->likelihood ?? '') . ",";
-            $csv .= $this->escapeCsv($risk->consequence ?? '') . ",";
-            $csv .= $this->escapeCsv($risk->risk_score ?? '') . ",";
-            $csv .= $this->escapeCsv($risk->riskLevel?->level ?? '') . ",";
-            $csv .= $this->escapeCsv($risk->control_measures ?? '') . ",";
-            $csv .= $this->escapeCsv($risk->status ?? '') . "\n";
+        $csv = "AUDIT SUMMARY REPORT\n";
+        $csv .= 'Generated: '.now()->format('Y-m-d H:i:s')."\n";
+        $csv .= 'Period: '.($dateFrom ?? 'All').' to '.($dateTo ?? 'All')."\n";
+        $csv .= 'Total Audits: '.$audits->count()."\n\n";
+        $csv .= "Audit Number,Title,Type,Scheduled Date,Department,Lead Auditor,Status,Findings,Open Findings\n";
+        foreach ($audits as $audit) {
+            $csv .= implode(',', array_map($this->escapeCsv(...), [
+                $audit->audit_number,
+                $audit->title,
+                $audit->audit_type,
+                $audit->scheduled_date?->format('Y-m-d'),
+                $audit->department?->name,
+                $audit->leadAuditor?->name,
+                $audit->status,
+                $audit->findings->count(),
+                $audit->findings->where('status', '!=', 'closed')->count(),
+            ]))."\n";
         }
 
         return $csv;
@@ -470,87 +523,42 @@ class GenerateReportJob implements ShouldQueue
         $dateFrom = $params['date_from'] ?? null;
         $dateTo = $params['date_to'] ?? null;
 
-        // Query training records
         $query = TrainingRecord::query()
-            ->with(['employee', 'program', 'trainer'])
-            ->orderBy('training_date', 'desc');
-
-        if ($dateFrom) {
-            $query->where('training_date', '>=', $dateFrom);
-        }
-        if ($dateTo) {
-            $query->where('training_date', '<=', $dateTo);
-        }
+            ->with(['employee.site', 'employee.department', 'trainingProgram'])
+            ->when($dateFrom, fn ($builder) => $builder->whereDate('start_date', '>=', $dateFrom))
+            ->when($dateTo, fn ($builder) => $builder->whereDate('start_date', '<=', $dateTo))
+            ->when(($params['site_id'] ?? null) || ($params['department_id'] ?? null), function ($builder) use ($params): void {
+                $builder->whereHas('employee', function ($employeeQuery) use ($params): void {
+                    $employeeQuery
+                        ->when($params['site_id'] ?? null, fn ($query, $siteId) => $query->where('site_id', $siteId))
+                        ->when($params['department_id'] ?? null, fn ($query, $departmentId) => $query->where('department_id', $departmentId));
+                });
+            })
+            ->orderByDesc('start_date');
 
         $records = $query->get();
 
-        // Build CSV
         $csv = "TRAINING RECORDS REPORT\n";
-        $csv .= "Generated: " . now()->format('Y-m-d H:i:s') . "\n";
-        $csv .= "Period: " . ($dateFrom ?? 'All') . " to " . ($dateTo ?? 'All') . "\n";
-        $csv .= "Total Records: " . $records->count() . "\n";
-        $csv .= "\n";
-
-        // Headers
-        $csv .= "Employee,Program,Training Date,Duration (Hours),Trainer,Status,Certificate Number,Expiry Date,Score\n";
-
-        // Data rows
+        $csv .= 'Generated: '.now()->format('Y-m-d H:i:s')."\n";
+        $csv .= 'Period: '.($dateFrom ?? 'All').' to '.($dateTo ?? 'All')."\n";
+        $csv .= 'Total Records: '.$records->count()."\n\n";
+        $csv .= "Employee Number,Employee,Site,Department,Program,Start Date,End Date,Provider,Status,Result,Certificate Number,Expiry Date,Score\n";
         foreach ($records as $record) {
-            $csv .= $this->escapeCsv($record->employee?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($record->program?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($record->training_date?->format('Y-m-d') ?? '') . ",";
-            $csv .= $this->escapeCsv($record->duration_hours ?? '') . ",";
-            $csv .= $this->escapeCsv($record->trainer?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($record->status ?? '') . ",";
-            $csv .= $this->escapeCsv($record->certificate_number ?? '') . ",";
-            $csv .= $this->escapeCsv($record->expiry_date?->format('Y-m-d') ?? '') . ",";
-            $csv .= $this->escapeCsv($record->score ?? '') . "\n";
-        }
-
-        return $csv;
-    }
-
-    /**
-     * Generate Compliance Status Report (CSV)
-     */
-    protected function generateComplianceStatusCsv(array $params): string
-    {
-        $dateFrom = $params['date_from'] ?? null;
-        $dateTo = $params['date_to'] ?? null;
-
-        // Query legal requirements if model exists
-        $csv = "COMPLIANCE STATUS REPORT\n";
-        $csv .= "Generated: " . now()->format('Y-m-d H:i:s') . "\n";
-        $csv .= "Period: " . ($dateFrom ?? 'All') . " to " . ($dateTo ?? 'All') . "\n";
-        $csv .= "\n";
-
-        // Check if LegalRequirement model is available
-        if (class_exists(LegalRequirement::class)) {
-            $query = LegalRequirement::query()
-                ->orderBy('due_date', 'asc');
-
-            if ($dateFrom) {
-                $query->where('created_at', '>=', $dateFrom);
-            }
-            if ($dateTo) {
-                $query->where('created_at', '<=', $dateTo);
-            }
-
-            $requirements = $query->get();
-
-            $csv .= "Total Requirements: " . $requirements->count() . "\n\n";
-            $csv .= "Requirement,Category,Status,Due Date,Responsible,Compliance Rate\n";
-
-            foreach ($requirements as $req) {
-                $csv .= $this->escapeCsv($req->title ?? '') . ",";
-                $csv .= $this->escapeCsv($req->category ?? '') . ",";
-                $csv .= $this->escapeCsv($req->status ?? '') . ",";
-                $csv .= $this->escapeCsv($req->due_date?->format('Y-m-d') ?? '') . ",";
-                $csv .= $this->escapeCsv($req->responsible?->name ?? '') . ",";
-                $csv .= $this->escapeCsv($req->compliance_rate ?? '0') . "%\n";
-            }
-        } else {
-            $csv .= "Legal Compliance module not yet implemented.\n";
+            $csv .= implode(',', array_map($this->escapeCsv(...), [
+                $record->employee?->employee_no,
+                $record->employee?->name,
+                $record->employee?->site?->name,
+                $record->employee?->department?->name,
+                $record->trainingProgram?->name,
+                $record->start_date?->format('Y-m-d'),
+                $record->end_date?->format('Y-m-d'),
+                $record->provider,
+                $record->status,
+                $record->result,
+                $record->certificate_number,
+                $record->expiry_date?->format('Y-m-d'),
+                $record->score,
+            ]))."\n";
         }
 
         return $csv;
@@ -564,51 +572,49 @@ class GenerateReportJob implements ShouldQueue
         $dateFrom = $params['date_from'] ?? null;
         $dateTo = $params['date_to'] ?? null;
 
-        // Query CAPA actions
         $query = CapaAction::query()
-            ->with(['assignedTo', 'priority', 'status'])
-            ->orderBy('due_date', 'asc');
-
-        if ($dateFrom) {
-            $query->where('created_at', '>=', $dateFrom);
-        }
-        if ($dateTo) {
-            $query->where('created_at', '<=', $dateTo);
-        }
+            ->with(['assignedTo', 'priority', 'site', 'department'])
+            ->when($dateFrom, fn ($builder) => $builder->whereDate('created_at', '>=', $dateFrom))
+            ->when($dateTo, fn ($builder) => $builder->whereDate('created_at', '<=', $dateTo))
+            ->when($params['site_id'] ?? null, fn ($builder, $siteId) => $builder->where('site_id', $siteId))
+            ->when($params['department_id'] ?? null, fn ($builder, $departmentId) => $builder->where('department_id', $departmentId))
+            ->orderBy('due_date');
 
         $actions = $query->get();
 
         // Calculate metrics
         $total = $actions->count();
-        $completed = $actions->whereIn('status.code', ['completed', 'verified'])->count();
-        $overdue = $actions->where('due_date', '<', now())->whereNotIn('status.code', ['completed', 'verified'])->count();
+        $completed = $actions->where('status', 'closed')->count();
+        $overdue = $actions->filter(fn (CapaAction $action) => $action->is_overdue)->count();
 
         // Build CSV
         $csv = "CAPA EFFECTIVENESS REPORT\n";
-        $csv .= "Generated: " . now()->format('Y-m-d H:i:s') . "\n";
-        $csv .= "Period: " . ($dateFrom ?? 'All') . " to " . ($dateTo ?? 'All') . "\n";
+        $csv .= 'Generated: '.now()->format('Y-m-d H:i:s')."\n";
+        $csv .= 'Period: '.($dateFrom ?? 'All').' to '.($dateTo ?? 'All')."\n";
         $csv .= "\n";
 
         $csv .= "SUMMARY\n";
-        $csv .= "Total Actions," . $total . "\n";
-        $csv .= "Completed," . $completed . "\n";
-        $csv .= "Completion Rate," . ($total > 0 ? round(($completed / $total) * 100, 1) : 0) . "%\n";
-        $csv .= "Overdue," . $overdue . "\n";
+        $csv .= 'Total Actions,'.$total."\n";
+        $csv .= 'Completed,'.$completed."\n";
+        $csv .= 'Completion Rate,'.($total > 0 ? round(($completed / $total) * 100, 1) : 0)."%\n";
+        $csv .= 'Overdue,'.$overdue."\n";
         $csv .= "\n";
 
         // Headers
-        $csv .= "Action Number,Title,Type,Priority,Assigned To,Due Date,Status,Effectiveness Rating\n";
+        $csv .= "Action Number,Title,Source,Site,Department,Priority,Assigned To,Due Date,Status,Verification Note\n";
 
         // Data rows
         foreach ($actions as $action) {
-            $csv .= $this->escapeCsv($action->action_number ?? '') . ",";
-            $csv .= $this->escapeCsv($action->title ?? '') . ",";
-            $csv .= $this->escapeCsv($action->type ?? '') . ",";
-            $csv .= $this->escapeCsv($action->priority?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($action->assignedTo?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($action->due_date?->format('Y-m-d') ?? '') . ",";
-            $csv .= $this->escapeCsv($action->status?->name ?? '') . ",";
-            $csv .= $this->escapeCsv($action->effectiveness_rating ?? 'N/A') . "\n";
+            $csv .= $this->escapeCsv($action->action_number ?? '').',';
+            $csv .= $this->escapeCsv($action->title ?? '').',';
+            $csv .= $this->escapeCsv($action->source_module ?? '').',';
+            $csv .= $this->escapeCsv($action->site?->name ?? '').',';
+            $csv .= $this->escapeCsv($action->department?->name ?? '').',';
+            $csv .= $this->escapeCsv($action->priority?->name ?? '').',';
+            $csv .= $this->escapeCsv($action->assignedTo?->name ?? '').',';
+            $csv .= $this->escapeCsv($action->due_date?->format('Y-m-d') ?? '').',';
+            $csv .= $this->escapeCsv($action->status ?? '').',';
+            $csv .= $this->escapeCsv($action->verification_note ?? '')."\n";
         }
 
         return $csv;
@@ -622,12 +628,17 @@ class GenerateReportJob implements ShouldQueue
         $template = $this->report->template;
 
         $csv = "CUSTOM QHSSE REPORT\n";
-        $csv .= "Template: " . $template->name . "\n";
-        $csv .= "Generated: " . now()->format('Y-m-d H:i:s') . "\n";
-        $csv .= "Period: " . ($params['date_from'] ?? 'All') . " to " . ($params['date_to'] ?? 'All') . "\n";
-        $csv .= "\n";
-        $csv .= "Note: Custom report generation requires template-specific configuration.\n";
-        $csv .= "This is a placeholder. Implement custom logic based on template config.\n";
+        $csv .= 'Template: '.$template->name."\n";
+        $csv .= 'Generated: '.now()->format('Y-m-d H:i:s')."\n";
+        $csv .= 'Period: '.($params['date_from'] ?? 'All').' to '.($params['date_to'] ?? 'All')."\n\n";
+        $csv .= "Section,Data Source,Enabled\n";
+        foreach ($template->getSections() as $section) {
+            $csv .= implode(',', array_map($this->escapeCsv(...), [
+                $section['label'] ?? $section['key'] ?? 'Section',
+                $section['data_source'] ?? '',
+                ($section['enabled'] ?? true) ? 'Yes' : 'No',
+            ]))."\n";
+        }
 
         return $csv;
     }
