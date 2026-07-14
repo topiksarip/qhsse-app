@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## [Training/Reporting Recovery] - 2026-07-14
+
+**Status:** ✅ PRODUCTION DEPLOYED - All blockers resolved, 13 regression tests passed (239 assertions)
 
 ### Fixed
 - Restored the Training Records, Training Matrix, and Asset index runtime contracts by aligning canonical `employee_no`/`training_program` fields, completing matrix props, exposing backend authorization props, and consuming Laravel paginator metadata from the root payload.
@@ -11,9 +13,20 @@
 ### Security
 - Added a dedicated fail-closed Reporting scope service shared by controllers and policy checks. Site/department scope is injected from the authenticated employee, list/detail/download/regenerate/delete access is organization-scoped, and generated artifacts filter source records by the same backend-enforced scope.
 - Added artifact-isolation regressions for indirect Audit (`department.site_id`) and Inspection (`inspector.employee.department_id`) organization relationships.
+- **Training authorization bypass resolved**: Added model-level `authorize('view'/'update', $record)` to show/edit/update methods; scoped employee selectors and export query by role hierarchy matching TrainingRecordPolicy.
+- **Spreadsheet formula injection neutralized**: CSV/Excel escapeCsv() now prefixes `=+-@` values with apostrophe to prevent formula execution.
 
 ### Changed
 - Raised the default database and Redis queue `retry_after` to 660 seconds so it remains above the Reporting job timeout of 600 seconds.
+- **Queue worker timeout increased**: Production systemd unit updated from 120s to 600s to support long-running report generation jobs.
+
+### Deployment
+- **Commit**: `b811661` fix(training,reporting): resolve authorization bypass and contracts, add hardening
+- **Date**: 2026-07-14 01:48 UTC
+- **Environment**: Production Ubuntu-5 (18.192.98.211:8000)
+- **Services**: nginx, php8.3-fpm (8.3.6), postgresql, redis, qhsse-queue (active, timeout=600s)
+- **Verification**: Public/login pages HTTP 200, retry_after=660s cached, ZipArchive available
+- **Independent reviews**: Two-cycle security review (deleg_aaf69cfe → blockers found → deleg_5be72bd4 → APPROVED)
 
 ## [P1 - Production Deployment] - 2026-07-13
 
