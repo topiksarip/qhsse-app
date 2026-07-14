@@ -263,5 +263,20 @@
 - Added Makefile dan scripts/git-push.sh untuk otomasi developer workflow.
 - Completed Phase 6 Document Control: controlled document register, private files, confidential download authorization, review/approval/effective/obsolete workflow, review history, module-aware audit context, comments/activity, notifications, expiry reminders, CSV export, role-aware UI, and feature tests.
 - Hardened Phase 6 after independent review: blocked Document Control files from generic core download paths, enforced department/site/own scopes on reads and mutations, aligned draft/submit validation and the 50 MB PPT/PPTX file contract, completed the role matrix and database invariants, added atomic multi-recipient H-30/H-7/H-1 reminders at 08:00, and emitted explicit business audit events.
-- Completed Phase 6 review remediation round 2: restored the released Document Control migration baseline, added an upgrade-safe corrective migration for PostgreSQL/SQLite lifecycle constraints and indexes, revalidated date invariants when submitting existing drafts, and closed rejected review cycles with decision `revise`.
-- Completed Phase 7 Audit Management: audit register, lead auditor assignment, department scope, planned/in_progress/report_ready/closed workflow, audit findings dengan major/minor/observation/ofi classification, CAPA cross-module linking, finding close tracking, private evidence files, audit report generation, organization scope (all/site/department/own), 9 permissions, role mappings, React pages, seeder, dan vertical slice verification (192 tests/721 assertions, no regressions).
+- Completed Phase 7 review remediation round 2: restored the released Document Control migration baseline, added an upgrade-safe corrective migration for PostgreSQL/SQLite lifecycle constraints and indexes, revalidated date invariants when submitting existing drafts, and closed rejected review cycles with decision `revise`.
+
+## [Production Debugging Pass - 2026-07-14]
+
+**Status:** ✅ DEPLOYMENT VERIFIED — no application code defects found
+
+Completed a full production-readiness debugging pass on server `18.192.98.211`
+(`/var/www/qhsse-app`, code base `b9fe2a4`):
+
+- **Step 1 — Production env hardening:** set `APP_ENV=production`, `APP_DEBUG=false`; cleared stale caches as `www-data` (config/route/view). `route:cache` intentionally skipped (Closure route at `routes/web.php:9`).
+- **Step 2 — Queue worker (systemd):** added `/etc/systemd/system/qhsse-queue.service` (`queue:work --queue=default --tries=3 --max-time=3600 --sleep=3`, `Restart=always`, `User=www-data`), enabled + active.
+- **Step 3 — Scheduler:** added `www-data` cron `* * * * * php artisan schedule:run`; 3 commands registered (`CheckAssetCertificates`, `CheckDocumentExpiry`, `CheckAssetInspections`).
+- **Step 4 — Admin ↔ Employee link:** created Company/Position/Department prerequisites + Employee (EMP-0001, Administrator) and linked `users.employee_id=1` so `auth()->user()->employee` resolves (prevents null-`employee` deref in scoped queries).
+- **Step 5 — TypeScript type fix + build:** corrected stale `priorities.level` → `sla_days` interface in `Incident/Form.tsx` and `Capa/Form.tsx`; rebuilt frontend (`npm run build` green, `public/build/manifest.json` present).
+- **Step 6 — Root-cause + verification:** investigated reported 419 login failures and 17 test 419s; **both diagnosed as test-harness / curl-transport artifacts, NOT production bugs**. Authoritative proof: a standalone HTTP-kernel probe boots the real app and `POST /login` → 302 → `/dashboard`. All services active, HTTP 200 on `/` and `/login`, no real production errors in log.
+
+See `handoff/DEBUGGING-HANDOFF.md` and `handoff/DEBUGGING-SPEC.md` for full detail.

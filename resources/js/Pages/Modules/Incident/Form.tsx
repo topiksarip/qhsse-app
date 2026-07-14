@@ -33,7 +33,7 @@ type Props = {
     areas: (MasterData & { site_id: number })[];
     departments: (MasterData & { site_id: number })[];
     severities: (MasterData & { level: number; color: string })[];
-    priorities: (MasterData & { level: number; color: string })[];
+    priorities: (MasterData & { sla_days: number; color: string })[];
     employees: EmployeeOption[];
 };
 
