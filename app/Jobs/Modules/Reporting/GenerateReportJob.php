@@ -112,7 +112,13 @@ class GenerateReportJob implements ShouldQueue
     protected function generateCsvContent(): string
     {
         $template = $this->report->template;
-        $params = $this->report->parameters;
+        // Defensive: after queue rehydration $parameters may arrive as a JSON
+        // string instead of an array (Eloquent cast not always applied), so
+        // normalize before passing to the type-specific generators.
+        $raw = $this->report->parameters;
+        $params = is_string($raw)
+            ? (json_decode($raw, true) ?? [])
+            : (is_array($raw) ? $raw : []);
 
         // Dispatch to specific report type generator
         return match ($template->type) {

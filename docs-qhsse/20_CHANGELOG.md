@@ -280,3 +280,17 @@ Completed a full production-readiness debugging pass on server `18.192.98.211`
 - **Step 6 — Root-cause + verification:** investigated reported 419 login failures and 17 test 419s; **both diagnosed as test-harness / curl-transport artifacts, NOT production bugs**. Authoritative proof: a standalone HTTP-kernel probe boots the real app and `POST /login` → 302 → `/dashboard`. All services active, HTTP 200 on `/` and `/login`, no real production errors in log.
 
 See `handoff/DEBUGGING-HANDOFF.md` and `handoff/DEBUGGING-SPEC.md` for full detail.
+
+## [D6 Closure — Production Debugging Pass - 2026-07-15]
+
+**Status:** ✅ D6 CLOSED — Saved Report queue job verified `completed`
+
+Closed the remaining D6 gap by running the full async report flow against the
+real queue worker (seed `ReportTemplate` + `SavedReport`, dispatch `GenerateReportJob`):
+
+- **Found + fixed a latent production bug:** after queue rehydration, `SavedReport::$parameters` arrives as a JSON **string** (not the cast `array`), so every type-specific CSV generator (`generateSafetyMetricsCsv`, `generateIncidentSummaryCsv`, etc.) type-errored and the job was marked `failed`.
+- **Fix:** defensively normalize `$params` in `GenerateReportJob::generateCsvContent()` (`is_string → json_decode`, else keep array).
+- **Proof (queue path, not sync):** after redeploy + worker restart, a fresh `SavedReport` dispatched → worker drained it (`jobs: 1→0`), status flipped `pending → completed`, `file_path`/`file_size=195` set, CSV file present on disk. Proof rows deleted afterwards (no leftover test data).
+- Updated `handoff/DEBUGGING-HANDOFF.md` (§4b) and `handoff/DEBUGGING-PLAN.md` (DoD D6 → ✅).
+
+All 7 DoD items now GREEN. Debugging pass fully complete.
