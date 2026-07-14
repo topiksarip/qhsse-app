@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware(['auth', 'verified'])->prefix('modules')->name('modules.')->group(function (): void {
+    require __DIR__.'/modules/incident.php';
     Route::get('/health', fn () => response()->json([
         'status' => 'ok',
         'scope' => 'module-registry',
