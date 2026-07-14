@@ -1,22 +1,34 @@
 <?php
 
+use App\Models\Core\MasterData\Site;
+use App\Models\Modules\Asset\Asset;
+use App\Models\Modules\Asset\AssetCertificate;
 use App\Models\Modules\Capa\CapaAction;
 use App\Models\Modules\Incident\IncidentReport;
 use App\Models\Modules\Inspection\Inspection;
 use App\Models\User;
+use Database\Seeders\CapaSeeder;
+use Database\Seeders\IncidentReportingSeeder;
+use Database\Seeders\InspectionSeeder;
+use Database\Seeders\InvestigationSeeder;
+use Database\Seeders\NotificationTemplateSeeder;
+use Database\Seeders\NumberingFormatSeeder;
+use Database\Seeders\QhsseMasterDataSeeder;
+use Database\Seeders\RolesAndPermissionsSeeder;
+use Database\Seeders\WorkflowSeeder;
 
 use function Pest\Laravel\actingAs;
 
 beforeEach(function () {
-    $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
-    $this->seed(\Database\Seeders\QhsseMasterDataSeeder::class);
-    $this->seed(\Database\Seeders\NumberingFormatSeeder::class);
-    $this->seed(\Database\Seeders\WorkflowSeeder::class);
-    $this->seed(\Database\Seeders\NotificationTemplateSeeder::class);
-    $this->seed(\Database\Seeders\IncidentReportingSeeder::class);
-    $this->seed(\Database\Seeders\InvestigationSeeder::class);
-    $this->seed(\Database\Seeders\CapaSeeder::class);
-    $this->seed(\Database\Seeders\InspectionSeeder::class);
+    $this->seed(RolesAndPermissionsSeeder::class);
+    $this->seed(QhsseMasterDataSeeder::class);
+    $this->seed(NumberingFormatSeeder::class);
+    $this->seed(WorkflowSeeder::class);
+    $this->seed(NotificationTemplateSeeder::class);
+    $this->seed(IncidentReportingSeeder::class);
+    $this->seed(InvestigationSeeder::class);
+    $this->seed(CapaSeeder::class);
+    $this->seed(InspectionSeeder::class);
 
     $this->admin = User::factory()->create();
     $this->admin->assignRole('Admin');
@@ -95,7 +107,7 @@ test('dashboard widgets contain real data not placeholders', function () {
 });
 
 test('dashboard filters by site_id', function () {
-    $site = \App\Models\Core\MasterData\Site::factory()->create();
+    $site = Site::factory()->create();
     IncidentReport::factory()->create(['site_id' => $site->id]);
 
     actingAs($this->admin);
@@ -141,4 +153,57 @@ test('dashboard notification summary shows unread count', function () {
     $notif = getProps($response)['notificationSummary'];
     expect($notif)->toHaveKey('unread');
     expect($notif['unread'])->toBeInt();
+});
+
+test('dashboard exposes scoped asset compliance KPIs', function () {
+    $site = Site::factory()->create();
+    $asset = Asset::create([
+        'asset_number' => 'AST-DASH-0001',
+        'name' => 'Safety Critical Asset',
+        'category' => 'equipment',
+        'site_id' => $site->id,
+        'safety_critical' => true,
+        'status' => 'active',
+        'next_inspection_date' => today()->subDay(),
+        'created_by' => $this->admin->id,
+        'updated_by' => $this->admin->id,
+    ]);
+    Asset::create([
+        'asset_number' => 'AST-DASH-0002',
+        'name' => 'Decommissioned Asset',
+        'category' => 'equipment',
+        'site_id' => $site->id,
+        'status' => 'decommissioned',
+        'created_by' => $this->admin->id,
+        'updated_by' => $this->admin->id,
+    ]);
+    AssetCertificate::create([
+        'asset_id' => $asset->id,
+        'certificate_type' => 'Calibration',
+        'certificate_number' => 'CERT-DASH-0001',
+        'issued_date' => today()->subYear(),
+        'status' => 'expired',
+        'created_by' => $this->admin->id,
+        'updated_by' => $this->admin->id,
+    ]);
+    AssetCertificate::create([
+        'asset_id' => $asset->id,
+        'certificate_type' => 'Permit',
+        'certificate_number' => 'CERT-DASH-0002',
+        'issued_date' => today()->subMonth(),
+        'status' => 'expiring_soon',
+        'created_by' => $this->admin->id,
+        'updated_by' => $this->admin->id,
+    ]);
+
+    actingAs($this->admin);
+    $kpis = collect(getProps($this->get(route('dashboard')))['kpis'])->keyBy('label');
+
+    expect($kpis['Total Aset']['value'])->toBe(2)
+        ->and($kpis['Safety-Critical Assets']['value'])->toBe(1)
+        ->and($kpis['Sertifikat Expired']['value'])->toBe(1)
+        ->and($kpis['Sertifikat Expiring Soon']['value'])->toBe(1)
+        ->and($kpis['Inspeksi Overdue']['value'])->toBe(1)
+        ->and($kpis['Aset Aktif']['value'])->toBe(1)
+        ->and($kpis['Aset Decommissioned']['value'])->toBe(1);
 });

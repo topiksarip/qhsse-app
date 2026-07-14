@@ -2,18 +2,18 @@
 
 namespace App\Models\Modules\Asset;
 
+use App\Models\Concerns\Auditable;
 use App\Models\Contracts\ProvidesAuditContext;
+use App\Models\Core\Files\ManagedFile;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Builder;
-use Carbon\Carbon;
 
 class AssetCertificate extends Model implements ProvidesAuditContext
 {
-    use HasFactory, SoftDeletes;
+    use Auditable, HasFactory;
 
     protected $fillable = [
         'asset_id',
@@ -23,6 +23,7 @@ class AssetCertificate extends Model implements ProvidesAuditContext
         'issued_date',
         'expiry_date',
         'status',
+        'certificate_file_id',
         'notes',
         'created_by',
         'updated_by',
@@ -39,6 +40,11 @@ class AssetCertificate extends Model implements ProvidesAuditContext
         return $this->belongsTo(Asset::class);
     }
 
+    public function certificateFile(): BelongsTo
+    {
+        return $this->belongsTo(ManagedFile::class, 'certificate_file_id');
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -50,6 +56,11 @@ class AssetCertificate extends Model implements ProvidesAuditContext
     }
 
     // Scopes
+    public function scopeActiveRecords(Builder $query): Builder
+    {
+        return $query->whereNull('legacy_deleted_at');
+    }
+
     public function scopeExpired(Builder $query): Builder
     {
         return $query->where('status', 'expired');
@@ -88,7 +99,7 @@ class AssetCertificate extends Model implements ProvidesAuditContext
 
     public function getDaysUntilExpiryAttribute(): ?int
     {
-        if (!$this->expiry_date) {
+        if (! $this->expiry_date) {
             return null;
         }
 
@@ -98,8 +109,10 @@ class AssetCertificate extends Model implements ProvidesAuditContext
     // Methods
     public function updateStatus(): void
     {
-        if (!$this->expiry_date) {
+        if (! $this->expiry_date) {
             $this->status = 'valid';
+            $this->save();
+
             return;
         }
 
@@ -115,7 +128,7 @@ class AssetCertificate extends Model implements ProvidesAuditContext
             $this->status = 'valid';
         }
 
-        $this->saveQuietly();
+        $this->save();
     }
 
     // Static methods

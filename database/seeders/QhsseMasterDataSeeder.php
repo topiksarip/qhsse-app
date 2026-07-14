@@ -45,9 +45,12 @@ class QhsseMasterDataSeeder extends Seeder
 
         foreach ([
             ['incident', 'ACCIDENT', 'Accident'],
+            ['incident', 'INCIDENT', 'Incident'],
             ['incident', 'NEAR_MISS', 'Near Miss'],
             ['incident', 'UNSAFE_ACT', 'Unsafe Act'],
             ['incident', 'UNSAFE_CONDITION', 'Unsafe Condition'],
+            ['incident', 'ENVIRONMENTAL_SPILL', 'Environmental Spill'],
+            ['incident', 'SECURITY_BREACH', 'Security Breach'],
             ['action', 'CORRECTIVE', 'Corrective Action'],
             ['action', 'PREVENTIVE', 'Preventive Action'],
         ] as [$module, $code, $name]) {

@@ -9,6 +9,7 @@ class UpdateAssetCertificateRequest extends FormRequest
     public function authorize(): bool
     {
         $certificate = $this->route('certificate');
+
         return $this->user()->can('update', $certificate);
     }
 
@@ -16,10 +17,11 @@ class UpdateAssetCertificateRequest extends FormRequest
     {
         return [
             'certificate_type' => ['sometimes', 'required', 'string', 'max:255'],
-            'certificate_number' => ['nullable', 'string', 'max:255'],
-            'issuing_body' => ['nullable', 'string', 'max:255'],
-            'issued_date' => ['nullable', 'date'],
+            'certificate_number' => ['sometimes', 'required', 'string', 'max:255'],
+            'issuing_body' => ['sometimes', 'required', 'string', 'max:255'],
+            'issued_date' => ['sometimes', 'required', 'date'],
             'expiry_date' => ['nullable', 'date', 'after:issued_date'],
+            'certificate_file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx', 'max:10240'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
     }
@@ -40,6 +42,7 @@ class UpdateAssetCertificateRequest extends FormRequest
             'issuing_body' => 'issuing body',
             'issued_date' => 'issued date',
             'expiry_date' => 'expiry date',
+            'certificate_file' => 'certificate file',
             'notes' => 'notes',
         ];
     }

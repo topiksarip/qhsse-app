@@ -13,13 +13,13 @@ class AssetCertificatePolicy
 
     public function viewAny(User $user, Asset $asset): bool
     {
-        return $user->hasPermissionTo('asset.certificates.view') 
+        return $user->hasPermissionTo('asset.certificates.view')
             && app(AssetPolicy::class)->view($user, $asset);
     }
 
     public function view(User $user, AssetCertificate $certificate): bool
     {
-        if (!$user->hasPermissionTo('asset.certificates.view')) {
+        if (! $user->hasPermissionTo('asset.certificates.view')) {
             return false;
         }
 
@@ -29,7 +29,7 @@ class AssetCertificatePolicy
 
     public function create(User $user, Asset $asset): bool
     {
-        if (!$user->hasPermissionTo('asset.certificates.create')) {
+        if (! $user->hasPermissionTo('asset.certificates.create')) {
             return false;
         }
 
@@ -44,7 +44,7 @@ class AssetCertificatePolicy
 
     public function update(User $user, AssetCertificate $certificate): bool
     {
-        if (!$user->hasPermissionTo('asset.certificates.update')) {
+        if (! $user->hasPermissionTo('asset.certificates.update')) {
             return false;
         }
 
@@ -59,7 +59,6 @@ class AssetCertificatePolicy
 
     public function delete(User $user, AssetCertificate $certificate): bool
     {
-        // Only Super Admin can delete certificates
-        return $user->hasRole('Super Admin');
+        return false;
     }
 }

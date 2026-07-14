@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Modules\Asset;
 
+use App\Models\Modules\Asset\AssetCertificate;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreAssetCertificateRequest extends FormRequest
@@ -9,17 +10,19 @@ class StoreAssetCertificateRequest extends FormRequest
     public function authorize(): bool
     {
         $asset = $this->route('asset');
-        return $this->user()->can('create', [\App\Models\Modules\Asset\AssetCertificate::class, $asset]);
+
+        return $this->user()->can('create', [AssetCertificate::class, $asset]);
     }
 
     public function rules(): array
     {
         return [
             'certificate_type' => ['required', 'string', 'max:255'],
-            'certificate_number' => ['nullable', 'string', 'max:255'],
-            'issuing_body' => ['nullable', 'string', 'max:255'],
-            'issued_date' => ['nullable', 'date'],
+            'certificate_number' => ['required', 'string', 'max:255'],
+            'issuing_body' => ['required', 'string', 'max:255'],
+            'issued_date' => ['required', 'date'],
             'expiry_date' => ['nullable', 'date', 'after:issued_date'],
+            'certificate_file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx', 'max:10240'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
     }
@@ -40,6 +43,7 @@ class StoreAssetCertificateRequest extends FormRequest
             'issuing_body' => 'issuing body',
             'issued_date' => 'issued date',
             'expiry_date' => 'expiry date',
+            'certificate_file' => 'certificate file',
             'notes' => 'notes',
         ];
     }

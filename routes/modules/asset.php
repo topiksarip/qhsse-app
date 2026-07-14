@@ -6,7 +6,8 @@ use App\Http\Controllers\Modules\Asset\AssetInspectionController;
 use Illuminate\Support\Facades\Route;
 
 // Asset Management Routes
-Route::middleware(['auth', 'verified'])
+Route::middleware(['auth', 'verified', 'active'])
+    ->scopeBindings()
     ->prefix('assets')
     ->name('assets.')
     ->group(function (): void {
@@ -22,7 +23,9 @@ Route::middleware(['auth', 'verified'])
         Route::get('/{asset}', [AssetController::class, 'show'])->name('show')->middleware('permission:asset.management.view');
         Route::get('/{asset}/edit', [AssetController::class, 'edit'])->name('edit')->middleware('permission:asset.management.update');
         Route::put('/{asset}', [AssetController::class, 'update'])->name('update')->middleware('permission:asset.management.update');
-        Route::delete('/{asset}', [AssetController::class, 'destroy'])->name('destroy')->middleware('permission:asset.management.update');
+        Route::patch('/{asset}/status', [AssetController::class, 'status'])->name('status')->middleware('permission:asset.management.update');
+        Route::post('/{asset}/decommission', [AssetController::class, 'decommission'])->name('decommission')->middleware('permission:asset.management.update');
+        Route::post('/{asset}/comments', [AssetController::class, 'comment'])->name('comments.store')->middleware('permission:core.comments.create');
 
         // Certificate Routes (nested under assets)
         Route::prefix('{asset}/certificates')->name('certificates.')->group(function (): void {
@@ -32,8 +35,7 @@ Route::middleware(['auth', 'verified'])
             Route::get('/{certificate}', [AssetCertificateController::class, 'show'])->name('show')->middleware('permission:asset.certificates.view');
             Route::get('/{certificate}/edit', [AssetCertificateController::class, 'edit'])->name('edit')->middleware('permission:asset.certificates.update');
             Route::put('/{certificate}', [AssetCertificateController::class, 'update'])->name('update')->middleware('permission:asset.certificates.update');
-            Route::delete('/{certificate}', [AssetCertificateController::class, 'destroy'])->name('destroy')->middleware('permission:asset.certificates.update');
-            Route::get('/{certificate}/files/{file}/download', [AssetCertificateController::class, 'download'])->name('files.download')->middleware('permission:asset.certificates.view');
+            Route::get('/{certificate}/files/{fileId}/download', [AssetCertificateController::class, 'download'])->name('files.download')->middleware('permission:asset.certificates.view');
         });
 
         // Inspection Routes (nested under assets)
@@ -44,7 +46,6 @@ Route::middleware(['auth', 'verified'])
             Route::get('/{inspection}', [AssetInspectionController::class, 'show'])->name('show')->middleware('permission:asset.inspections.view');
             Route::get('/{inspection}/edit', [AssetInspectionController::class, 'edit'])->name('edit')->middleware('permission:asset.inspections.create');
             Route::put('/{inspection}', [AssetInspectionController::class, 'update'])->name('update')->middleware('permission:asset.inspections.create');
-            Route::delete('/{inspection}', [AssetInspectionController::class, 'destroy'])->name('destroy')->middleware('permission:asset.inspections.create');
-            Route::post('/{inspection}/link-capa', [AssetInspectionController::class, 'linkCapa'])->name('link-capa')->middleware('permission:asset.inspections.create');
+            Route::get('/{inspection}/create-capa', [AssetInspectionController::class, 'createCapa'])->name('create-capa')->middleware('permission:asset.inspections.create');
         });
     });

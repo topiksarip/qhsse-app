@@ -1,6 +1,10 @@
 # Test Cases — Asset & Equipment Safety
 
-> Pest PHP 3 + PHPUnit. Tests run on SQLite in-memory via `.env.testing`.
+> Pest PHP + PHPUnit. The executable source of truth is:
+> - `tests/Feature/Modules/AssetEquipmentSafetyTest.php`
+> - `tests/Feature/Modules/AssetMigrationCompatibilityTest.php`
+>
+> The factory-based snippets below are retained as an early design reference only. The released Asset module does not ship the `database/factories/Modules/Asset/*Factory.php` paths described by those snippets; current regression fixtures intentionally use direct model creation against the released schema.
 
 ## Test Environment
 
@@ -15,7 +19,10 @@ SESSION_DRIVER=array
 QUEUE_CONNECTION=sync
 ```
 
-Test file: `tests/Feature/Modules/Asset/AssetEquipmentSafetyTest.php`
+Test files:
+
+- `tests/Feature/Modules/AssetEquipmentSafetyTest.php`
+- `tests/Feature/Modules/AssetMigrationCompatibilityTest.php`
 
 ## Factory Definition
 

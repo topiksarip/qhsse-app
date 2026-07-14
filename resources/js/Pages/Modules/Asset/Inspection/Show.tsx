@@ -1,13 +1,14 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { PageProps } from '@/types';
+import { formatDateOnly } from '@/Utils/date';
 
 interface Inspection {
     id: number;
     inspection_date: string;
+    next_inspection_date: string | null;
     result: string;
     findings: string | null;
-    recommendations: string | null;
     notes: string | null;
     inspector: { id: number; name: string };
     capa_action: {
@@ -25,7 +26,7 @@ interface Asset {
     name: string;
 }
 
-export default function Show({ auth, asset, inspection, can }: PageProps<{
+export default function Show({ asset, inspection, can }: PageProps<{
     asset: Asset;
     inspection: Inspection;
     can: { update: boolean; delete: boolean; linkCapa: boolean };
@@ -51,7 +52,7 @@ export default function Show({ auth, asset, inspection, can }: PageProps<{
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <Link
                             href={`/assets/${asset.id}/inspections`}
@@ -60,7 +61,7 @@ export default function Show({ auth, asset, inspection, can }: PageProps<{
                             ← Back to Inspections
                         </Link>
                         <h2 className="font-semibold text-xl text-gray-800 leading-tight">
-                            Inspection: {inspection.inspection_date}
+                            Inspection: {formatDateOnly(inspection.inspection_date)}
                         </h2>
                     </div>
                     <div className="flex space-x-2">
@@ -79,15 +80,15 @@ export default function Show({ auth, asset, inspection, can }: PageProps<{
             <Head title={`Inspection ${inspection.inspection_date}`} />
 
             <div className="py-12">
-                <div className="max-w-4xl mx-auto sm:px-6 lg:px-8">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Inspection Details */}
                     <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                         <div className="p-6">
                             <h3 className="text-lg font-medium mb-4">Inspection Details</h3>
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                 <div>
                                     <h4 className="text-sm font-medium text-gray-500">Inspection Date</h4>
-                                    <p className="mt-1 text-sm text-gray-900">{inspection.inspection_date}</p>
+                                    <p className="mt-1 text-sm text-gray-900">{formatDateOnly(inspection.inspection_date)}</p>
                                 </div>
                                 <div>
                                     <h4 className="text-sm font-medium text-gray-500">Result</h4>
@@ -101,7 +102,11 @@ export default function Show({ auth, asset, inspection, can }: PageProps<{
                                 </div>
                                 <div>
                                     <h4 className="text-sm font-medium text-gray-500">Recorded</h4>
-                                    <p className="mt-1 text-sm text-gray-900">{inspection.created_at}</p>
+                                    <p className="mt-1 text-sm text-gray-900">{new Date(inspection.created_at).toLocaleString('id-ID')}</p>
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-medium text-gray-500">Next Inspection</h4>
+                                    <p className="mt-1 text-sm text-gray-900">{formatDateOnly(inspection.next_inspection_date, '-')}</p>
                                 </div>
                             </div>
 
@@ -112,12 +117,6 @@ export default function Show({ auth, asset, inspection, can }: PageProps<{
                                 </div>
                             )}
 
-                            {inspection.recommendations && (
-                                <div className="mt-6">
-                                    <h4 className="text-sm font-medium text-gray-500">Recommendations</h4>
-                                    <p className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{inspection.recommendations}</p>
-                                </div>
-                            )}
 
                             {inspection.notes && (
                                 <div className="mt-6">
@@ -138,7 +137,7 @@ export default function Show({ auth, asset, inspection, can }: PageProps<{
                                         <div>
                                             <p className="font-medium">
                                                 <Link
-                                                    href={`/capa/${inspection.capa_action.id}`}
+                                                    href={route('capa.actions.show', inspection.capa_action.id)}
                                                     className="text-blue-600 hover:text-blue-900"
                                                 >
                                                     {inspection.capa_action.action_number}
@@ -154,12 +153,10 @@ export default function Show({ auth, asset, inspection, can }: PageProps<{
                                     <p className="text-gray-500 mb-4">No CAPA action linked yet.</p>
                                     {can.linkCapa && inspection.result !== 'pass' && (
                                         <Link
-                                            href={`/assets/${asset.id}/inspections/${inspection.id}/link-capa`}
-                                            method="post"
-                                            as="button"
+                                            href={`/assets/${asset.id}/inspections/${inspection.id}/create-capa`}
                                             className="inline-flex items-center px-4 py-2 bg-orange-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-orange-700"
                                         >
-                                            Link to CAPA Action
+                                            Buat CAPA Action
                                         </Link>
                                     )}
                                 </div>

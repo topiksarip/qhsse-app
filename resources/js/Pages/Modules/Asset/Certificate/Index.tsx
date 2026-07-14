@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import EmptyState from '@/Components/UI/EmptyState';
+import { formatDateOnly } from '@/Utils/date';
 
 interface Certificate {
     id: number;
@@ -10,8 +11,9 @@ interface Certificate {
     issued_date: string | null;
     expiry_date: string | null;
     status: string;
-    issuing_authority: string | null;
+    issuing_body: string | null;
     notes: string | null;
+    can_update: boolean;
 }
 
 interface Asset {
@@ -20,10 +22,10 @@ interface Asset {
     name: string;
 }
 
-export default function Index({ auth, asset, certificates, can }: PageProps<{
+export default function Index({ asset, certificates, can }: PageProps<{
     asset: Asset;
     certificates: Certificate[];
-    can: { create: boolean; update: boolean; delete: boolean };
+    can: { create: boolean };
 }>) {
     const getStatusColor = (status: string) => {
         const colors: Record<string, string> = {
@@ -97,8 +99,8 @@ export default function Index({ auth, asset, certificates, can }: PageProps<{
                                                 </Link>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">{cert.certificate_number}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap">{cert.issued_date || '-'}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap">{cert.expiry_date || '-'}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{formatDateOnly(cert.issued_date, '-')}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap">{formatDateOnly(cert.expiry_date, '-')}</td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(cert.status)}`}>
                                                     {getStatusLabel(cert.status)}
@@ -111,7 +113,7 @@ export default function Index({ auth, asset, certificates, can }: PageProps<{
                                                 >
                                                     View
                                                 </Link>
-                                                {can.update && (
+                                                {cert.can_update && (
                                                     <Link
                                                         href={`/assets/${asset.id}/certificates/${cert.id}/edit`}
                                                         className="text-yellow-600 hover:text-yellow-900"

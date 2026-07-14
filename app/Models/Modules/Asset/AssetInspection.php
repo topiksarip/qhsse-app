@@ -2,18 +2,19 @@
 
 namespace App\Models\Modules\Asset;
 
+use App\Models\Concerns\Auditable;
 use App\Models\Contracts\ProvidesAuditContext;
 use App\Models\Modules\Capa\CapaAction;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class AssetInspection extends Model implements ProvidesAuditContext
 {
-    use HasFactory, SoftDeletes;
+    use Auditable, HasFactory;
 
     protected $fillable = [
         'asset_id',
@@ -23,7 +24,6 @@ class AssetInspection extends Model implements ProvidesAuditContext
         'next_inspection_date',
         'notes',
         'findings',
-        'capa_action_id',
         'created_by',
         'updated_by',
     ];
@@ -44,9 +44,10 @@ class AssetInspection extends Model implements ProvidesAuditContext
         return $this->belongsTo(User::class, 'inspector_id');
     }
 
-    public function capaAction(): BelongsTo
+    public function capaAction(): HasOne
     {
-        return $this->belongsTo(CapaAction::class);
+        return $this->hasOne(CapaAction::class, 'source_reference_id')
+            ->where('source_module', 'asset_inspection');
     }
 
     public function creator(): BelongsTo
@@ -60,6 +61,11 @@ class AssetInspection extends Model implements ProvidesAuditContext
     }
 
     // Scopes
+    public function scopeActiveRecords(Builder $query): Builder
+    {
+        return $query->whereNull('legacy_deleted_at');
+    }
+
     public function scopePass(Builder $query): Builder
     {
         return $query->where('result', 'pass');
@@ -87,7 +93,7 @@ class AssetInspection extends Model implements ProvidesAuditContext
 
     public function scopeWithoutCapa(Builder $query): Builder
     {
-        return $query->whereNull('capa_action_id');
+        return $query->whereDoesntHave('capaAction');
     }
 
     // Accessors
@@ -103,12 +109,12 @@ class AssetInspection extends Model implements ProvidesAuditContext
 
     public function getRequiresCapaAttribute(): bool
     {
-        return $this->result === 'fail' && is_null($this->capa_action_id);
+        return $this->result === 'fail' && ! $this->capaAction()->exists();
     }
 
     public function getHasCapaAttribute(): bool
     {
-        return !is_null($this->capa_action_id);
+        return $this->capaAction()->exists();
     }
 
     // Static methods

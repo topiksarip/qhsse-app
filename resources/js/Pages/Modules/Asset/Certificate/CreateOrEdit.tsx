@@ -13,7 +13,7 @@ interface Certificate {
     certificate_number: string;
     issued_date: string | null;
     expiry_date: string | null;
-    issuing_authority: string | null;
+    issuing_body: string | null;
     notes: string | null;
 }
 
@@ -23,10 +23,9 @@ interface Asset {
     name: string;
 }
 
-export default function CreateOrEdit({ auth, asset, certificate, certificateTypes }: PageProps<{
+export default function CreateOrEdit({ asset, certificate }: PageProps<{
     asset: Asset;
     certificate?: Certificate;
-    certificateTypes: Record<string, string>;
 }>) {
     const isEditing = !!certificate;
 
@@ -35,9 +34,9 @@ export default function CreateOrEdit({ auth, asset, certificate, certificateType
         certificate_number: certificate?.certificate_number || '',
         issued_date: certificate?.issued_date || '',
         expiry_date: certificate?.expiry_date || '',
-        issuing_authority: certificate?.issuing_authority || '',
+        issuing_body: certificate?.issuing_body || '',
         notes: certificate?.notes || '',
-        files: [] as File[],
+        certificate_file: null as File | null,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -76,18 +75,15 @@ export default function CreateOrEdit({ auth, asset, certificate, certificateType
                                 {/* Certificate Type */}
                                 <div>
                                     <InputLabel htmlFor="certificate_type" value="Certificate Type *" />
-                                    <select
+                                    <TextInput
                                         id="certificate_type"
-                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                                        type="text"
+                                        className="mt-1 block w-full"
                                         value={data.certificate_type}
                                         onChange={(e) => setData('certificate_type', e.target.value)}
+                                        placeholder="Contoh: Kalibrasi, SIO, Sertifikat Kelayakan"
                                         required
-                                    >
-                                        <option value="">Select Type</option>
-                                        {Object.entries(certificateTypes).map(([key, label]) => (
-                                            <option key={key} value={key}>{label}</option>
-                                        ))}
-                                    </select>
+                                    />
                                     <InputError message={errors.certificate_type} className="mt-2" />
                                 </div>
 
@@ -107,20 +103,21 @@ export default function CreateOrEdit({ auth, asset, certificate, certificateType
 
                                 {/* Issued Date */}
                                 <div>
-                                    <InputLabel htmlFor="issued_date" value="Issued Date" />
+                                    <InputLabel htmlFor="issued_date" value="Tanggal Terbit *" />
                                     <TextInput
                                         id="issued_date"
                                         type="date"
                                         className="mt-1 block w-full"
                                         value={data.issued_date}
                                         onChange={(e) => setData('issued_date', e.target.value)}
+                                        required
                                     />
                                     <InputError message={errors.issued_date} className="mt-2" />
                                 </div>
 
                                 {/* Expiry Date */}
                                 <div>
-                                    <InputLabel htmlFor="expiry_date" value="Expiry Date" />
+                                    <InputLabel htmlFor="expiry_date" value="Tanggal Kedaluwarsa" />
                                     <TextInput
                                         id="expiry_date"
                                         type="date"
@@ -130,21 +127,21 @@ export default function CreateOrEdit({ auth, asset, certificate, certificateType
                                     />
                                     <InputError message={errors.expiry_date} className="mt-2" />
                                     <p className="mt-1 text-xs text-gray-500">
-                                        Status will be auto-calculated based on expiry date
+                                        Status dihitung otomatis dari tanggal kedaluwarsa.
                                     </p>
                                 </div>
 
                                 {/* Issuing Authority */}
                                 <div className="md:col-span-2">
-                                    <InputLabel htmlFor="issuing_authority" value="Issuing Authority" />
+                                    <InputLabel htmlFor="issuing_body" value="Lembaga Penerbit" />
                                     <TextInput
-                                        id="issuing_authority"
+                                        id="issuing_body"
                                         type="text"
                                         className="mt-1 block w-full"
-                                        value={data.issuing_authority}
-                                        onChange={(e) => setData('issuing_authority', e.target.value)}
+                                        value={data.issuing_body}
+                                        onChange={(e) => setData('issuing_body', e.target.value)}
                                     />
-                                    <InputError message={errors.issuing_authority} className="mt-2" />
+                                    <InputError message={errors.issuing_body} className="mt-2" />
                                 </div>
                             </div>
 
@@ -163,21 +160,17 @@ export default function CreateOrEdit({ auth, asset, certificate, certificateType
 
                             {/* File Upload */}
                             <div className="mt-6">
-                                <InputLabel htmlFor="files" value="Upload Certificate Files" />
+                                <InputLabel htmlFor="certificate_file" value={isEditing ? 'Ganti Bukti Sertifikat' : 'Bukti Sertifikat'} />
                                 <input
-                                    id="files"
+                                    id="certificate_file"
                                     type="file"
-                                    multiple
                                     accept=".pdf,.jpg,.jpeg,.png"
                                     className="mt-1 block w-full"
-                                    onChange={(e) => {
-                                        const files = Array.from(e.target.files || []);
-                                        setData('files', files);
-                                    }}
+                                    onChange={(e) => setData('certificate_file', e.target.files?.[0] ?? null)}
                                 />
-                                <InputError message={errors.files} className="mt-2" />
+                                <InputError message={errors.certificate_file} className="mt-2" />
                                 <p className="mt-1 text-xs text-gray-500">
-                                    Accepted formats: PDF, JPG, PNG (Max 10MB per file)
+                                    PDF, JPG, atau PNG; maksimum 10 MB. File disimpan secara privat.
                                 </p>
                             </div>
 

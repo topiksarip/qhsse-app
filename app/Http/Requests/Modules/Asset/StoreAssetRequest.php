@@ -2,13 +2,16 @@
 
 namespace App\Http\Requests\Modules\Asset;
 
+use App\Models\Modules\Asset\Asset;
+use App\Modules\Asset\AssetAccess;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreAssetRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('create', \App\Models\Modules\Asset\Asset::class);
+        return $this->user()->can('create', Asset::class);
     }
 
     public function rules(): array
@@ -19,13 +22,19 @@ class StoreAssetRequest extends FormRequest
             'serial_number' => ['nullable', 'string', 'max:255'],
             'model' => ['nullable', 'string', 'max:255'],
             'manufacturer' => ['nullable', 'string', 'max:255'],
-            'site_id' => ['required', 'integer', 'exists:sites,id'],
-            'area_id' => ['nullable', 'integer', 'exists:areas,id'],
-            'department_id' => ['nullable', 'integer', 'exists:departments,id'],
+            'site_id' => [
+                'required', 'integer', 'exists:sites,id',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (! app(AssetAccess::class)->canUseLocation($this->user(), (int) $value, $this->integer('department_id') ?: null)) {
+                        $fail('The selected site or department is outside your organizational scope.');
+                    }
+                },
+            ],
+            'area_id' => ['nullable', 'integer', Rule::exists('areas', 'id')->where('site_id', $this->integer('site_id'))],
+            'department_id' => ['nullable', 'integer', Rule::exists('departments', 'id')->where('site_id', $this->integer('site_id'))],
             'purchase_date' => ['nullable', 'date'],
             'installation_date' => ['nullable', 'date'],
             'warranty_expiry_date' => ['nullable', 'date', 'after:purchase_date'],
-            'status' => ['sometimes', 'string', 'in:active,inactive,decommissioned'],
             'safety_critical' => ['sometimes', 'boolean'],
             'next_inspection_date' => ['nullable', 'date', 'after:today'],
             'description' => ['nullable', 'string', 'max:1000'],

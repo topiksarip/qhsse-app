@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Core;
 
+use App\Core\Authorization\ParentAuthorizationRegistry;
 use App\Core\Files\ManagedFileService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Core\ManagedFileUploadRequest;
@@ -15,11 +16,31 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ManagedFileController extends Controller
 {
+    public function __construct(private readonly ParentAuthorizationRegistry $authRegistry) {}
+
     public function index(Request $request): Response
     {
-        $files = ManagedFile::query()
-            ->where('module_name', '!=', 'document')
-            ->with('uploader:id,name,email')
+        $moduleName = $request->string('module_name')->toString();
+        $referenceId = $request->integer('reference_id') ?: null;
+        
+        $query = ManagedFile::query()->with('uploader:id,name,email');
+        
+        // Block unregistered modules from generic endpoints (fail-closed)
+        if ($moduleName) {
+            if (!$this->authRegistry->isModuleRegistered($moduleName)) {
+                // Fail-closed: unregistered modules cannot use generic endpoints
+                $query->whereRaw('1 = 0');
+            } elseif ($referenceId) {
+                // Apply parent authorization for registered modules
+                if (!$this->authRegistry->canAccessParent($moduleName, $referenceId, $request->user())) {
+                    $query->whereRaw('1 = 0');
+                } else {
+                    $query->where('module_name', $moduleName)->where('reference_id', $referenceId);
+                }
+            }
+        }
+        
+        $files = $query
             ->when($request->string('search')->toString(), function ($query, string $search): void {
                 $query->where(function ($query) use ($search): void {
                     $query->where('original_name', 'like', "%{$search}%")
@@ -47,7 +68,11 @@ class ManagedFileController extends Controller
 
     public function store(ManagedFileUploadRequest $request, ManagedFileService $service): RedirectResponse
     {
-        abort_if($request->validated('module_name') === 'document', 403);
+        $moduleName = $request->validated('module_name');
+        $referenceId = $request->validated('reference_id');
+        
+        abort_unless($this->authRegistry->isModuleRegistered($moduleName), 403);
+        abort_unless($this->authRegistry->canAccessParent($moduleName, $referenceId, $request->user()), 403);
 
         $service->store(
             $request->file('file'),
@@ -59,10 +84,19 @@ class ManagedFileController extends Controller
         return redirect()->route('core.files.index');
     }
 
-    public function download(ManagedFile $file): StreamedResponse
+    public function download(Request $request, ManagedFile $file): StreamedResponse
     {
-        abort_if($file->module_name === 'document', 404);
         abort_if($file->deleted_at !== null, 404);
+        
+        // Fail-closed: unregistered modules return 404 (not 403) to avoid info leak
+        if (!$this->authRegistry->isModuleRegistered($file->module_name)) {
+            abort(404);
+        }
+        
+        if (!$this->authRegistry->canAccessParent($file->module_name, $file->reference_id, $request->user())) {
+            abort(404);
+        }
+        
         abort_unless(Storage::disk($file->disk)->exists($file->path), 404);
 
         return Storage::disk($file->disk)->download($file->path, $file->original_name);
@@ -70,7 +104,7 @@ class ManagedFileController extends Controller
 
     public function destroy(ManagedFile $file, ManagedFileService $service, Request $request): RedirectResponse
     {
-        abort_if($file->module_name === 'document', 404);
+        abort_if(in_array($file->module_name, ['document', 'asset'], true), 404);
         abort_if($file->deleted_at !== null, 404);
 
         $service->markDeleted($file, $request->user());

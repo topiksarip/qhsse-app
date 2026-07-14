@@ -2,31 +2,47 @@
 
 namespace App\Http\Requests\Modules\Asset;
 
+use App\Modules\Asset\AssetAccess;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateAssetRequest extends FormRequest
 {
     public function authorize(): bool
     {
         $asset = $this->route('asset');
+
         return $this->user()->can('update', $asset);
     }
 
     public function rules(): array
     {
+        $asset = $this->route('asset');
+        $siteId = $this->integer('site_id') ?: $asset->site_id;
+        $departmentId = $this->has('department_id')
+            ? ($this->integer('department_id') ?: null)
+            : $asset->department_id;
+
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'category' => ['sometimes', 'required', 'string', 'in:equipment,machinery,vehicle,safety_equipment,fire_equipment,lifting,other'],
             'serial_number' => ['nullable', 'string', 'max:255'],
             'model' => ['nullable', 'string', 'max:255'],
             'manufacturer' => ['nullable', 'string', 'max:255'],
-            'site_id' => ['sometimes', 'required', 'integer', 'exists:sites,id'],
-            'area_id' => ['nullable', 'integer', 'exists:areas,id'],
-            'department_id' => ['nullable', 'integer', 'exists:departments,id'],
+            'site_id' => [
+                'sometimes', 'required', 'integer', 'exists:sites,id',
+                function (string $attribute, mixed $value, \Closure $fail) use ($departmentId): void {
+                    if (! app(AssetAccess::class)->canUseLocation($this->user(), (int) $value, $departmentId)) {
+                        $fail('The selected site or department is outside your organizational scope.');
+                    }
+                },
+            ],
+            'area_id' => ['nullable', 'integer', Rule::exists('areas', 'id')->where('site_id', $siteId)],
+            'department_id' => ['nullable', 'integer', Rule::exists('departments', 'id')->where('site_id', $siteId)],
             'purchase_date' => ['nullable', 'date'],
             'installation_date' => ['nullable', 'date'],
             'warranty_expiry_date' => ['nullable', 'date', 'after:purchase_date'],
-            'status' => ['sometimes', 'string', 'in:active,inactive,decommissioned'],
+
             'safety_critical' => ['sometimes', 'boolean'],
             'next_inspection_date' => ['nullable', 'date'],
             'description' => ['nullable', 'string', 'max:1000'],
@@ -62,7 +78,7 @@ class UpdateAssetRequest extends FormRequest
             'purchase_date' => 'purchase date',
             'installation_date' => 'installation date',
             'warranty_expiry_date' => 'warranty expiry date',
-            'status' => 'status',
+
             'safety_critical' => 'safety critical flag',
             'next_inspection_date' => 'next inspection date',
             'description' => 'description',

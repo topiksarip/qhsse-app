@@ -49,6 +49,11 @@ export default function Dashboard({ filters, filterOptions, kpis, widgets, quick
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
         ),
+        'assets.index': (
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-6h6v6m-9 4h12a2 2 0 002-2V9l-8-6-8 6v10a2 2 0 002 2z" />
+            </svg>
+        ),
     };
 
     return (
@@ -73,8 +78,8 @@ export default function Dashboard({ filters, filterOptions, kpis, widgets, quick
                             <div className="grid gap-8 lg:grid-cols-[1.25fr_0.75fr]">
                                 <div>
                                     <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-600 dark:text-emerald-400">Live Dashboard</p>
-                                    <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight text-slate-900 dark:text-white sm:text-5xl">Real-time KPI dari 4 modul operasional.</h1>
-                                    <p className="mt-4 max-w-2xl text-base text-slate-600 dark:text-slate-300">Insident, Investigasi, CAPA, dan Inspeksi — filter by site, department, dan date range.</p>
+                                    <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight text-slate-900 dark:text-white sm:text-5xl">Real-time KPI dari 5 modul operasional.</h1>
+                                    <p className="mt-4 max-w-2xl text-base text-slate-600 dark:text-slate-300">Insiden, Investigasi, CAPA, Inspeksi, dan Asset — filter berdasarkan site, department, dan rentang tanggal.</p>
                                 </div>
                                 <DashboardFilters
                                     filters={filters}
@@ -92,8 +97,8 @@ export default function Dashboard({ filters, filterOptions, kpis, widgets, quick
                                 <h3 className="text-lg font-bold text-slate-950 dark:text-white">Quick Actions</h3>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">Fast access to key operational modules</p>
                             </div>
-                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                                {visibleQuickLinks.slice(0, 4).map((item) => (
+                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                                {visibleQuickLinks.slice(0, 5).map((item) => (
                                     <QuickActionCard
                                         key={item.route}
                                         label={item.label}

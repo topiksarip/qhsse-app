@@ -7,11 +7,14 @@ use App\Models\Core\MasterData\Department;
 use App\Models\Core\MasterData\Site;
 use App\Models\Core\Notifications\CoreNotification;
 use App\Models\Core\Users\Employee;
+use App\Models\Modules\Asset\Asset;
+use App\Models\Modules\Asset\AssetCertificate;
 use App\Models\Modules\Capa\CapaAction;
 use App\Models\Modules\Incident\IncidentReport;
 use App\Models\Modules\Inspection\Inspection;
 use App\Models\Modules\Investigation\Investigation;
 use App\Models\User;
+use App\Modules\Asset\AssetAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +23,8 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
+    public function __construct(private readonly AssetAccess $assetAccess) {}
+
     public function __invoke(Request $request): Response
     {
         $siteId = $request->integer('site_id') ?: null;
@@ -27,7 +32,7 @@ class DashboardController extends Controller
         $from = Carbon::parse($request->query('from', now()->startOfMonth()->toDateString()));
         $to = Carbon::parse($request->query('to', now()->toDateString()));
 
-        $kpis = $this->buildKpis($siteId, $departmentId, $from, $to);
+        $kpis = $this->buildKpis($request, $siteId, $departmentId, $from, $to);
         $widgets = $this->buildWidgets($siteId, $from, $to);
 
         return Inertia::render('Dashboard', [
@@ -48,6 +53,7 @@ class DashboardController extends Controller
                 ['label' => 'Investigasi', 'route' => 'investigation.reports.index', 'permission' => 'investigation.reports.view'],
                 ['label' => 'CAPA / Action', 'route' => 'capa.actions.index', 'permission' => 'capa.actions.view'],
                 ['label' => 'Inspeksi', 'route' => 'inspection.checklists.index', 'permission' => 'inspection.checklists.view'],
+                ['label' => 'Asset & Equipment', 'route' => 'assets.index', 'permission' => 'asset.management.view'],
                 ['label' => 'Sites', 'route' => 'core.sites.index', 'permission' => 'core.sites.view'],
                 ['label' => 'Notifications', 'route' => 'core.notifications.index', 'permission' => 'core.notifications.view'],
             ],
@@ -70,7 +76,7 @@ class DashboardController extends Controller
         }
     }
 
-    private function buildKpis(?int $siteId, ?int $departmentId, Carbon $from, Carbon $to): array
+    private function buildKpis(Request $request, ?int $siteId, ?int $departmentId, Carbon $from, Carbon $to): array
     {
         $kpis = [];
 
@@ -136,6 +142,36 @@ class DashboardController extends Controller
 
         // 8. Unread Notifications
         $kpis[] = ['label' => 'Notifikasi', 'value' => CoreNotification::query()->whereNull('read_at')->where('recipient_id', auth()->id())->count(), 'sub' => 'Belum dibaca', 'tone' => 'amber'];
+
+        $assetQuery = $this->assetAccess->scope(Asset::query(), $request->user());
+        $this->applySiteDept($assetQuery, $siteId, $departmentId);
+        $assetIds = (clone $assetQuery)->select('assets.id');
+
+        $totalAssets = (clone $assetQuery)->count();
+        $safetyCritical = (clone $assetQuery)->where('safety_critical', true)->count();
+        $expiredCertificates = AssetCertificate::query()
+            ->activeRecords()
+            ->whereIn('asset_id', clone $assetIds)
+            ->where('status', 'expired')
+            ->count();
+        $expiringCertificates = AssetCertificate::query()
+            ->activeRecords()
+            ->whereIn('asset_id', clone $assetIds)
+            ->whereIn('status', ['expiring_soon', 'expiring_critical'])
+            ->count();
+        $overdueInspections = (clone $assetQuery)
+            ->whereDate('next_inspection_date', '<', today())
+            ->count();
+        $activeAssets = (clone $assetQuery)->where('status', 'active')->count();
+        $decommissionedAssets = (clone $assetQuery)->where('status', 'decommissioned')->count();
+
+        $kpis[] = ['label' => 'Total Aset', 'value' => $totalAssets, 'sub' => 'Dalam scope', 'tone' => 'indigo'];
+        $kpis[] = ['label' => 'Safety-Critical Assets', 'value' => $safetyCritical, 'sub' => 'Prioritas tinggi', 'tone' => 'red'];
+        $kpis[] = ['label' => 'Sertifikat Expired', 'value' => $expiredCertificates, 'sub' => 'Perlu tindakan', 'tone' => 'red'];
+        $kpis[] = ['label' => 'Sertifikat Expiring Soon', 'value' => $expiringCertificates, 'sub' => 'Segera kedaluwarsa', 'tone' => 'amber'];
+        $kpis[] = ['label' => 'Inspeksi Overdue', 'value' => $overdueInspections, 'sub' => 'Lewat jatuh tempo', 'tone' => 'amber'];
+        $kpis[] = ['label' => 'Aset Aktif', 'value' => $activeAssets, 'sub' => 'Operasional', 'tone' => 'emerald'];
+        $kpis[] = ['label' => 'Aset Decommissioned', 'value' => $decommissionedAssets, 'sub' => 'Riwayat permanen', 'tone' => 'indigo'];
 
         return $kpis;
     }

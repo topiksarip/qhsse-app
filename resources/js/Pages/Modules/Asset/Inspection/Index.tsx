@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import EmptyState from '@/Components/UI/EmptyState';
+import { formatDateOnly } from '@/Utils/date';
 
 interface Inspection {
     id: number;
@@ -9,8 +10,9 @@ interface Inspection {
     result: string;
     inspector: { id: number; name: string };
     findings: string | null;
-    recommendations: string | null;
-    capa_action_id: number | null;
+    capa_action: { id: number; action_number: string; status: string } | null;
+    can_update: boolean;
+    can_create_capa: boolean;
     created_at: string;
 }
 
@@ -20,10 +22,10 @@ interface Asset {
     name: string;
 }
 
-export default function Index({ auth, asset, inspections, can }: PageProps<{
+export default function Index({ asset, inspections, can }: PageProps<{
     asset: Asset;
     inspections: Inspection[];
-    can: { create: boolean; update: boolean; linkCapa: boolean };
+    can: { create: boolean };
 }>) {
     const getResultColor = (result: string) => {
         const colors: Record<string, string> = {
@@ -90,7 +92,7 @@ export default function Index({ auth, asset, inspections, can }: PageProps<{
                                                     href={`/assets/${asset.id}/inspections/${inspection.id}`}
                                                     className="text-blue-600 hover:text-blue-900"
                                                 >
-                                                    {inspection.inspection_date}
+                                                    {formatDateOnly(inspection.inspection_date)}
                                                 </Link>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">{inspection.inspector.name}</td>
@@ -100,8 +102,10 @@ export default function Index({ auth, asset, inspections, can }: PageProps<{
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                {inspection.capa_action_id ? (
-                                                    <span className="text-green-600 text-sm">✓ Linked</span>
+                                                {inspection.capa_action ? (
+                                                    <Link href={route('capa.actions.show', inspection.capa_action.id)} className="text-green-600 text-sm hover:underline">
+                                                        {inspection.capa_action.action_number}
+                                                    </Link>
                                                 ) : (
                                                     <span className="text-gray-400 text-sm">-</span>
                                                 )}
@@ -113,7 +117,7 @@ export default function Index({ auth, asset, inspections, can }: PageProps<{
                                                 >
                                                     View
                                                 </Link>
-                                                {can.update && (
+                                                {inspection.can_update && (
                                                     <Link
                                                         href={`/assets/${asset.id}/inspections/${inspection.id}/edit`}
                                                         className="text-yellow-600 hover:text-yellow-900"
@@ -121,14 +125,12 @@ export default function Index({ auth, asset, inspections, can }: PageProps<{
                                                         Edit
                                                     </Link>
                                                 )}
-                                                {can.linkCapa && !inspection.capa_action_id && inspection.result !== 'pass' && (
+                                                {inspection.can_create_capa && !inspection.capa_action && (
                                                     <Link
-                                                        href={`/assets/${asset.id}/inspections/${inspection.id}/link-capa`}
-                                                        method="post"
-                                                        as="button"
+                                                        href={`/assets/${asset.id}/inspections/${inspection.id}/create-capa`}
                                                         className="text-orange-600 hover:text-orange-900"
                                                     >
-                                                        Link CAPA
+                                                        Buat CAPA
                                                     </Link>
                                                 )}
                                             </td>

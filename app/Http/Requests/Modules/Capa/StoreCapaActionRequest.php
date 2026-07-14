@@ -7,14 +7,17 @@ use Illuminate\Validation\Rule;
 
 class StoreCapaActionRequest extends FormRequest
 {
-    public function authorize(): bool { return true; }
+    public function authorize(): bool
+    {
+        return true;
+    }
 
     public function rules(): array
     {
         return [
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
-            'source_module' => ['nullable', 'string', Rule::in(['incident', 'inspection', 'audit', 'manual'])],
+            'source_module' => ['nullable', 'string', Rule::in(['incident', 'inspection', 'asset_inspection', 'audit', 'manual'])],
             'source_reference_id' => ['nullable', 'integer'],
             'source_type' => ['nullable', 'string', Rule::in(['corrective', 'preventive'])],
             'site_id' => ['required', 'exists:sites,id'],

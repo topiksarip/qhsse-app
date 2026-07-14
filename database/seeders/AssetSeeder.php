@@ -2,14 +2,14 @@
 
 namespace Database\Seeders;
 
+use App\Core\Numbering\NumberingService;
+use App\Models\Core\MasterData\Area;
+use App\Models\Core\MasterData\Department;
+use App\Models\Core\MasterData\Site;
 use App\Models\Modules\Asset\Asset;
 use App\Models\Modules\Asset\AssetCertificate;
 use App\Models\Modules\Asset\AssetInspection;
-use App\Models\Core\MasterData\Site;
-use App\Models\Core\MasterData\Area;
-use App\Models\Core\MasterData\Department;
 use App\Models\User;
-use App\Core\Numbering\NumberingService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -18,15 +18,15 @@ class AssetSeeder extends Seeder
     public function run(): void
     {
         $numberingService = app(NumberingService::class);
-        
+
         // Create minimal org data if not exists
         $site = Site::firstOrCreate(
             ['code' => 'HQ'],
             ['name' => 'Headquarters', 'address' => 'Test Address', 'is_active' => true]
         );
-        
+
         $area = Area::where('site_id', $site->id)->first();
-        if (!$area) {
+        if (! $area) {
             $area = Area::create([
                 'site_id' => $site->id,
                 'code' => 'PROD',
@@ -34,12 +34,12 @@ class AssetSeeder extends Seeder
                 'is_active' => true,
             ]);
         }
-        
+
         $department = Department::firstOrCreate(
-            ['code' => 'OPS'],
+            ['site_id' => $site->id, 'code' => 'OPS'],
             ['name' => 'Operations', 'is_active' => true]
         );
-        
+
         $user = User::first();
 
         DB::beginTransaction();
@@ -153,7 +153,7 @@ class AssetSeeder extends Seeder
             $this->command->info('✓ Seeded 3 assets with certificates and inspections');
         } catch (\Exception $e) {
             DB::rollBack();
-            $this->command->error('✗ Asset seeding failed: ' . $e->getMessage());
+            $this->command->error('✗ Asset seeding failed: '.$e->getMessage());
             throw $e;
         }
     }

@@ -13,13 +13,13 @@ class AssetInspectionPolicy
 
     public function viewAny(User $user, Asset $asset): bool
     {
-        return $user->hasPermissionTo('asset.inspections.view') 
+        return $user->hasPermissionTo('asset.inspections.view')
             && app(AssetPolicy::class)->view($user, $asset);
     }
 
     public function view(User $user, AssetInspection $inspection): bool
     {
-        if (!$user->hasPermissionTo('asset.inspections.view')) {
+        if (! $user->hasPermissionTo('asset.inspections.view')) {
             return false;
         }
 
@@ -29,7 +29,7 @@ class AssetInspectionPolicy
 
     public function create(User $user, Asset $asset): bool
     {
-        if (!$user->hasPermissionTo('asset.inspections.create')) {
+        if (! $user->hasPermissionTo('asset.inspections.create')) {
             return false;
         }
 
@@ -44,7 +44,7 @@ class AssetInspectionPolicy
 
     public function update(User $user, AssetInspection $inspection): bool
     {
-        if (!$user->hasPermissionTo('asset.inspections.create')) {
+        if (! $user->hasPermissionTo('asset.inspections.create')) {
             return false;
         }
 
@@ -59,8 +59,7 @@ class AssetInspectionPolicy
 
     public function delete(User $user, AssetInspection $inspection): bool
     {
-        // Only Super Admin can delete inspections
-        return $user->hasRole('Super Admin');
+        return false;
     }
 
     public function linkCapa(User $user, AssetInspection $inspection): bool
@@ -70,7 +69,7 @@ class AssetInspectionPolicy
             return false;
         }
 
-        // QHSSE Manager or QHSSE Officer can link CAPA
-        return $user->hasAnyRole(['Super Admin', 'Admin', 'QHSSE Manager', 'QHSSE Officer']);
+        return $user->hasPermissionTo('capa.actions.create')
+            && app(AssetPolicy::class)->view($user, $inspection->asset);
     }
 }

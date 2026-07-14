@@ -16,6 +16,8 @@ interface Asset {
     area: { id: number; name: string } | null;
     department: { id: number; name: string } | null;
     next_inspection_date: string | null;
+    certificate_status: 'valid' | 'expiring_soon' | 'expiring_critical' | 'expired' | null;
+    failed_inspections_without_capa: number;
     created_at: string;
 }
 
@@ -69,6 +71,13 @@ export default function Index({ auth, assets, filters, sites, categories, status
 
     const getCategoryLabel = (cat: string) => categories[cat] || cat;
     const getStatusLabel = (stat: string) => statuses[stat] || stat;
+    const exportQuery = new URLSearchParams({
+        ...(search && { search }),
+        ...(siteId && { site_id: siteId }),
+        ...(category && { category }),
+        ...(status && { status }),
+        ...(safetyCritical && { safety_critical: safetyCritical }),
+    }).toString();
 
     const getStatusColor = (stat: string) => {
         const colors: Record<string, string> = {
@@ -78,6 +87,13 @@ export default function Index({ auth, assets, filters, sites, categories, status
         };
         return colors[stat] || 'bg-gray-100 text-gray-800';
     };
+
+    const certificateStatus = {
+        valid: { label: 'Sertifikat Valid', className: 'bg-green-100 text-green-800' },
+        expiring_soon: { label: 'Segera Kedaluwarsa', className: 'bg-yellow-100 text-yellow-800' },
+        expiring_critical: { label: 'Kritis ≤ 7 Hari', className: 'bg-orange-100 text-orange-800' },
+        expired: { label: 'Sertifikat Expired', className: 'bg-red-100 text-red-800' },
+    } as const;
 
     return (
         <AuthenticatedLayout
@@ -89,7 +105,7 @@ export default function Index({ auth, assets, filters, sites, categories, status
                     <div className="flex space-x-2">
                         {can.export && (
                             <Link
-                                href="/assets/export"
+                                href={`/assets/export${exportQuery ? `?${exportQuery}` : ''}`}
                                 className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50"
                             >
                                 Export
@@ -110,11 +126,11 @@ export default function Index({ auth, assets, filters, sites, categories, status
             <Head title="Assets" />
 
             <div className="py-12">
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Search/Filter Form */}
                     <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                         <form onSubmit={handleSearch} className="p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-6">
                                 <div>
                                     <input
                                         type="text"
@@ -160,6 +176,17 @@ export default function Index({ auth, assets, filters, sites, categories, status
                                         ))}
                                     </select>
                                 </div>
+                                <div>
+                                    <select
+                                        value={safetyCritical}
+                                        onChange={(e) => setSafetyCritical(e.target.value)}
+                                        className="w-full border-gray-300 rounded-md shadow-sm"
+                                    >
+                                        <option value="">Semua Tingkat Kritis</option>
+                                        <option value="1">Safety Critical</option>
+                                        <option value="0">Non-Critical</option>
+                                    </select>
+                                </div>
                                 <div className="flex space-x-2">
                                     <button
                                         type="submit"
@@ -190,13 +217,14 @@ export default function Index({ auth, assets, filters, sites, categories, status
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Site</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Compliance</th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {assets.data.length === 0 ? (
                                         <tr>
-                                            <td colSpan={6} className="px-6 py-12">
+                                            <td colSpan={7} className="px-6 py-12">
                                                 <EmptyState
                                                     title="No assets found"
                                                     description="Manage safety-critical equipment, machinery, and assets requiring inspection and certification"
@@ -232,6 +260,22 @@ export default function Index({ auth, assets, filters, sites, categories, status
                                                 <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(asset.status)}`}>
                                                     {getStatusLabel(asset.status)}
                                                 </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex flex-col items-start gap-1">
+                                                    {asset.certificate_status ? (
+                                                        <span className={`rounded-full px-2 py-1 text-xs font-semibold ${certificateStatus[asset.certificate_status].className}`}>
+                                                            {certificateStatus[asset.certificate_status].label}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-500">Belum ada sertifikat</span>
+                                                    )}
+                                                    {asset.failed_inspections_without_capa > 0 && (
+                                                        <span className="rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-800">
+                                                            {asset.failed_inspections_without_capa} inspeksi fail tanpa CAPA
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                 <Link href={`/assets/${asset.id}`} className="text-blue-600 hover:text-blue-900">

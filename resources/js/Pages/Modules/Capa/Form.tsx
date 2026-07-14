@@ -5,30 +5,39 @@ import { FormEvent } from 'react';
 
 type MasterData = { id: number; name: string; [key: string]: unknown };
 
+type CapaItem = {
+    id: number; action_number: string; title: string; description: string; status: string;
+    source_module: string | null; source_reference_id: number | null; source_type: string | null;
+    site_id: number; department_id: number | null; assigned_to: number; due_date: string | null;
+    severity_id: number | null; priority_id: number;
+};
+
+type CapaPrefill = Partial<Pick<CapaItem,
+    'title' | 'description' | 'source_module' | 'source_reference_id' |
+    'source_type' | 'site_id' | 'department_id'
+>>;
+
 type Props = {
-    item: {
-        id: number; action_number: string; title: string; description: string; status: string;
-        source_module: string | null; source_type: string | null; site_id: number;
-        department_id: number | null; assigned_to: number; due_date: string | null;
-        severity_id: number | null; priority_id: number;
-    } | null;
+    item: CapaItem | null;
+    prefill?: CapaPrefill;
     sites: MasterData[]; departments: (MasterData & { site_id: number })[];
     severities: (MasterData & { level: number; color: string })[];
     priorities: (MasterData & { level: number; color: string })[];
     users: MasterData[];
 };
 
-export default function Form({ item, sites, departments, severities, priorities, users }: PageProps<Props>) {
+export default function Form({ item, prefill = {}, sites, departments, severities, priorities, users }: PageProps<Props>) {
     const isEdit = item !== null;
     const isEditable = !item || ['open', 'in_progress', 'rejected'].includes(item.status);
 
     const { data, setData, post, put, processing, errors } = useForm({
-        title: item?.title ?? '',
-        description: item?.description ?? '',
-        source_module: item?.source_module ?? 'manual',
-        source_type: item?.source_type ?? 'corrective',
-        site_id: item?.site_id ?? '',
-        department_id: item?.department_id ?? '',
+        title: item?.title ?? prefill.title ?? '',
+        description: item?.description ?? prefill.description ?? '',
+        source_module: item?.source_module ?? prefill.source_module ?? 'manual',
+        source_reference_id: item?.source_reference_id?.toString() ?? prefill.source_reference_id?.toString() ?? '',
+        source_type: item?.source_type ?? prefill.source_type ?? 'corrective',
+        site_id: item?.site_id ?? prefill.site_id ?? '',
+        department_id: item?.department_id ?? prefill.department_id ?? '',
         assigned_to: item?.assigned_to ?? '',
         due_date: item?.due_date ?? '',
         severity_id: item?.severity_id ?? '',
@@ -37,7 +46,7 @@ export default function Form({ item, sites, departments, severities, priorities,
 
     function submit(e: FormEvent) {
         e.preventDefault();
-        if (isEdit) { put(route('capa.actions.update', item!.id)); } else { post(route('capa.actions.store')); }
+        if (isEdit) { put(route('capa.actions.update', item.id)); } else { post(route('capa.actions.store')); }
     }
 
     return (
@@ -47,7 +56,7 @@ export default function Form({ item, sites, departments, severities, priorities,
                 {isEdit && (
                     <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nomor CAPA</label>
-                        <input type="text" value={item!.action_number} disabled className="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400" />
+                        <input type="text" value={item.action_number} disabled className="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 text-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400" />
                     </div>
                 )}
                 <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
@@ -64,7 +73,7 @@ export default function Form({ item, sites, departments, severities, priorities,
                         <div className="grid gap-4 md:grid-cols-2">
                             <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Source</label>
                                 <select value={data.source_module} onChange={(e) => setData('source_module', e.target.value)} disabled={!isEditable} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200">
-                                    <option value="manual">Manual</option><option value="incident">Incident</option><option value="inspection">Inspection</option><option value="audit">Audit</option>
+                                    <option value="manual">Manual</option><option value="incident">Incident</option><option value="inspection">Inspection</option><option value="asset_inspection">Inspeksi Aset</option><option value="audit">Audit</option>
                                 </select>
                             </div>
                             <div><label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Type</label>

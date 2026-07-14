@@ -28,24 +28,21 @@ interface Asset {
     notes: string | null;
 }
 
-export default function CreateOrEdit({ auth, asset, sites, areas, departments, categories, statuses }: PageProps<{
+export default function CreateOrEdit({ asset, sites, areas, departments, categories }: PageProps<{
     asset?: Asset;
     sites: Array<{ id: number; name: string }>;
     areas: Array<{ id: number; name: string; site_id: number }>;
-    departments: Array<{ id: number; name: string }>;
+    departments: Array<{ id: number; name: string; site_id: number }>;
     categories: Record<string, string>;
-    statuses: Record<string, string>;
 }>) {
     const isEditing = !!asset;
 
     const { data, setData, post, put, processing, errors } = useForm({
-        asset_number: asset?.asset_number || '',
         name: asset?.name || '',
         category: asset?.category || '',
         serial_number: asset?.serial_number || '',
         model: asset?.model || '',
         manufacturer: asset?.manufacturer || '',
-        status: asset?.status || 'active',
         safety_critical: asset?.safety_critical || false,
         purchase_date: asset?.purchase_date || '',
         installation_date: asset?.installation_date || '',
@@ -69,6 +66,7 @@ export default function CreateOrEdit({ auth, asset, sites, areas, departments, c
     };
 
     const filteredAreas = areas.filter(area => area.site_id === Number(data.site_id));
+    const filteredDepartments = departments.filter(department => department.site_id === Number(data.site_id));
 
     return (
         <AuthenticatedLayout
@@ -93,18 +91,9 @@ export default function CreateOrEdit({ auth, asset, sites, areas, departments, c
                                 {/* Asset Number */}
                                 <div>
                                     <InputLabel htmlFor="asset_number" value="Asset Number" />
-                                    <TextInput
-                                        id="asset_number"
-                                        type="text"
-                                        className="mt-1 block w-full"
-                                        value={data.asset_number}
-                                        onChange={(e) => setData('asset_number', e.target.value)}
-                                        disabled={isEditing}
-                                    />
-                                    <InputError message={errors.asset_number} className="mt-2" />
-                                    {!isEditing && (
-                                        <p className="mt-1 text-xs text-gray-500">Auto-generated if left blank</p>
-                                    )}
+                                    <p id="asset_number" className="mt-1 rounded-md bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                                        {asset?.asset_number ?? 'Dibuat otomatis oleh Numbering Service setelah disimpan'}
+                                    </p>
                                 </div>
 
                                 {/* Name */}
@@ -178,22 +167,6 @@ export default function CreateOrEdit({ auth, asset, sites, areas, departments, c
                                     <InputError message={errors.manufacturer} className="mt-2" />
                                 </div>
 
-                                {/* Status */}
-                                <div>
-                                    <InputLabel htmlFor="status" value="Status *" />
-                                    <select
-                                        id="status"
-                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                                        value={data.status}
-                                        onChange={(e) => setData('status', e.target.value)}
-                                        required
-                                    >
-                                        {Object.entries(statuses).map(([key, label]) => (
-                                            <option key={key} value={key}>{label}</option>
-                                        ))}
-                                    </select>
-                                    <InputError message={errors.status} className="mt-2" />
-                                </div>
 
                                 {/* Safety Critical */}
                                 <div className="flex items-center">
@@ -219,7 +192,8 @@ export default function CreateOrEdit({ auth, asset, sites, areas, departments, c
                                         value={data.site_id}
                                         onChange={(e) => {
                                             setData('site_id', e.target.value);
-                                            setData('area_id', ''); // Reset area when site changes
+                                            setData('area_id', '');
+                                            setData('department_id', '');
                                         }}
                                         required
                                     >
@@ -259,7 +233,7 @@ export default function CreateOrEdit({ auth, asset, sites, areas, departments, c
                                         onChange={(e) => setData('department_id', e.target.value)}
                                     >
                                         <option value="">Select Department</option>
-                                        {departments.map(dept => (
+                                        {filteredDepartments.map(dept => (
                                             <option key={dept.id} value={dept.id}>{dept.name}</option>
                                         ))}
                                     </select>

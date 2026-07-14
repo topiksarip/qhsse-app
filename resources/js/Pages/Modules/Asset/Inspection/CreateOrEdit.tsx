@@ -10,10 +10,16 @@ import PrimaryButton from '@/Components/PrimaryButton';
 interface Inspection {
     id: number;
     inspection_date: string;
+    inspector_id: number;
     result: string;
     findings: string | null;
-    recommendations: string | null;
+    next_inspection_date: string | null;
     notes: string | null;
+}
+
+interface Inspector {
+    id: number;
+    name: string;
 }
 
 interface Asset {
@@ -22,18 +28,20 @@ interface Asset {
     name: string;
 }
 
-export default function CreateOrEdit({ auth, asset, inspection, results }: PageProps<{
+export default function CreateOrEdit({ asset, inspection, inspectors, results }: PageProps<{
     asset: Asset;
     inspection?: Inspection;
+    inspectors: Inspector[];
     results: Record<string, string>;
 }>) {
     const isEditing = !!inspection;
 
     const { data, setData, post, put, processing, errors } = useForm({
         inspection_date: inspection?.inspection_date || new Date().toISOString().split('T')[0],
+        inspector_id: inspection?.inspector_id?.toString() || '',
         result: inspection?.result || '',
         findings: inspection?.findings || '',
-        recommendations: inspection?.recommendations || '',
+        next_inspection_date: inspection?.next_inspection_date || '',
         notes: inspection?.notes || '',
     });
 
@@ -101,6 +109,23 @@ export default function CreateOrEdit({ auth, asset, inspection, results }: PageP
                                     </select>
                                     <InputError message={errors.result} className="mt-2" />
                                 </div>
+
+                                <div>
+                                    <InputLabel htmlFor="inspector_id" value="Inspector *" />
+                                    <select
+                                        id="inspector_id"
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                                        value={data.inspector_id}
+                                        onChange={(e) => setData('inspector_id', e.target.value)}
+                                        required
+                                    >
+                                        <option value="">Pilih inspector</option>
+                                        {inspectors.map((inspector) => (
+                                            <option key={inspector.id} value={inspector.id}>{inspector.name}</option>
+                                        ))}
+                                    </select>
+                                    <InputError message={errors.inspector_id} className="mt-2" />
+                                </div>
                             </div>
 
                             {/* Findings */}
@@ -117,18 +142,17 @@ export default function CreateOrEdit({ auth, asset, inspection, results }: PageP
                                 <InputError message={errors.findings} className="mt-2" />
                             </div>
 
-                            {/* Recommendations */}
+                            {/* Next Inspection */}
                             <div className="mt-6">
-                                <InputLabel htmlFor="recommendations" value="Recommendations" />
-                                <textarea
-                                    id="recommendations"
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
-                                    rows={4}
-                                    value={data.recommendations}
-                                    onChange={(e) => setData('recommendations', e.target.value)}
-                                    placeholder="Recommendations for maintenance or corrective actions..."
+                                <InputLabel htmlFor="next_inspection_date" value="Tanggal Inspeksi Berikutnya" />
+                                <TextInput
+                                    id="next_inspection_date"
+                                    type="date"
+                                    className="mt-1 block w-full"
+                                    value={data.next_inspection_date}
+                                    onChange={(e) => setData('next_inspection_date', e.target.value)}
                                 />
-                                <InputError message={errors.recommendations} className="mt-2" />
+                                <InputError message={errors.next_inspection_date} className="mt-2" />
                             </div>
 
                             {/* Notes */}

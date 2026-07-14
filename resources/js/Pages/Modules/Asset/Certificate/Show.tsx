@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { PageProps } from '@/types';
+import { formatDateOnly } from '@/Utils/date';
 
 interface Certificate {
     id: number;
@@ -9,15 +10,15 @@ interface Certificate {
     issued_date: string | null;
     expiry_date: string | null;
     status: string;
-    issuing_authority: string | null;
+    issuing_body: string | null;
     notes: string | null;
-    files: Array<{
+    certificate_file: {
         id: number;
-        file_name: string;
-        file_size: number;
-        uploaded_at: string;
+        original_name: string;
+        size: number;
+        mime_type: string;
         download_url: string;
-    }>;
+    } | null;
     created_at: string;
 }
 
@@ -27,7 +28,7 @@ interface Asset {
     name: string;
 }
 
-export default function Show({ auth, asset, certificate, can }: PageProps<{
+export default function Show({ asset, certificate, can }: PageProps<{
     asset: Asset;
     certificate: Certificate;
     can: { update: boolean; delete: boolean };
@@ -61,7 +62,7 @@ export default function Show({ auth, asset, certificate, can }: PageProps<{
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <Link
                             href={`/assets/${asset.id}/certificates`}
@@ -89,12 +90,12 @@ export default function Show({ auth, asset, certificate, can }: PageProps<{
             <Head title={`Certificate ${certificate.certificate_number}`} />
 
             <div className="py-12">
-                <div className="max-w-4xl mx-auto sm:px-6 lg:px-8">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Certificate Details */}
                     <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                         <div className="p-6">
                             <h3 className="text-lg font-medium mb-4">Certificate Details</h3>
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                 <div>
                                     <h4 className="text-sm font-medium text-gray-500">Certificate Type</h4>
                                     <p className="mt-1 text-sm text-gray-900">{certificate.certificate_type}</p>
@@ -110,16 +111,16 @@ export default function Show({ auth, asset, certificate, can }: PageProps<{
                                     </span>
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-medium text-gray-500">Issuing Authority</h4>
-                                    <p className="mt-1 text-sm text-gray-900">{certificate.issuing_authority || '-'}</p>
+                                    <h4 className="text-sm font-medium text-gray-500">Lembaga Penerbit</h4>
+                                    <p className="mt-1 text-sm text-gray-900">{certificate.issuing_body || '-'}</p>
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-medium text-gray-500">Issued Date</h4>
-                                    <p className="mt-1 text-sm text-gray-900">{certificate.issued_date || '-'}</p>
+                                    <h4 className="text-sm font-medium text-gray-500">Tanggal Terbit</h4>
+                                    <p className="mt-1 text-sm text-gray-900">{formatDateOnly(certificate.issued_date, '-')}</p>
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-medium text-gray-500">Expiry Date</h4>
-                                    <p className="mt-1 text-sm text-gray-900">{certificate.expiry_date || '-'}</p>
+                                    <h4 className="text-sm font-medium text-gray-500">Tanggal Kedaluwarsa</h4>
+                                    <p className="mt-1 text-sm text-gray-900">{formatDateOnly(certificate.expiry_date, '-')}</p>
                                 </div>
                             </div>
 
@@ -136,24 +137,22 @@ export default function Show({ auth, asset, certificate, can }: PageProps<{
                     <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div className="p-6">
                             <h3 className="text-lg font-medium mb-4">Attached Files</h3>
-                            {certificate.files.length > 0 ? (
+                            {certificate.certificate_file ? (
                                 <div className="space-y-3">
-                                    {certificate.files.map((file) => (
-                                        <div key={file.id} className="flex items-center justify-between border rounded-lg p-4">
+                                        <div className="flex items-center justify-between border rounded-lg p-4">
                                             <div>
-                                                <p className="font-medium text-sm">{file.file_name}</p>
+                                                <p className="font-medium text-sm">{certificate.certificate_file.original_name}</p>
                                                 <p className="text-xs text-gray-500">
-                                                    {formatFileSize(file.file_size)} • Uploaded {file.uploaded_at}
+                                                    {formatFileSize(certificate.certificate_file.size)} • {certificate.certificate_file.mime_type}
                                                 </p>
                                             </div>
                                             <a
-                                                href={file.download_url}
+                                                href={certificate.certificate_file.download_url}
                                                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
                                             >
                                                 Download
                                             </a>
                                         </div>
-                                    ))}
                                 </div>
                             ) : (
                                 <p className="text-gray-500 text-center py-8">No files attached.</p>

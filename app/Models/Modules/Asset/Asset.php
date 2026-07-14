@@ -2,21 +2,21 @@
 
 namespace App\Models\Modules\Asset;
 
+use App\Models\Concerns\Auditable;
 use App\Models\Contracts\ProvidesAuditContext;
 use App\Models\Core\MasterData\Area;
 use App\Models\Core\MasterData\Department;
 use App\Models\Core\MasterData\Site;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Builder;
 
 class Asset extends Model implements ProvidesAuditContext
 {
-    use HasFactory, SoftDeletes;
+    use Auditable, HasFactory;
 
     protected $fillable = [
         'asset_number',
@@ -166,6 +166,7 @@ class Asset extends Model implements ProvidesAuditContext
     public function getHasExpiredCertificatesAttribute(): bool
     {
         return $this->certificates()
+            ->activeRecords()
             ->where('status', 'expired')
             ->exists();
     }
@@ -173,24 +174,26 @@ class Asset extends Model implements ProvidesAuditContext
     public function getHasExpiringCertificatesAttribute(): bool
     {
         return $this->certificates()
+            ->activeRecords()
             ->whereIn('status', ['expiring_soon', 'expiring_critical'])
             ->exists();
     }
 
     public function getIsInspectionOverdueAttribute(): bool
     {
-        if (!$this->next_inspection_date) {
+        if (! $this->next_inspection_date) {
             return false;
         }
-        
+
         return $this->next_inspection_date->isPast();
     }
 
     public function getHasFailedInspectionAttribute(): bool
     {
         return $this->inspections()
+            ->activeRecords()
             ->where('result', 'fail')
-            ->whereNull('capa_action_id')
+            ->whereDoesntHave('capaAction')
             ->exists();
     }
 
