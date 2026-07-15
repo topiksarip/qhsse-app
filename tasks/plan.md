@@ -81,6 +81,16 @@ Terapkan primitif Phase 1 + TableWrapper + sidebar baru. Urutan:
 
 ## Status
 - Intent: CONFIRMED.
-- Spec: draft di plan ini (🔲 butuh konfirmasi 3 poin di atas).
-- Plan: DRAFT — menunggu konfirmasi user.
-- Execution: BELUM dimulai.
+- Spec: draft di plan ini.
+- Plan: ACTIVE — eksekusi berjalan (Phase 0 & 1 SELESAI + deployed).
+- Execution: Phase 0 (sidebar/dark/table wrapper) + Phase 1 (primitives) done & deployed ke Ubuntu-5.
+
+## ⚠️ Deploy Gotcha (learned 2026-07-15)
+`php artisan optimize:clear` menghapus `bootstrap/cache/`. Di Ubuntu-5 direktori tidak otomatis dibuat ulang
+dengan kepemilikan benar → semua perintah artisan + web app 500 ("bootstrap/cache directory must be present
+and writable"). FIX sebelum/sesudah `optimize:clear`:
+  sudo mkdir -p bootstrap/cache
+  sudo chown -R ubuntu:www-data bootstrap/cache
+  sudo chmod -R 775 bootstrap/cache
+Lalu `php artisan config:cache; php artisan route:cache`. (Jangan jalankan `optimize:clear` sebagai root
+kecuali kepemilikan dikembalikan untuk user deploy `ubuntu`.)
