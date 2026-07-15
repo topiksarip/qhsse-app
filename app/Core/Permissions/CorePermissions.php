@@ -439,7 +439,7 @@ final class CorePermissions
         $contractorView = ['contractor.management.view'];
         $contractorCreate = ['contractor.management.view', 'contractor.management.create', 'contractor.management.update', 'contractor.management.evaluate'];
 
-        $assetFull = ['core.comments.create', 'asset.management.view', 'asset.management.create', 'asset.management.update', 'asset.management.export', 'asset.management.delete', 'asset.certificates.view', 'asset.certificates.create', 'asset.certificates.update', 'asset.certificates.delete', 'asset.certificates.export', 'asset.inspections.view', 'asset.inspections.create', 'asset.inspections.update', 'asset.inspections.delete', 'asset.inspections.export'];
+        $assetFull = ['core.comments.create', 'asset.management.view', 'asset.management.create', 'asset.management.update', 'asset.management.export', 'asset.certificates.view', 'asset.certificates.create', 'asset.certificates.update', 'asset.certificates.export', 'asset.inspections.view', 'asset.inspections.create', 'asset.inspections.update', 'asset.inspections.export'];
         $assetViewExport = ['asset.management.view', 'asset.management.export', 'asset.certificates.view', 'asset.inspections.view'];
         $assetView = ['asset.management.view', 'asset.certificates.view', 'asset.inspections.view'];
         $assetCreate = ['asset.management.view', 'asset.management.create', 'asset.management.update'];

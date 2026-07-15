@@ -40,7 +40,6 @@ class AssetInspectionController extends Controller
             'inspections' => $inspections,
             'can' => [
                 'create' => $request->user()->can('create', [AssetInspection::class, $asset]),
-                'delete' => $request->user()->can('delete', [AssetInspection::class, $asset]),
             ],
         ]);
     }
@@ -142,25 +141,6 @@ class AssetInspectionController extends Controller
 
         return redirect()->route('assets.show', ['asset' => $asset, 'tab' => 'inspections'])
             ->with('success', 'Inspection updated successfully.');
-    }
-
-    public function destroy(Request $request, Asset $asset, AssetInspection $inspection): RedirectResponse
-    {
-        $this->authorize('delete', $inspection);
-
-        $inspection->delete();
-
-        // Log activity
-        $this->activityService->log(
-            moduleName: 'asset',
-            referenceId: $asset->id,
-            action: 'inspection_deleted',
-            description: "Inspection deleted from asset {$asset->asset_number}",
-            actor: $request->user()
-        );
-
-        return redirect()->route('assets.show', ['asset' => $asset, 'tab' => 'inspections'])
-            ->with('success', 'Inspection deleted successfully.');
     }
 
     public function createCapa(Request $request, Asset $asset, AssetInspection $inspection): RedirectResponse

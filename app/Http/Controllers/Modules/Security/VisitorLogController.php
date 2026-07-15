@@ -86,9 +86,9 @@ class VisitorLogController extends Controller
             ],
             'sites' => $this->sites(),
             'can' => [
-                'create' => $request->user()->can('create', VisitorLog::class),
-                'export' => $request->user()->can('export', VisitorLog::class),
-                'delete' => $request->user()->can('delete', VisitorLog::class),
+                'create' => request()->user()->can('create', VisitorLog::class),
+                'export' => request()->user()->can('export', VisitorLog::class),
+                'delete' => request()->user()->can('delete', VisitorLog::class),
             ],
         ]);
     }

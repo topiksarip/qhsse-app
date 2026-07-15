@@ -43,7 +43,6 @@ class AssetCertificateController extends Controller
             'certificates' => $certificates,
             'can' => [
                 'create' => $request->user()->can('create', [AssetCertificate::class, $asset]),
-                'delete' => $request->user()->can('delete', [AssetCertificate::class, $asset]),
             ],
         ]);
     }
@@ -209,26 +208,6 @@ class AssetCertificateController extends Controller
 
         return redirect()->route('assets.show', ['asset' => $asset, 'tab' => 'certificates'])
             ->with('success', 'Certificate updated successfully.');
-    }
-
-    public function destroy(Request $request, Asset $asset, AssetCertificate $certificate): RedirectResponse
-    {
-        $this->authorize('delete', $certificate);
-
-        $certificateType = $certificate->certificate_type;
-        $certificate->delete();
-
-        // Log activity
-        $this->activityService->log(
-            moduleName: 'asset',
-            referenceId: $asset->id,
-            action: 'certificate_deleted',
-            description: "Certificate {$certificateType} deleted from asset {$asset->asset_number}",
-            actor: $request->user()
-        );
-
-        return redirect()->route('assets.show', ['asset' => $asset, 'tab' => 'certificates'])
-            ->with('success', 'Certificate deleted successfully.');
     }
 
     public function download(Request $request, Asset $asset, AssetCertificate $certificate, int $fileId)
