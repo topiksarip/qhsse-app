@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Pagination from '@/Components/Qhsse/Pagination';
 import EmptyState from '@/Components/UI/EmptyState';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import { Paginated } from '@/types/core';
 import { PageProps } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
@@ -97,6 +98,18 @@ export default function Index({ items, filters, auth }: PageProps<{ items: Pagin
                                             <td className="whitespace-nowrap px-4 py-3 text-sm"><span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${statusColors[item.status] ?? ''}`}>{statusLabels[item.status] ?? item.status}</span></td>
                                             <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{item.assignedTo?.name ?? '-'}</td>
                                             <td className="whitespace-nowrap px-4 py-3 text-sm">{item.due_date ? <span className={isOverdue(item) ? 'font-semibold text-red-600' : 'text-gray-500 dark:text-gray-400'}>{new Date(item.due_date).toLocaleDateString('id-ID')}</span> : '-'}</td>
+                                            <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
+                                                <DeleteWithConfirm
+                                                    routeName="capa.actions.destroy"
+                                                    id={item.id}
+                                                    permission="capa.actions.delete"
+                                                    itemLabel={item.action_number}
+                                                    asLink
+                                                    className="text-red-600 hover:underline dark:text-red-400"
+                                                >
+                                                    🗑 Hapus
+                                                </DeleteWithConfirm>
+                                            </td>
                                             <td className="whitespace-nowrap px-4 py-3 text-sm">{item.priority && <span className="inline-flex rounded-full px-2 py-1 text-xs font-semibold" style={{ backgroundColor: `${item.priority.color}20`, color: item.priority.color }}>{item.priority.name}</span>}</td>
                                         </tr>
                                     ))

@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Pagination from '@/Components/Qhsse/Pagination';
 import EmptyState from '@/Components/UI/EmptyState';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import { Paginated } from '@/types/core';
 import { PageProps } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
@@ -81,6 +82,18 @@ export default function Index({ items, filters, auth }: PageProps<{ items: Pagin
                                         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{item.inspector?.name ?? '-'}</td>
                                         <td className="px-4 py-3 text-sm"><span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${statusColors[item.status] ?? ''}`}>{item.status}</span></td>
                                         <td className="px-4 py-3 text-sm"><span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${resultColors[item.overall_result] ?? ''}`}>{item.overall_result}</span></td>
+                                            <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
+                                                <DeleteWithConfirm
+                                                    routeName="inspection.checklists.destroy"
+                                                    id={item.id}
+                                                    permission="inspection.checklists.delete"
+                                                    itemLabel={item.inspection_number}
+                                                    asLink
+                                                    className="text-red-600 hover:underline dark:text-red-400"
+                                                >
+                                                    🗑 Hapus
+                                                </DeleteWithConfirm>
+                                            </td>
                                         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{new Date(item.scheduled_at).toLocaleDateString('id-ID')}</td>
                                     </tr>
                                 ))}

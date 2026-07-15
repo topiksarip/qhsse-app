@@ -81,11 +81,7 @@ class EnvironmentalRecordPolicy
     /**
      * Determine whether the user can delete the environmental record.
      */
-    public function delete(User $user, EnvironmentalRecord $environmentalRecord): bool
-    {
-        // Environmental records are never deleted, only closed
-        return false;
-    }
+    public function delete(User $user, EnvironmentalRecord $environmentalRecord): bool { return $user->can('environment.records.delete'); }
 
     /**
      * Determine whether the user can export environmental records.

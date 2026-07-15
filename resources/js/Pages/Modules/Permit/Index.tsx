@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { PageProps, PaginatedData, Permit, Site, Department } from '@/types';
 import { useState } from 'react';
 import EmptyState from '@/Components/UI/EmptyState';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import PermitTypeBadge from '@/Components/Permit/PermitTypeBadge';
 import StatusBadge from '@/Components/Permit/StatusBadge';
 import RiskBadge from '@/Components/Permit/RiskBadge';
@@ -213,7 +214,16 @@ export default function Index({ auth, permits, filters, sites, departments, type
                                                     <div className="flex items-center justify-center gap-2">
                                                         <Link href={route('permit.work.show', p.id)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400">👁 Lihat</Link>
                                                         {canUpdate && p.status === 'draft' && (
-                                                            <Link href={route('permit.work.edit', p.id)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400">✏ Edit</Link>
+                                                            <><Link href={route('permit.work.edit', p.id)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400">✏ Edit</Link>                                            <DeleteWithConfirm
+                                                routeName="permit.work.destroy"
+                                                id={p.id}
+                                                permission="permit.work.delete"
+                                                itemLabel={p.permit_number}
+                                                asLink
+                                                className="ml-2 text-red-600 hover:underline dark:text-red-400"
+                                            >
+                                                🗑
+                                            </DeleteWithConfirm></>
                                                         )}
                                                     </div>
                                                 </td>

@@ -348,6 +348,21 @@ class AuditController extends Controller
         return back()->with('success', 'Temuan audit berhasil ditambahkan.');
     }
 
+    public function destroy(Request $request, Audit $audit): RedirectResponse
+    {
+        $this->authorize('delete', $audit);
+        abort_if($audit->status !== 'planned', 403, 'Hanya audit dengan status Direncanakan yang dapat dihapus.');
+
+        $actor = $request->user();
+        DB::transaction(function () use ($audit, $actor) {
+            $this->audit->deleted($audit, $actor, 'audit', $audit->id);
+            $this->activity->log('audit', $audit->id, 'audit.deleted', "Audit {$audit->audit_number} dihapus", $actor);
+            $audit->delete();
+        });
+
+        return redirect()->route('audits.index')->with('success', 'Audit berhasil dihapus.');
+    }
+
     public function updateFinding(UpdateAuditFindingRequest $request, Audit $audit, AuditFinding $finding): RedirectResponse
     {
         $actor = $request->user();

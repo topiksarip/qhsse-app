@@ -117,17 +117,7 @@ class RiskRegisterPolicy
 
     public function delete(User $user, RiskRegister $riskRegister): bool
     {
-        // Only Super Admin and Admin can delete
-        if (!$user->hasRole(['Super Admin', 'Admin'])) {
-            return false;
-        }
-
-        // Cannot delete monitored records
-        if ($riskRegister->status === 'monitored') {
-            return false;
-        }
-
-        return true;
+        return $user->can('risk.registers.delete');
     }
 
     public function export(User $user): bool

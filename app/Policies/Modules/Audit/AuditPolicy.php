@@ -70,4 +70,5 @@ class AuditPolicy
 
         return false;
     }
+    public function delete(User $user, Audit $audit): bool { return $user->can('audit.management.delete'); }
 }

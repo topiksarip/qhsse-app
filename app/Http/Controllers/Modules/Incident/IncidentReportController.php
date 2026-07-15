@@ -223,6 +223,22 @@ class IncidentReportController extends Controller
             ->with('success', 'Laporan insiden berhasil diperbarui.');
     }
 
+    public function destroy(Request $request, IncidentReport $incidentReport): RedirectResponse
+    {
+        $actor = $request->user();
+        $this->access->ensureVisible($actor, $incidentReport);
+        $this->authorize('delete', $incidentReport);
+        abort_unless($incidentReport->status === 'draft', 409, 'Hanya insiden draft yang dapat dihapus.');
+
+        DB::transaction(function () use ($incidentReport, $actor) {
+            $this->auditService->deleted($incidentReport, $actor, 'incident', $incidentReport->id);
+            $this->activityService->log('incident', $incidentReport->id, 'incident.deleted', 'Laporan insiden dihapus', $actor);
+            $incidentReport->delete();
+        });
+
+        return redirect()->route('incident.reports.index')->with('success', 'Laporan insiden berhasil dihapus.');
+    }
+
     public function export(Request $request, ListQuery $listQuery, CsvExporter $exporter): StreamedResponse
     {
         $query = $listQuery->apply(

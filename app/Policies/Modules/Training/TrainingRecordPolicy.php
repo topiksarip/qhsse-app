@@ -79,11 +79,7 @@ class TrainingRecordPolicy
     /**
      * Determine whether the user can delete the training record.
      */
-    public function delete(User $user, TrainingRecord $record): bool
-    {
-        // Only Super Admin and Admin can delete training records
-        return $user->hasRole(['Super Admin', 'Admin']);
-    }
+    public function delete(User $user, TrainingRecord $record): bool { return $user->can('training.records.delete'); }
 
     /**
      * Determine whether the user can export training records.

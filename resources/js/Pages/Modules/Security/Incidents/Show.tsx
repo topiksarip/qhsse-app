@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import { PageProps, SecurityIncident } from '@/types';
 import TypeBadge from '@/Components/Security/TypeBadge';
 import StatusBadge from '@/Components/Security/StatusBadge';
@@ -62,11 +63,21 @@ export default function Show({ auth, incident }: ShowProps) {
                                 </dl>
                             </div>
                             <div className="flex flex-wrap gap-2">
-                                {canEdit && (
+<>                                {canEdit && (
                                     <Link href={route('security.incidents.edit', incident.id)} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">
                                         ✏ Edit
                                     </Link>
                                 )}
+                        <DeleteWithConfirm
+                            routeName="security.incidents.destroy"
+                            id={incident.id}
+                            permission="security.incidents.delete"
+                            itemLabel={incident.security_number}
+                            redirectTo="security.incidents.index"
+                            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 dark:bg-red-700 dark:text-white"
+                        >
+                            Hapus
+                        </DeleteWithConfirm></>
                             </div>
                         </div>
                     </div>

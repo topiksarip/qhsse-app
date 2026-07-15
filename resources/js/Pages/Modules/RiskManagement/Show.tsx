@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import { PageProps, RiskRegister } from '@/types';
 import TypeBadge from '@/Components/Risk/TypeBadge';
 import StatusBadge from '@/Components/Risk/StatusBadge';
@@ -59,9 +60,19 @@ export default function Show({ auth, riskRegister }: ShowProps) {
                                 <h3 className="mt-2 text-lg font-medium text-gray-900 dark:text-gray-100">{riskRegister.title}</h3>
                             </div>
                             {canEdit && (
-                                <Link href={route('risk.registers.edit', riskRegister.id)} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">
+<>                                <Link href={route('risk.registers.edit', riskRegister.id)} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">
                                     ✏ Edit
                                 </Link>
+                        <DeleteWithConfirm
+                            routeName="risk.registers.destroy"
+                            id={riskRegister.id}
+                            permission="risk.registers.delete"
+                            itemLabel={riskRegister.register_number}
+                            redirectTo="risk.registers.index"
+                            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 dark:bg-red-700 dark:text-white"
+                        >
+                            Hapus
+                        </DeleteWithConfirm></>
                             )}
                         </div>
                     </div>

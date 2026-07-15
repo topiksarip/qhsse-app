@@ -7,6 +7,7 @@ import ResultBadge from '@/Components/Training/ResultBadge';
 import ExpiryIndicator from '@/Components/Training/ExpiryIndicator';
 import { format, parseISO } from 'date-fns';
 import EmptyState from '@/Components/UI/EmptyState';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 
 interface RecordsIndexProps extends PageProps {
     records: PaginatedData<TrainingRecord>;
@@ -303,6 +304,16 @@ export default function Index({ auth, records, filters, can }: RecordsIndexProps
                                                                 ✏ Edit
                                                             </Link>
                                                         )}
+                                                        <DeleteWithConfirm
+                                                            routeName="training.records.destroy"
+                                                            id={record.id}
+                                                            permission="training.records.delete"
+                                                            itemLabel={record.training_number}
+                                                            asLink
+                                                            className="ml-2 text-red-600 hover:underline dark:text-red-400"
+                                                        >
+                                                            🗑
+                                                        </DeleteWithConfirm>
                                                     </div>
                                                 </td>
                                             </tr>

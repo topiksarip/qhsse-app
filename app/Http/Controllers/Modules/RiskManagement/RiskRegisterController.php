@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Modules\RiskManagement\AssessRiskRegisterRequest;
 use App\Http\Requests\Modules\RiskManagement\StoreRiskRegisterRequest;
 use App\Http\Requests\Modules\RiskManagement\UpdateRiskRegisterRequest;
+use Illuminate\Http\Request;
 use App\Models\Core\MasterData\Area;
 use App\Models\Core\MasterData\Department;
 use App\Models\Core\MasterData\RiskMatrixLevel;
@@ -265,6 +266,20 @@ class RiskRegisterController extends Controller
             DB::rollBack();
             return back()->withInput()->with('error', 'Gagal memperbarui risk register: ' . $e->getMessage());
         }
+    }
+
+    public function destroy(Request $request, RiskRegister $riskRegister): RedirectResponse
+    {
+        $this->authorize('delete', $riskRegister);
+
+        $actor = $request->user();
+        DB::transaction(function () use ($riskRegister, $actor) {
+            $this->auditService->deleted($riskRegister, $actor, 'risk', $riskRegister->id);
+            $this->activityService->log('risk', $riskRegister->id, 'risk.deleted', "Risk register {$riskRegister->register_number} dihapus", $actor);
+            $riskRegister->delete();
+        });
+
+        return redirect()->route('risk.registers.index')->with('success', 'Risk register berhasil dihapus.');
     }
 
     public function assess(AssessRiskRegisterRequest $request, RiskRegister $riskRegister): RedirectResponse

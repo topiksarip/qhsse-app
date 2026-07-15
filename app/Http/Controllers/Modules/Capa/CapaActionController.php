@@ -281,6 +281,23 @@ class CapaActionController extends Controller
         return redirect()->route('capa.actions.show', $capaAction)->with('success', 'Status CAPA diperbarui.');
     }
 
+    public function destroy(Request $request, CapaAction $capaAction): RedirectResponse
+    {
+        abort_unless($this->capaAccess->canAccess($capaAction, $request->user()), 403);
+        $this->authorize('delete', $capaAction);
+
+        $actor = $request->user();
+        $actionNumber = $capaAction->action_number;
+
+        DB::transaction(function () use ($capaAction, $actor) {
+            $this->auditService->deleted($capaAction, $actor, 'capa', $capaAction->id);
+            $this->activityService->log('capa', $capaAction->id, 'capa.deleted', 'CAPA action dihapus: ' . $capaAction->action_number, $actor);
+            $capaAction->delete();
+        });
+
+        return redirect()->route('capa.actions.index')->with('success', "CAPA {$actionNumber} berhasil dihapus.");
+    }
+
     public function export(Request $request, ListQuery $listQuery, CsvExporter $exporter): StreamedResponse
     {
         $baseQuery = $this->capaAccess->scope(CapaAction::query(), $request->user());

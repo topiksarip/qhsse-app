@@ -1,6 +1,7 @@
 import Pagination from '@/Components/Qhsse/Pagination';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import EmptyState from '@/Components/UI/EmptyState';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import { PageProps } from '@/types';
 import { Paginated } from '@/types/core';
 import { Head, Link, router } from '@inertiajs/react';
@@ -142,7 +143,19 @@ export default function Index({ audits, filters, departments, auth }: PageProps<
                                     <td className="whitespace-nowrap px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyle[item.status] ?? 'bg-slate-100 text-slate-700'}`}>{statusLabel[item.status] ?? item.status}</span></td>
                                     <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-500">{item.scheduled_date ? new Date(item.scheduled_date).toLocaleDateString('id-ID') : '-'}</td>
                                     <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-500">{item.lead_auditor?.name ?? '-'}</td>
-                                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{item.findings_count}</td>
+                                    <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300">                                            <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
+                                                <DeleteWithConfirm
+                                                    routeName="audits.destroy"
+                                                    id={item.id}
+                                                    permission="audits.delete"
+                                                    itemLabel={item.audit_number}
+                                                    asLink
+                                                    className="text-red-600 hover:underline dark:text-red-400"
+                                                >
+                                                    🗑 Hapus
+                                                </DeleteWithConfirm>
+                                            </td>
+{item.findings_count}</td>
                                 </tr>
                             ))}
                         </tbody>

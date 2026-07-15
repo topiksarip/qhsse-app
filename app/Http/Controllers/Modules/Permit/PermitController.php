@@ -19,6 +19,7 @@ use App\Models\Core\MasterData\Site;
 use App\Models\Modules\Permit\Permit;
 use App\Models\Modules\Permit\PermitChecklist;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -459,6 +460,21 @@ class PermitController extends Controller
 
             return back()->with('success', "Permit berhasil di-{$action}");
         });
+    }
+
+    public function destroy(Request $request, Permit $permit): RedirectResponse
+    {
+        $this->authorize('delete', $permit);
+        abort_unless(in_array($permit->status, ['draft', 'cancelled', 'rejected'], true), 403, 'Permit hanya dapat dihapus jika masih draft/cancelled/rejected.');
+
+        $user = $request->user();
+        DB::transaction(function () use ($permit, $user) {
+            $this->auditService->deleted($permit, $user, 'permit', $permit->id);
+            $this->activityService->log('permit', $permit->id, 'permit.deleted', "Permit {$permit->permit_number} deleted", $user);
+            $permit->delete();
+        });
+
+        return redirect()->route('permit.work.index')->with('success', 'Permit deleted.');
     }
 
     public function export(Request $request)

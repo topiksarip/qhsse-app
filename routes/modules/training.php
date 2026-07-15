@@ -67,6 +67,7 @@ Route::middleware(['auth', 'verified'])
         Route::put('/{record}', [TrainingRecordController::class, 'update'])
             ->name('update')
             ->middleware('permission:training.records.update');
+        Route::delete('/{record}', [\App\Http\Controllers\Modules\Training\TrainingRecordController::class, 'destroy'])->name('destroy')->middleware('permission:training.records.delete');
     });
 
 // Training Matrix

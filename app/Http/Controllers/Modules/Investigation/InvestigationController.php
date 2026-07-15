@@ -207,6 +207,21 @@ class InvestigationController extends Controller
             ->with('success', 'Investigasi berhasil diperbarui.');
     }
 
+    public function destroy(Request $request, Investigation $investigation): RedirectResponse
+    {
+        $actor = $request->user();
+        $this->authorize('delete', $investigation);
+        abort_unless(in_array($investigation->status, ['draft', 'cancelled'], true), 409, 'Investigasi hanya dapat dihapus jika draft/cancelled.');
+
+        DB::transaction(function () use ($investigation, $actor) {
+            $this->auditService->deleted($investigation, $actor, 'investigation', $investigation->id);
+            $this->activityService->log('investigation', $investigation->id, 'investigation.deleted', 'Investigasi dihapus', $actor);
+            $investigation->delete();
+        });
+
+        return redirect()->route('investigation.reports.index')->with('success', 'Investigasi berhasil dihapus.');
+    }
+
     public function start(Investigation $investigation, Request $request): RedirectResponse
     {
         try {

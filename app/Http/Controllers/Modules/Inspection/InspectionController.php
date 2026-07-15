@@ -234,6 +234,21 @@ class InspectionController extends Controller
         return redirect()->route('inspection.checklists.show', $inspection)->with('success', 'Hasil inspeksi disimpan.');
     }
 
+    public function destroy(Request $request, Inspection $inspection): RedirectResponse
+    {
+        $actor = $request->user();
+        $this->authorize('delete', $inspection);
+        abort_unless(in_array($inspection->status, ['draft', 'in_progress', 'cancelled'], true), 409, 'Inspeksi hanya dapat dihapus jika draft/in_progress/cancelled.');
+
+        DB::transaction(function () use ($inspection, $actor) {
+            $this->auditService->deleted($inspection, $actor, 'inspection', $inspection->id);
+            $this->activityService->log('inspection', $inspection->id, 'inspection.deleted', 'Inspeksi dihapus', $actor);
+            $inspection->delete();
+        });
+
+        return redirect()->route('inspection.checklists.index')->with('success', 'Inspeksi berhasil dihapus.');
+    }
+
     public function start(Inspection $inspection, Request $request): RedirectResponse
     {
         $actor = $request->user();

@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/react';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import { FormEvent, useState } from 'react';
 
 type Option = { id: number; name: string };
@@ -137,7 +138,17 @@ export default function Show({ audit, findings, evidenceFiles, comments, activit
 
                 {/* Workflow Actions */}
                 <div className="flex flex-wrap gap-2">
-                    {can.update && <Link href={route('audits.edit', audit.id)} className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-300 dark:bg-gray-700 dark:text-gray-200">Edit</Link>}
+<>                    {can.update && <Link href={route('audits.edit', audit.id)} className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-300 dark:bg-gray-700 dark:text-gray-200">Edit</Link>}
+                        <DeleteWithConfirm
+                            routeName="audits.destroy"
+                            id={audit.id}
+                            permission="audits.delete"
+                            itemLabel={audit.audit_number}
+                            redirectTo="audits.index"
+                            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 dark:bg-red-700 dark:text-white"
+                        >
+                            Hapus
+                        </DeleteWithConfirm></>
                     {can.start && <button onClick={startAudit} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Mulai Audit</button>}
                     {can.generate_report && <button onClick={() => setModal('generateReport')} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700">Buat Laporan</button>}
                     {can.close && <button onClick={() => setModal('close')} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">Tutup Audit</button>}

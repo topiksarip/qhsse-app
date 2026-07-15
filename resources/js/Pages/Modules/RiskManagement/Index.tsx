@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { PageProps, PaginatedData, RiskRegister, Site, Department, Area, Severity, RiskMatrixLevel } from '@/types';
 import { useState } from 'react';
 import EmptyState from '@/Components/UI/EmptyState';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import TypeBadge from '@/Components/Risk/TypeBadge';
 import StatusBadge from '@/Components/Risk/StatusBadge';
 import RiskLevelBadge from '@/Components/Risk/RiskLevelBadge';
@@ -174,7 +175,19 @@ export default function Index({ auth, items, filters, sites, areas, departments,
                                                 <td className="px-4 py-3 text-center"><RiskLevelBadge level={r.riskLevel} /></td>
                                                 <td className="px-4 py-3 text-center"><StatusBadge status={r.status} /></td>
                                                 <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
-                                                    <Link href={route('risk.registers.show', r.id)} className="text-indigo-600 hover:underline dark:text-indigo-400">👁</Link>
+                                                    <Link href={route('risk.registers.show', r.id)} className="text-indigo-600 hover:underline dark:text-indigo-400">👁                                            <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
+                                                <DeleteWithConfirm
+                                                    routeName="risk.registers.destroy"
+                                                    id={r.id}
+                                                    permission="risk.registers.delete"
+                                                    itemLabel={r.register_number}
+                                                    asLink
+                                                    className="text-red-600 hover:underline dark:text-red-400"
+                                                >
+                                                    🗑 Hapus
+                                                </DeleteWithConfirm>
+                                            </td>
+</Link>
                                                 </td>
                                             </tr>
                                         ))}

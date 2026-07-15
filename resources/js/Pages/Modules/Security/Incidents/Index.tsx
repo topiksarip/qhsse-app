@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { PageProps, PaginatedData, SecurityIncident, Site } from '@/types';
 import { useState } from 'react';
 import EmptyState from '@/Components/UI/EmptyState';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import TypeBadge from '@/Components/Security/TypeBadge';
 import StatusBadge from '@/Components/Security/StatusBadge';
 import SeverityBadge from '@/Components/Security/SeverityBadge';
@@ -179,7 +180,16 @@ export default function Index({ auth, incidents, filters, sites, types, statuses
                                         <td className="px-4 py-3 text-sm">{i.reporter?.name ?? '-'}</td>
                                         <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
                                             <Link href={route('security.incidents.show', i.id)} className="text-indigo-600 hover:underline dark:text-indigo-400">👁</Link>
-                                            {canEdit(i) && <Link href={route('security.incidents.edit', i.id)} className="ml-2 text-gray-600 hover:underline dark:text-gray-300">✏</Link>}
+                                            <>{canEdit(i) && <Link href={route('security.incidents.edit', i.id)} className="ml-2 text-gray-600 hover:underline dark:text-gray-300">✏</Link>}                                            <DeleteWithConfirm
+                                                routeName="security.incidents.destroy"
+                                                id={i.id}
+                                                permission="security.incidents.delete"
+                                                itemLabel={i.security_number}
+                                                asLink
+                                                className="ml-2 text-red-600 hover:underline dark:text-red-400"
+                                            >
+                                                🗑
+                                            </DeleteWithConfirm></>
                                         </td>
                                     </tr>
                                 ))}

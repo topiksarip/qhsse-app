@@ -253,6 +253,20 @@ class TrainingRecordController extends Controller
     /**
      * Export training records to CSV.
      */
+    public function destroy(Request $request, TrainingRecord $record): RedirectResponse
+    {
+        $this->authorize('delete', $record);
+
+        $actor = $request->user();
+        DB::transaction(function () use ($record, $actor) {
+            $this->auditService->deleted($record, $actor, 'training', $record->id);
+            $this->activityService->log('training', $record->id, 'training.record.deleted', "Training record {$record->training_number} deleted", $actor);
+            $record->delete();
+        });
+
+        return redirect()->route('training.records.index')->with('success', 'Training record deleted.');
+    }
+
     public function export(Request $request, CsvExporter $exporter)
     {
         $this->authorize('training.records.export');

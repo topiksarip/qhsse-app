@@ -202,6 +202,21 @@ class DocumentControlController extends Controller
         return redirect()->route('document.control.show', $controlledDocument)->with('success', 'Dokumen berhasil diperbarui.');
     }
 
+    public function destroy(Request $request, ControlledDocument $controlledDocument): RedirectResponse
+    {
+        $this->authorize('delete', $controlledDocument);
+        abort_unless(in_array($controlledDocument->status, ['draft', 'rejected'], true), 403);
+
+        $actor = $request->user();
+        DB::transaction(function () use ($controlledDocument, $actor) {
+            $this->audit->deleted($controlledDocument, $actor, 'document', $controlledDocument->id);
+            $this->activity->log('document', $controlledDocument->id, 'document.deleted', 'Dokumen dihapus', $actor);
+            $controlledDocument->delete();
+        });
+
+        return redirect()->route('document.control.index')->with('success', 'Dokumen berhasil dihapus.');
+    }
+
     public function submitReview(Request $request, ControlledDocument $controlledDocument): RedirectResponse
     {
         $this->ensureMutable($request->user(), $controlledDocument);

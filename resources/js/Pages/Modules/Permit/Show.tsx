@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import { PageProps, Permit, PermitChecklist, ValidityStatus } from '@/types';
 import { FormEvent, useState } from 'react';
 import PermitTypeBadge from '@/Components/Permit/PermitTypeBadge';
@@ -124,7 +125,17 @@ export default function Show({ auth, permit, workflow, availableActions, checkli
                     </div>
                     <div className="flex gap-2">
                         {canUpdate && (
-                            <Link href={route('permit.work.edit', permit.id)} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">✏ Edit</Link>
+<>                            <Link href={route('permit.work.edit', permit.id)} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">✏ Edit</Link>
+                        <DeleteWithConfirm
+                            routeName="permit.work.destroy"
+                            id={permit.id}
+                            permission="permit.work.delete"
+                            itemLabel={permit.permit_number}
+                            redirectTo="permit.work.index"
+                            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 dark:bg-red-700 dark:text-white"
+                        >
+                            Hapus
+                        </DeleteWithConfirm></>
                         )}
                     </div>
                 </div>

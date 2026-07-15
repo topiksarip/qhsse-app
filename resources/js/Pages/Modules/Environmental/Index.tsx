@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { PageProps, PaginatedData, EnvironmentalRecord, Site, EnvironmentalType, EnvironmentalStatus } from '@/types';
 import { useState } from 'react';
 import EmptyState from '@/Components/UI/EmptyState';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import TypeBadge from '@/Components/Environmental/TypeBadge';
 import StatusBadge from '@/Components/Environmental/StatusBadge';
 import ExceedanceBadge from '@/Components/Environmental/ExceedanceBadge';
@@ -214,7 +215,16 @@ export default function Index({ auth, records, filters, sites, types, statuses }
                                         <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
                                             <Link href={route('environment.records.show', r.id)} className="text-indigo-600 hover:underline dark:text-indigo-400">👁</Link>
                                             {canEdit(r) && (
-                                                <Link href={route('environment.records.edit', r.id)} className="ml-2 text-gray-600 hover:underline dark:text-gray-300">✏</Link>
+                                                <><Link href={route('environment.records.edit', r.id)} className="ml-2 text-gray-600 hover:underline dark:text-gray-300">✏</Link>                                            <DeleteWithConfirm
+                                                routeName="environment.records.destroy"
+                                                id={r.id}
+                                                permission="environment.records.delete"
+                                                itemLabel={r.record_number}
+                                                asLink
+                                                className="ml-2 text-red-600 hover:underline dark:text-red-400"
+                                            >
+                                                🗑
+                                            </DeleteWithConfirm></>
                                             )}
                                         </td>
                                     </tr>

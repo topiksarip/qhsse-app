@@ -10,6 +10,7 @@ use App\Models\Modules\Quality\Ncr;
 use App\Models\User;
 use App\Modules\Quality\NcrAccess;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\{Inertia, Response as InertiaResponse};
@@ -187,6 +188,23 @@ class NcrController extends Controller
         $this->notifyQhsseTeam($user, $ncr, 'quality.ncr.' . $action, "NCR {$ncr->ncr_number} {$action}");
 
         return redirect()->route('quality.ncrs.show', $ncr)->with('success', "NCR {$action} berhasil.");
+    }
+
+    public function destroy(Request $request, Ncr $ncr): \Illuminate\Http\RedirectResponse
+    {
+        $this->access->canAccess(Auth::user(), $ncr) || abort(403);
+        $this->authorize('delete', $ncr);
+
+        $user = $request->user();
+        $ncrNumber = $ncr->ncr_number;
+
+        DB::transaction(function () use ($ncr, $user) {
+            $this->auditService->deleted($ncr, $user, 'quality', $ncr->id);
+            $this->activityService->log('quality', $ncr->id, 'deleted', "NCR {$ncr->ncr_number} deleted", $user->id);
+            $ncr->delete();
+        });
+
+        return redirect()->route('quality.ncrs.index')->with('success', "NCR {$ncrNumber} berhasil dihapus.");
     }
 
     protected function notifyQhsseTeam(User $actor, Ncr $ncr, string $type, string $message): void

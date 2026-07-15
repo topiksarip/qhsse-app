@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/react';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import { FormEvent, useState } from 'react';
 
 type CapaAction = {
@@ -68,7 +69,17 @@ export default function Show({ action, comments, activities, workflowHistory, av
                     </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <Link href={route('capa.actions.index')} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">Kembali</Link>
+<>                    <Link href={route('capa.actions.index')} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">Kembali</Link>
+                        <DeleteWithConfirm
+                            routeName="capa.actions.destroy"
+                            id={action.id}
+                            permission="capa.actions.delete"
+                            itemLabel={action.action_number}
+                            redirectTo="capa.actions.index"
+                            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 dark:bg-red-700 dark:text-white"
+                        >
+                            Hapus
+                        </DeleteWithConfirm></>
                     {canEdit && <Link href={route('capa.actions.edit', action.id)} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">Edit</Link>}
                     {availableTransitions.map((t) => {
                         const permKey = t.action_key === 'start' || t.action_key === 'restart' ? 'update' : t.action_key === 'submit_verification' ? 'submit' : t.action_key === 'verify_close' ? 'close' : t.action_key === 'reject' ? 'reject' : 'update';

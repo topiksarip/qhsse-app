@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import { useState } from 'react';
 
 type Item = { id: number; question: string; type: string; category: string | null; is_required: boolean };
@@ -57,7 +58,17 @@ export default function Show({ inspection, auth }: PageProps<{ inspection: Inspe
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                    <Link href={route('inspection.checklists.index')} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">Kembali</Link>
+<>                    <Link href={route('inspection.checklists.index')} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">Kembali</Link>
+                        <DeleteWithConfirm
+                            routeName="inspection.checklists.destroy"
+                            id={inspection.id}
+                            permission="inspection.checklists.delete"
+                            itemLabel={inspection.inspection_number}
+                            redirectTo="inspection.checklists.index"
+                            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 dark:bg-red-700 dark:text-white"
+                        >
+                            Hapus
+                        </DeleteWithConfirm></>
                     {canExecute && inspection.status === 'pending' && <button onClick={start} className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Mulai Inspeksi</button>}
                     {canExecute && inspection.status === 'in_progress' && <button onClick={save} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">Simpan Hasil</button>}
                     {canExecute && inspection.status === 'in_progress' && <button onClick={complete} className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">Selesaikan</button>}

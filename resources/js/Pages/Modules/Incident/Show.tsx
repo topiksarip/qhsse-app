@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/react';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import { FormEvent, useState } from 'react';
 
 type Incident = {
@@ -114,7 +115,17 @@ export default function Show({ incident, evidence, comments, activities, workflo
                     {/* Action Buttons */}
                     <div className="flex flex-wrap gap-2">
                         <Link href={route('incident.reports.index')} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">Kembali</Link>
-                        {canEdit && <Link href={route('incident.reports.edit', incident.id)} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">Edit</Link>}
+<>                        {canEdit && <Link href={route('incident.reports.edit', incident.id)} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">Edit</Link>}
+                        <DeleteWithConfirm
+                            routeName="incident.reports.destroy"
+                            id={incident.id}
+                            permission="incident.reports.delete"
+                            itemLabel={incident.incident_number}
+                            redirectTo="incident.reports.index"
+                            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 dark:bg-red-700 dark:text-white"
+                        >
+                            Hapus
+                        </DeleteWithConfirm></>
                         {permissions.has('incident.reports.export') && <a href={route('incident.reports.print', incident.id)} target="_blank" rel="noreferrer" className="rounded-md bg-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Cetak / PDF</a>}
                         {availableTransitions.map((t) => {
                             const actionPermissions: Record<string, string> = { submit: 'submit', review: 'review', reject: 'review', close: 'close' };

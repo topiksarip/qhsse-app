@@ -5,6 +5,7 @@ import { Paginated } from '@/types/core';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 import EmptyState from '@/Components/UI/EmptyState';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 
 type Option = { id: number; name: string };
 type TypeOption = { value: string; label: string };
@@ -93,6 +94,18 @@ export default function Index({ items, filters, departments, documentTypes, auth
                                     <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-600 dark:text-slate-300"><span className="font-semibold uppercase">{item.type || '-'}</span> · v{item.version || '-'}</td>
                                     <td className="whitespace-nowrap px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyle[item.status] ?? 'bg-slate-100 text-slate-700'}`}>{statusLabel[item.status] ?? item.status}</span></td>
                                     <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-500">{item.owner?.name ?? '-'}</td>
+                                            <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
+                                                <DeleteWithConfirm
+                                                    routeName="document.control.destroy"
+                                                    id={item.id}
+                                                    permission="document.control.delete"
+                                                    itemLabel={item.document_number}
+                                                    asLink
+                                                    className="text-red-600 hover:underline dark:text-red-400"
+                                                >
+                                                    🗑 Hapus
+                                                </DeleteWithConfirm>
+                                            </td>
                                     <td className="whitespace-nowrap px-4 py-3 text-sm text-slate-500">{item.review_date ? new Date(item.review_date).toLocaleDateString('id-ID') : '-'}</td>
                                 </tr>
                             ))}

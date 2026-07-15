@@ -63,10 +63,7 @@ class SecurityIncidentPolicy
         return false;
     }
 
-    public function delete(User $user, SecurityIncident $securityIncident): bool
-    {
-        return false;
-    }
+    public function delete(User $user, SecurityIncident $securityIncident): bool { return $user->can('security.incidents.delete'); }
 
     public function export(User $user): bool
     {

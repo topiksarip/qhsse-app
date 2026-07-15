@@ -37,6 +37,7 @@ Route::middleware(['auth', 'verified'])
         Route::put('/{riskRegister}', [RiskRegisterController::class, 'update'])
             ->name('update')
             ->middleware('permission:risk.registers.update');
+        Route::delete('/{riskRegister}', [\App\Http\Controllers\Modules\RiskManagement\RiskRegisterController::class, 'destroy'])->name('destroy')->middleware('permission:risk.registers.delete');
 
         Route::post('/{riskRegister}/assess', [RiskRegisterController::class, 'assess'])
             ->name('assess')

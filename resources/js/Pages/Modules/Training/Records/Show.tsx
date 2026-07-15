@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import { Head, Link } from '@inertiajs/react';
 import { PageProps, TrainingRecord } from '@/types';
 import StatusBadge from '@/Components/Training/StatusBadge';
@@ -42,6 +43,16 @@ export default function Show({ auth, record, can }: ShowProps) {
                                 ✏ Edit
                             </Link>
                         )}
+                        <DeleteWithConfirm
+                            routeName="training.records.destroy"
+                            id={record.id}
+                            permission="training.records.delete"
+                            itemLabel={record.training_number}
+                            redirectTo="training.records.index"
+                            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 dark:bg-red-700 dark:text-white"
+                        >
+                            Hapus
+                        </DeleteWithConfirm>
                     </div>
                 </div>
             }

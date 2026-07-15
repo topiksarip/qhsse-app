@@ -18,6 +18,6 @@ class NcrPolicy {
         if($user->hasRole('QHSSE Officer') && $user->employee?->site_id===$ncr->site_id) return true;
         return false;
     }
-    public function delete(User $user, Ncr $ncr): bool { return false; }
+    public function delete(User $user, Ncr $ncr): bool { return $user->can('quality.ncrs.delete'); }
     public function export(User $user): bool { return $user->can('quality.ncrs.export'); }
 }

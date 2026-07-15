@@ -242,6 +242,22 @@ final class CorePermissions
             'quality.complaints.update',
             'quality.complaints.close',
             'quality.complaints.export',
+
+            // Delete permissions (full CRUD enablement)
+            'incident.reports.delete',
+            'investigation.reports.delete',
+            'capa.actions.delete',
+            'inspection.checklists.delete',
+            'document.control.delete',
+            'audit.management.delete',
+            'training.records.delete',
+            'risk.registers.delete',
+            'legal.register.delete',
+            'asset.management.delete',
+            'permit.work.delete',
+            'environment.records.delete',
+            'security.incidents.delete',
+            'quality.ncrs.delete',
         ];
     }
 
@@ -279,6 +295,7 @@ final class CorePermissions
             'incident.reports.close',
             'incident.reports.export',
             'incident.reports.evidence',
+            'incident.reports.delete',
         ];
 
         $incidentViewExport = [
@@ -309,6 +326,7 @@ final class CorePermissions
             'investigation.reports.review',
             'investigation.reports.close',
             'investigation.reports.export',
+            'investigation.reports.delete',
         ];
 
         $investigationViewExport = [
@@ -323,7 +341,7 @@ final class CorePermissions
         $capaFull = [
             'capa.actions.view', 'capa.actions.create', 'capa.actions.update',
             'capa.actions.submit', 'capa.actions.verify', 'capa.actions.close',
-            'capa.actions.reject', 'capa.actions.export',
+            'capa.actions.reject', 'capa.actions.export', 'capa.actions.delete',
             'core.workflow.transition',
         ];
 
@@ -333,25 +351,25 @@ final class CorePermissions
 
         $capaAssign = ['capa.actions.view', 'capa.actions.create', 'capa.actions.update'];
 
-        $inspectionFull = ['inspection.checklists.view', 'inspection.checklists.create', 'inspection.checklists.update', 'inspection.checklists.execute', 'inspection.checklists.export'];
+        $inspectionFull = ['inspection.checklists.view', 'inspection.checklists.create', 'inspection.checklists.update', 'inspection.checklists.execute', 'inspection.checklists.export', 'inspection.checklists.delete'];
         $inspectionView = ['inspection.checklists.view'];
 
-        $documentFull = ['core.workflow.transition', 'document.control.view', 'document.control.create', 'document.control.update', 'document.control.submit_review', 'document.control.approve', 'document.control.make_effective', 'document.control.obsolete', 'document.control.export'];
+        $documentFull = ['core.workflow.transition', 'document.control.view', 'document.control.create', 'document.control.update', 'document.control.submit_review', 'document.control.approve', 'document.control.make_effective', 'document.control.obsolete', 'document.control.export', 'document.control.delete'];
         $documentView = ['document.control.view'];
         $documentViewExport = ['document.control.view', 'document.control.export'];
         $documentCreate = ['core.workflow.transition', 'document.control.view', 'document.control.create', 'document.control.update', 'document.control.submit_review'];
 
-        $auditFull = ['core.workflow.transition', 'audit.management.view', 'audit.management.create', 'audit.management.update', 'audit.management.execute', 'audit.management.close', 'audit.management.export', 'audit.findings.create', 'audit.findings.update', 'audit.findings.close'];
+        $auditFull = ['core.workflow.transition', 'audit.management.view', 'audit.management.create', 'audit.management.update', 'audit.management.execute', 'audit.management.close', 'audit.management.export', 'audit.management.delete', 'audit.findings.create', 'audit.findings.update', 'audit.findings.close'];
         $auditView = ['audit.management.view'];
         $auditViewExport = ['audit.management.view', 'audit.management.export'];
         $auditExecute = ['core.workflow.transition', 'audit.management.view', 'audit.management.execute', 'audit.findings.create', 'audit.findings.update', 'audit.findings.close'];
 
-        $riskFull = ['risk.registers.view', 'risk.registers.create', 'risk.registers.update', 'risk.registers.assess', 'risk.registers.export'];
+        $riskFull = ['risk.registers.view', 'risk.registers.create', 'risk.registers.update', 'risk.registers.assess', 'risk.registers.export', 'risk.registers.delete'];
         $riskViewExport = ['risk.registers.view', 'risk.registers.export'];
         $riskView = ['risk.registers.view'];
         $riskCreate = ['risk.registers.view', 'risk.registers.create', 'risk.registers.update'];
 
-        $legalFull = ['legal.register.view', 'legal.register.create', 'legal.register.update', 'legal.register.export', 'legal.obligations.view', 'legal.obligations.create', 'legal.obligations.update'];
+        $legalFull = ['legal.register.view', 'legal.register.create', 'legal.register.update', 'legal.register.export', 'legal.register.delete', 'legal.obligations.view', 'legal.obligations.create', 'legal.obligations.update'];
         $legalViewExport = ['legal.register.view', 'legal.register.export', 'legal.obligations.view'];
         $legalView = ['legal.register.view', 'legal.obligations.view'];
         $legalCreate = ['legal.register.view', 'legal.register.create', 'legal.register.update', 'legal.obligations.view'];
@@ -361,23 +379,23 @@ final class CorePermissions
         $emergencyView = ['emergency.plans.view', 'emergency.drills.view', 'emergency.contacts.view'];
         $emergencyCreate = ['emergency.plans.view', 'emergency.plans.create', 'emergency.plans.update', 'emergency.drills.view', 'emergency.drills.create', 'emergency.drills.update', 'emergency.contacts.view', 'emergency.contacts.create', 'emergency.contacts.update'];
 
-        $permitFull = ['permit.work.view', 'permit.work.create', 'permit.work.update', 'permit.work.approve', 'permit.work.close', 'permit.work.cancel', 'permit.work.export', 'permit.checklist.sign'];
+        $permitFull = ['permit.work.view', 'permit.work.create', 'permit.work.update', 'permit.work.approve', 'permit.work.close', 'permit.work.cancel', 'permit.work.export', 'permit.work.delete', 'permit.checklist.sign'];
         $permitViewExport = ['permit.work.view', 'permit.work.export'];
         $permitView = ['permit.work.view'];
         $permitCreate = ['permit.work.view', 'permit.work.create', 'permit.work.update'];
 
-        $environmentFull = ['environment.records.view', 'environment.records.create', 'environment.records.update', 'environment.records.approve', 'environment.records.close', 'environment.records.export'];
+        $environmentFull = ['environment.records.view', 'environment.records.create', 'environment.records.update', 'environment.records.approve', 'environment.records.close', 'environment.records.export', 'environment.records.delete'];
         $environmentViewExport = ['environment.records.view', 'environment.records.export'];
         $environmentView = ['environment.records.view'];
         $environmentCreate = ['environment.records.view', 'environment.records.create', 'environment.records.update'];
 
-        $securityFull = ['security.incidents.view', 'security.incidents.create', 'security.incidents.update', 'security.incidents.close', 'security.incidents.export', 'security.visitor.view', 'security.visitor.log', 'security.patrols.view', 'security.patrols.create', 'security.patrols.execute', 'security.patrols.export'];
+        $securityFull = ['security.incidents.view', 'security.incidents.create', 'security.incidents.update', 'security.incidents.close', 'security.incidents.export', 'security.incidents.delete', 'security.visitor.view', 'security.visitor.log', 'security.patrols.view', 'security.patrols.create', 'security.patrols.execute', 'security.patrols.export'];
         $securityOfficer = ['security.incidents.view', 'security.incidents.create', 'security.incidents.update', 'security.incidents.export', 'security.visitor.view', 'security.visitor.log', 'security.patrols.view', 'security.patrols.create', 'security.patrols.execute', 'security.patrols.export'];
         $securityViewExport = ['security.incidents.view', 'security.incidents.export', 'security.visitor.view', 'security.patrols.view', 'security.patrols.export'];
         $securityView = ['security.incidents.view', 'security.visitor.view'];
         $securityCreate = ['security.incidents.view', 'security.incidents.create', 'security.incidents.update', 'security.visitor.view', 'security.visitor.log', 'security.patrols.view'];
 
-        $qualityFull = ['quality.ncrs.view', 'quality.ncrs.create', 'quality.ncrs.update', 'quality.ncrs.close', 'quality.ncrs.export', 'quality.complaints.view', 'quality.complaints.create', 'quality.complaints.update', 'quality.complaints.close', 'quality.complaints.export'];
+        $qualityFull = ['quality.ncrs.view', 'quality.ncrs.create', 'quality.ncrs.update', 'quality.ncrs.close', 'quality.ncrs.export', 'quality.ncrs.delete', 'quality.complaints.view', 'quality.complaints.create', 'quality.complaints.update', 'quality.complaints.close', 'quality.complaints.export'];
         $qualityViewExport = ['quality.ncrs.view', 'quality.ncrs.export', 'quality.complaints.view', 'quality.complaints.export'];
         $qualityView = ['quality.ncrs.view', 'quality.complaints.view'];
         $qualityCreate = ['quality.ncrs.view', 'quality.ncrs.create', 'quality.ncrs.update', 'quality.complaints.view', 'quality.complaints.create', 'quality.complaints.update'];
@@ -387,7 +405,7 @@ final class CorePermissions
         $contractorView = ['contractor.management.view'];
         $contractorCreate = ['contractor.management.view', 'contractor.management.create', 'contractor.management.update', 'contractor.management.evaluate'];
 
-        $assetFull = ['core.comments.create', 'asset.management.view', 'asset.management.create', 'asset.management.update', 'asset.management.export', 'asset.certificates.view', 'asset.certificates.create', 'asset.certificates.update', 'asset.inspections.view', 'asset.inspections.create'];
+        $assetFull = ['core.comments.create', 'asset.management.view', 'asset.management.create', 'asset.management.update', 'asset.management.export', 'asset.management.delete', 'asset.certificates.view', 'asset.certificates.create', 'asset.certificates.update', 'asset.inspections.view', 'asset.inspections.create'];
         $assetViewExport = ['asset.management.view', 'asset.management.export', 'asset.certificates.view', 'asset.inspections.view'];
         $assetView = ['asset.management.view', 'asset.certificates.view', 'asset.inspections.view'];
         $assetCreate = ['asset.management.view', 'asset.management.create', 'asset.management.update'];
@@ -400,7 +418,7 @@ final class CorePermissions
         $reportingViewDownload = ['reporting.templates.view', 'reporting.reports.view', 'reporting.reports.download'];
         $reportingGenerate = ['reporting.templates.view', 'reporting.reports.view', 'reporting.reports.generate', 'reporting.reports.download'];
 
-        $trainingFull = ['training.programs.view', 'training.programs.create', 'training.programs.update', 'training.records.view', 'training.records.create', 'training.records.update', 'training.records.export'];
+        $trainingFull = ['training.programs.view', 'training.programs.create', 'training.programs.update', 'training.records.view', 'training.records.create', 'training.records.update', 'training.records.export', 'training.records.delete'];
         $trainingViewExport = ['training.programs.view', 'training.records.view', 'training.records.export'];
         $trainingView = ['training.programs.view', 'training.records.view'];
 

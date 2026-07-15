@@ -394,6 +394,20 @@ class EnvironmentalRecordController extends Controller
         return back()->with('success', 'Record berhasil ditutup.');
     }
 
+    public function destroy(Request $request, EnvironmentalRecord $environmentalRecord): RedirectResponse
+    {
+        $this->authorize('delete', $environmentalRecord);
+
+        $user = $request->user();
+        DB::transaction(function () use ($environmentalRecord, $user) {
+            $this->auditService->deleted($environmentalRecord, $user, 'environment', $environmentalRecord->id);
+            $this->activityService->log('environment', $environmentalRecord->id, 'environment.record.deleted', "Environmental record deleted", $user);
+            $environmentalRecord->delete();
+        });
+
+        return redirect()->route('environment.records.index')->with('success', 'Environmental record deleted.');
+    }
+
     public function export(Request $request)
     {
         $this->authorize('export', EnvironmentalRecord::class);

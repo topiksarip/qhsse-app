@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import { PageProps, EnvironmentalRecord } from '@/types';
 import TypeBadge from '@/Components/Environmental/TypeBadge';
 import StatusBadge from '@/Components/Environmental/StatusBadge';
@@ -43,7 +44,17 @@ export default function Show({ auth, record }: ShowProps) {
                     </div>
                     <div className="flex gap-2">
                         {canEdit && (
-                            <Link href={route('environment.records.edit', record.id)} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">✏ Edit</Link>
+<>                            <Link href={route('environment.records.edit', record.id)} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">✏ Edit</Link>
+                        <DeleteWithConfirm
+                            routeName="environment.records.destroy"
+                            id={record.id}
+                            permission="environment.records.delete"
+                            itemLabel={record.record_number}
+                            redirectTo="environment.records.index"
+                            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 dark:bg-red-700 dark:text-white"
+                        >
+                            Hapus
+                        </DeleteWithConfirm></>
                         )}
                     </div>
                 </div>

@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/react';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import { FormEvent, useState } from 'react';
 
 type UserRef = { id: number; name: string; email?: string };
@@ -47,7 +48,17 @@ export default function Show({ document, files, reviews, comments, activities, w
                 <section className="rounded-2xl bg-gradient-to-r from-slate-900 to-indigo-900 p-6 text-white shadow-lg"><div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><div className="flex flex-wrap items-center gap-2"><span className="rounded-md bg-white/10 px-2.5 py-1 text-sm font-bold">{document.document_number}</span><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyle[document.status]}`}>{statusLabel[document.status]}</span><span className="rounded-full bg-indigo-400/20 px-2.5 py-1 text-xs font-semibold uppercase text-indigo-100">{document.type || '-'} · v{document.version || '-'}</span>{document.is_confidential && <span className="rounded-full bg-purple-400/20 px-2.5 py-1 text-xs font-semibold text-purple-100">🔒 Rahasia</span>}</div><h1 className="mt-4 text-2xl font-bold">{document.title || 'Belum diberi judul'}</h1><p className="mt-2 text-sm text-slate-300">Owner: {document.owner?.name ?? '-'} · Department: {document.department?.name ?? 'Lintas department'}</p></div><Link href={route('document.control.index')} className="rounded-lg border border-white/30 px-4 py-2 text-center text-sm font-semibold hover:bg-white/10">Kembali</Link></div></section>
 
                 <div className="flex flex-wrap gap-2">
-                    {can.update && <Link href={route('document.control.edit', document.id)} className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-300">Edit</Link>}
+<>                    {can.update && <Link href={route('document.control.edit', document.id)} className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-300">Edit</Link>}
+                        <DeleteWithConfirm
+                            routeName="document.control.destroy"
+                            id={document.id}
+                            permission="document.control.delete"
+                            itemLabel={document.document_number}
+                            redirectTo="document.control.index"
+                            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 dark:bg-red-700 dark:text-white"
+                        >
+                            Hapus
+                        </DeleteWithConfirm></>
                     {can.submit_review && <button onClick={() => setModal('submitReview')} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Submit Review</button>}
                     {can.approve && <><button onClick={() => setModal('approve')} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">Approve</button><button onClick={() => setModal('reject')} className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">Reject</button></>}
                     {can.make_effective && <button onClick={() => setModal('makeEffective')} className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">Make Effective</button>}

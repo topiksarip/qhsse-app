@@ -13,6 +13,7 @@ Route::middleware(['auth', 'verified'])->prefix('permit')->name('permit.')->grou
         Route::get('/{permit}', [PermitController::class, 'show'])->name('show')->middleware('permission:permit.work.view');
         Route::get('/{permit}/edit', [PermitController::class, 'edit'])->name('edit')->middleware('permission:permit.work.update');
         Route::put('/{permit}', [PermitController::class, 'update'])->name('update')->middleware('permission:permit.work.update');
+        Route::delete('/{permit}', [\App\Http\Controllers\Modules\Permit\PermitController::class, 'destroy'])->name('destroy')->middleware('permission:permit.work.delete');
         Route::post('/{permit}/checklist/sign', [PermitController::class, 'signChecklist'])->name('checklist.sign')->middleware('permission:permit.work.checklist');
         Route::post('/{permit}/transition', [PermitController::class, 'transition'])->name('transition');
     });

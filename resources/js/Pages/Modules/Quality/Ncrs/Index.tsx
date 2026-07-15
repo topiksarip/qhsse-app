@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { PageProps, PaginatedData, Ncr, Site } from '@/types';
 import { useState } from 'react';
 import EmptyState from '@/Components/UI/EmptyState';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import SourceBadge from '@/Components/Quality/SourceBadge';
 import StatusBadge from '@/Components/Quality/StatusBadge';
 import SeverityBadge from '@/Components/Quality/SeverityBadge';
@@ -169,7 +170,16 @@ export default function Index({ auth, ncrs, filters, sites, sources, statuses }:
                                                 <td className="px-4 py-3 text-sm">{n.site?.name ?? '-'}</td>
                                                 <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
                                                     <Link href={route('quality.ncrs.show', n.id)} className="text-indigo-600 hover:underline dark:text-indigo-400">👁</Link>
-                                                    {canEdit(n) && <Link href={route('quality.ncrs.edit', n.id)} className="ml-2 text-gray-600 hover:underline dark:text-gray-300">✏</Link>}
+                                                    <>{canEdit(n) && <Link href={route('quality.ncrs.edit', n.id)} className="ml-2 text-gray-600 hover:underline dark:text-gray-300">✏</Link>}                                            <DeleteWithConfirm
+                                                routeName="quality.ncrs.destroy"
+                                                id={n.id}
+                                                permission="quality.ncrs.delete"
+                                                itemLabel={n.ncr_number}
+                                                asLink
+                                                className="ml-2 text-red-600 hover:underline dark:text-red-400"
+                                            >
+                                                🗑
+                                            </DeleteWithConfirm></>
                                                 </td>
                                             </tr>
                                         ))}

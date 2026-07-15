@@ -52,6 +52,7 @@ Route::middleware(['auth', 'verified', 'active'])
         Route::put('/{incidentReport}', [IncidentReportController::class, 'update'])
             ->name('update')
             ->middleware('permission:incident.reports.update');
+        Route::delete('/{incidentReport}', [\App\Http\Controllers\Modules\Incident\IncidentReportController::class, 'destroy'])->name('destroy')->middleware('permission:incident.reports.delete');
 
         Route::post('/{incidentReport}/submit', [IncidentWorkflowController::class, 'submit'])
             ->name('submit')
@@ -103,6 +104,7 @@ Route::middleware(['auth', 'verified'])
 
         Route::put('/{investigation}', [\App\Http\Controllers\Modules\Investigation\InvestigationController::class, 'update'])
             ->name('update')->middleware('permission:investigation.reports.update');
+        Route::delete('/{investigation}', [\App\Http\Controllers\Modules\Investigation\InvestigationController::class, 'destroy'])->name('destroy')->middleware('permission:investigation.reports.delete');
 
         Route::post('/{investigation}/start', [\App\Http\Controllers\Modules\Investigation\InvestigationController::class, 'start'])
             ->name('start')->middleware('permission:investigation.reports.submit');
@@ -126,6 +128,7 @@ Route::middleware(['auth', 'verified'])
         Route::get('/{capaAction}', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'show'])->name('show')->middleware('permission:capa.actions.view');
         Route::get('/{capaAction}/edit', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'edit'])->name('edit')->middleware('permission:capa.actions.update');
         Route::put('/{capaAction}', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'update'])->name('update')->middleware('permission:capa.actions.update');
+        Route::delete('/{capaAction}', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'destroy'])->name('destroy')->middleware('permission:capa.actions.delete');
         Route::post('/{capaAction}/start', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'start'])->name('start')->middleware('permission:capa.actions.update');
         Route::post('/{capaAction}/submit-verification', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'submitVerification'])->name('submit_verification')->middleware('permission:capa.actions.submit');
         Route::post('/{capaAction}/verify-close', [\App\Http\Controllers\Modules\Capa\CapaActionController::class, 'verifyClose'])->name('verify_close')->middleware('permission:capa.actions.close');
@@ -158,6 +161,7 @@ Route::middleware(['auth', 'verified'])
         Route::get('/export', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'export'])->name('export')->middleware('permission:inspection.checklists.export');
         Route::get('/{inspection}', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'show'])->name('show')->middleware('permission:inspection.checklists.view');
         Route::put('/{inspection}', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'update'])->name('update')->middleware('permission:inspection.checklists.execute');
+        Route::delete('/{inspection}', [\App\Http\Controllers\Modules\Inspection\InspectionController::class, 'destroy'])->name('destroy')->middleware('permission:inspection.checklists.delete');
         Route::post('/{inspection}/start', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'start'])->name('start')->middleware('permission:inspection.checklists.execute');
         Route::post('/{inspection}/complete', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'complete'])->name('complete')->middleware('permission:inspection.checklists.execute');
     });
@@ -174,6 +178,7 @@ Route::middleware(['auth', 'verified'])
         Route::get('/{controlledDocument}', [DocumentControlController::class, 'show'])->name('show')->middleware('permission:document.control.view');
         Route::get('/{controlledDocument}/edit', [DocumentControlController::class, 'edit'])->name('edit')->middleware('permission:document.control.update');
         Route::put('/{controlledDocument}', [DocumentControlController::class, 'update'])->name('update')->middleware('permission:document.control.update');
+        Route::delete('/{controlledDocument}', [\App\Http\Controllers\Modules\DocumentControl\DocumentControlController::class, 'destroy'])->name('destroy')->middleware('permission:document.control.delete');
         Route::post('/{controlledDocument}/submit-review', [DocumentControlController::class, 'submitReview'])->name('submitReview')->middleware('permission:document.control.submit_review');
         Route::post('/{controlledDocument}/approve', [DocumentControlController::class, 'approve'])->name('approve')->middleware('permission:document.control.approve');
         Route::post('/{controlledDocument}/make-effective', [DocumentControlController::class, 'makeEffective'])->name('makeEffective')->middleware('permission:document.control.make_effective');
@@ -196,6 +201,7 @@ Route::middleware(['auth', 'verified'])
         Route::get('/{audit}', [AuditController::class, 'show'])->name('show')->middleware('permission:audit.management.view');
         Route::get('/{audit}/edit', [AuditController::class, 'edit'])->name('edit')->middleware('permission:audit.management.update');
         Route::put('/{audit}', [AuditController::class, 'update'])->name('update')->middleware('permission:audit.management.update');
+        Route::delete('/{audit}', [AuditController::class, 'destroy'])->name('destroy')->middleware('permission:audit.management.delete');
         Route::post('/{audit}/start', [AuditController::class, 'startAudit'])->name('start')->middleware('permission:audit.management.execute');
         Route::post('/{audit}/generate-report', [AuditController::class, 'generateReport'])->name('generate-report')->middleware('permission:audit.management.execute');
         Route::post('/{audit}/close', [AuditController::class, 'closeAudit'])->name('close')->middleware('permission:audit.management.close');

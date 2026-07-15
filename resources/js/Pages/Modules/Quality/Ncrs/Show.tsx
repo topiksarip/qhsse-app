@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import { PageProps, Ncr } from '@/types';
 import SourceBadge from '@/Components/Quality/SourceBadge';
 import StatusBadge from '@/Components/Quality/StatusBadge';
@@ -45,9 +46,19 @@ export default function Show({ auth, ncr }: ShowProps) {
                                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Dibuat: {fmtDate(ncr.created_at)}</p>
                             </div>
                             {canEdit && (
-                                <Link href={route('quality.ncrs.edit', ncr.id)} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">
+<>                                <Link href={route('quality.ncrs.edit', ncr.id)} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">
                                     ✏ Edit
                                 </Link>
+                        <DeleteWithConfirm
+                            routeName="quality.ncrs.destroy"
+                            id={ncr.id}
+                            permission="quality.ncrs.delete"
+                            itemLabel={ncr.ncr_number}
+                            redirectTo="quality.ncrs.index"
+                            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 dark:bg-red-700 dark:text-white"
+                        >
+                            Hapus
+                        </DeleteWithConfirm></>
                             )}
                         </div>
                     </div>

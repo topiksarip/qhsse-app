@@ -86,11 +86,7 @@ class PermitPolicy
     /**
      * Determine whether the user can delete the permit.
      */
-    public function delete(User $user, Permit $permit): bool
-    {
-        // Permits are never deleted, only rejected/closed
-        return false;
-    }
+    public function delete(User $user, Permit $permit): bool { return $user->can('permit.work.delete'); }
 
     /**
      * Determine whether the user can export permits.

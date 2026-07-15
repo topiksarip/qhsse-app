@@ -16,6 +16,7 @@ use App\Models\Core\MasterData\Severity;
 use App\Models\Core\MasterData\Site;
 use App\Models\Modules\Security\SecurityIncident;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
@@ -265,6 +266,21 @@ class SecurityIncidentController extends Controller
             return redirect()->route('security.incidents.show', $securityIncident)
                 ->with('success', "Security incident {$action}d successfully");
         });
+    }
+
+    public function destroy(Request $request, SecurityIncident $securityIncident): RedirectResponse
+    {
+        $this->authorize('delete', $securityIncident);
+        abort_if($securityIncident->status === 'closed', 403, 'Closed security incidents cannot be deleted.');
+
+        $user = $request->user();
+        DB::transaction(function () use ($securityIncident, $user) {
+            $this->auditService->deleted($securityIncident, $user, 'security', $securityIncident->id);
+            $this->activityService->log('security', $securityIncident->id, 'security.incident.deleted', "Security incident {$securityIncident->incident_number} deleted", $user);
+            $securityIncident->delete();
+        });
+
+        return redirect()->route('security.incidents.index')->with('success', 'Security incident deleted.');
     }
 
     public function export(Request $request)
