@@ -6,6 +6,7 @@ import EmptyState from '@/Components/UI/EmptyState';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 
 interface Asset {
     id: number;
@@ -188,6 +189,18 @@ export default function Index({ auth, assets, filters, sites, categories, status
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
                                         <Link href={`/assets/${asset.id}`} className="text-emerald-600 hover:underline dark:text-emerald-400">View</Link>
+                                        {can.create && (
+                                        <DeleteWithConfirm
+                                            routeName="assets.destroy"
+                                            id={asset.id}
+                                            permission="asset.management.delete"
+                                            itemLabel={asset.asset_number}
+                                            redirectTo="assets.index"
+                                            asLink
+                                        >
+                                            Delete
+                                        </DeleteWithConfirm>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

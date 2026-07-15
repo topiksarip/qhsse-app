@@ -91,6 +91,7 @@ class AssetController extends Controller
             'can' => [
                 'create' => $request->user()->can('create', Asset::class),
                 'export' => $request->user()->can('export', Asset::class),
+                'delete' => $request->user()->can('delete', Asset::class),
             ],
         ]);
     }
@@ -299,6 +300,27 @@ class AssetController extends Controller
         );
 
         return back()->with('success', 'Komentar berhasil ditambahkan.');
+    }
+
+    public function destroy(Request $request, Asset $asset): RedirectResponse
+    {
+        $this->authorize('delete', $asset);
+
+        DB::transaction(function () use ($request, $asset): void {
+            $assetNumber = $asset->asset_number;
+            $asset->delete();
+
+            $this->activityService->log(
+                moduleName: 'asset',
+                referenceId: $asset->id,
+                action: 'asset_deleted',
+                description: "Asset {$assetNumber} soft-deleted",
+                actor: $request->user(),
+            );
+        });
+
+        return redirect()->route('assets.index')
+            ->with('success', 'Asset berhasil dihapus.');
     }
 
     public function export(Request $request): StreamedResponse

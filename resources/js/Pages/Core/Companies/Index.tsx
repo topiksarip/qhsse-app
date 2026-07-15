@@ -4,6 +4,7 @@ import StatusBadge from '@/Components/Qhsse/StatusBadge';
 import { Company, Paginated } from '@/types/core';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 
 export default function Index({ companies, filters }: { companies: Paginated<Company>; filters: { search?: string } }) {
     const [search, setSearch] = useState(filters.search ?? '');
@@ -44,7 +45,18 @@ export default function Index({ companies, filters }: { companies: Paginated<Com
                                         <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{company.name}</td>
                                         <td className="px-6 py-4 text-sm capitalize text-gray-700 dark:text-gray-300">{company.type}</td>
                                         <td className="px-6 py-4"><StatusBadge active={company.is_active} /></td>
-                                        <td className="px-6 py-4 text-right text-sm"><Link href={route('core.companies.edit', company.id)} className="text-indigo-600 dark:text-indigo-400">Edit</Link></td>
+                                        <td className="px-6 py-4 text-right text-sm"><Link href={route('core.companies.edit', company.id)} className="text-indigo-600 dark:text-indigo-400">Edit</Link>
+                                        <DeleteWithConfirm
+                                            routeName="core.companies.destroy"
+                                            id={company.id}
+                                            permission="core.companies.delete"
+                                            itemLabel={company.name}
+                                            redirectTo="core.companies.index"
+                                            asLink
+                                        >
+                                            Delete
+                                        </DeleteWithConfirm>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

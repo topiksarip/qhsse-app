@@ -6,6 +6,7 @@ use App\Models\Concerns\Auditable;
 use App\Models\Contracts\ProvidesAuditContext;
 use App\Models\Core\Files\ManagedFile;
 use App\Models\User;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AssetCertificate extends Model implements ProvidesAuditContext
 {
-    use Auditable, HasFactory;
+    use Auditable, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'asset_id',

@@ -4,6 +4,7 @@ import StatusBadge from '@/Components/Qhsse/StatusBadge';
 import { Site, Paginated } from '@/types/core';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 
 type Filters = {
     search?: string;
@@ -69,7 +70,18 @@ export default function Index({ items, filters }: { items: Paginated<Site>; filt
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg dark:bg-gray-800">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead className="bg-gray-50 dark:bg-gray-900"><tr><th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Code</th><th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Name</th><th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th><th className="px-6 py-3" /></tr></thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">{items.data.map((item) => <tr key={item.id}><td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{item.code}</td><td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{item.name}</td><td className="px-6 py-4"><StatusBadge active={item.is_active} /></td><td className="px-6 py-4 text-right text-sm"><Link href={route('core.sites.edit', item.id)} className="text-indigo-600 dark:text-indigo-400">Edit</Link></td></tr>)}</tbody>
+                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">{items.data.map((item) => <tr key={item.id}><td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{item.code}</td><td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{item.name}</td><td className="px-6 py-4"><StatusBadge active={item.is_active} /></td><td className="px-6 py-4 text-right text-sm"><Link href={route('core.sites.edit', item.id)} className="text-indigo-600 dark:text-indigo-400">Edit</Link>
+                                        <DeleteWithConfirm
+                                            routeName="core.sites.destroy"
+                                            id={item.id}
+                                            permission="core.sites.delete"
+                                            itemLabel={item.name}
+                                            redirectTo="core.sites.index"
+                                            asLink
+                                        >
+                                            Delete
+                                        </DeleteWithConfirm>
+                                    </td></tr>)}</tbody>
                         </table>
                     </div>
                     <Pagination links={items.links} />

@@ -8,6 +8,7 @@ use App\Models\Core\MasterData\Area;
 use App\Models\Core\MasterData\Department;
 use App\Models\Core\MasterData\Site;
 use App\Models\User;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Asset extends Model implements ProvidesAuditContext
 {
-    use Auditable, HasFactory;
+    use Auditable, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'asset_number',

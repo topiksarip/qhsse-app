@@ -48,6 +48,19 @@ class AssetPolicy
         return $user->hasPermissionTo('asset.management.export');
     }
 
+    public function delete(User $user, ?Asset $asset = null): bool
+    {
+        if (! $user->hasPermissionTo('asset.management.delete')) {
+            return false;
+        }
+
+        if ($asset && $asset->status !== 'active') {
+            return false;
+        }
+
+        return $asset ? app(AssetAccess::class)->canView($user, $asset) : true;
+    }
+
     public function decommission(User $user, Asset $asset): bool
     {
         return $asset->status !== 'decommissioned'

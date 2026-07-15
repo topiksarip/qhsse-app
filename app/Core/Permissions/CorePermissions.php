@@ -11,50 +11,62 @@ final class CorePermissions
             'core.sites.create',
             'core.sites.update',
             'core.sites.deactivate',
+            'core.sites.delete',
             'core.areas.view',
             'core.areas.create',
             'core.areas.update',
             'core.areas.deactivate',
+            'core.areas.delete',
             'core.departments.view',
             'core.departments.create',
             'core.departments.update',
             'core.departments.deactivate',
+            'core.departments.delete',
             'core.positions.view',
             'core.positions.create',
             'core.positions.update',
             'core.positions.deactivate',
+            'core.positions.delete',
             'core.companies.view',
             'core.companies.create',
             'core.companies.update',
             'core.companies.deactivate',
+            'core.companies.delete',
             'core.employees.view',
             'core.employees.create',
             'core.employees.update',
             'core.employees.deactivate',
+            'core.employees.delete',
             'core.users.view',
             'core.users.create',
             'core.users.update',
             'core.users.deactivate',
+            'core.users.delete',
             'core.severities.view',
             'core.severities.create',
             'core.severities.update',
             'core.severities.deactivate',
+            'core.severities.delete',
             'core.priorities.view',
             'core.priorities.create',
             'core.priorities.update',
             'core.priorities.deactivate',
+            'core.priorities.delete',
             'core.statuses.view',
             'core.statuses.create',
             'core.statuses.update',
             'core.statuses.deactivate',
+            'core.statuses.delete',
             'core.categories.view',
             'core.categories.create',
             'core.categories.update',
             'core.categories.deactivate',
+            'core.categories.delete',
             'core.risk-matrix.view',
             'core.risk-matrix.create',
             'core.risk-matrix.update',
             'core.risk-matrix.deactivate',
+            'core.risk-matrix.delete',
             'core.files.view',
             'core.files.upload',
             'core.files.download',
@@ -63,6 +75,7 @@ final class CorePermissions
             'core.numbering.create',
             'core.numbering.update',
             'core.numbering.generate',
+            'core.numbering.delete',
             'core.workflow.view',
             'core.workflow.manage',
             'core.workflow.transition',
@@ -131,6 +144,8 @@ final class CorePermissions
             'audit.findings.create',
             'audit.findings.update',
             'audit.findings.close',
+            'audit.findings.view',
+            'audit.findings.delete',
             // Training & Competency
             'training.programs.view',
             'training.programs.create',
@@ -154,6 +169,7 @@ final class CorePermissions
             'legal.obligations.view',
             'legal.obligations.create',
             'legal.obligations.update',
+            'legal.obligations.delete',
 
             // Contractor Management
             'contractor.management.view',
@@ -393,7 +409,7 @@ final class CorePermissions
         $documentViewExport = ['document.control.view', 'document.control.export'];
         $documentCreate = ['core.workflow.transition', 'document.control.view', 'document.control.create', 'document.control.update', 'document.control.submit_review'];
 
-        $auditFull = ['core.workflow.transition', 'audit.management.view', 'audit.management.create', 'audit.management.update', 'audit.management.execute', 'audit.management.close', 'audit.management.export', 'audit.management.delete', 'audit.findings.create', 'audit.findings.update', 'audit.findings.close'];
+        $auditFull = ['core.workflow.transition', 'audit.management.view', 'audit.management.create', 'audit.management.update', 'audit.management.execute', 'audit.management.close', 'audit.management.export', 'audit.management.delete', 'audit.findings.view', 'audit.findings.create', 'audit.findings.update', 'audit.findings.close', 'audit.findings.delete'];
         $auditView = ['audit.management.view'];
         $auditViewExport = ['audit.management.view', 'audit.management.export'];
         $auditExecute = ['core.workflow.transition', 'audit.management.view', 'audit.management.execute', 'audit.findings.create', 'audit.findings.update', 'audit.findings.close'];
@@ -403,7 +419,7 @@ final class CorePermissions
         $riskView = ['risk.registers.view'];
         $riskCreate = ['risk.registers.view', 'risk.registers.create', 'risk.registers.update'];
 
-        $legalFull = ['legal.register.view', 'legal.register.create', 'legal.register.update', 'legal.register.export', 'legal.register.delete', 'legal.obligations.view', 'legal.obligations.create', 'legal.obligations.update'];
+        $legalFull = ['legal.register.view', 'legal.register.create', 'legal.register.update', 'legal.register.export', 'legal.register.delete', 'legal.obligations.view', 'legal.obligations.create', 'legal.obligations.update', 'legal.obligations.delete'];
         $legalViewExport = ['legal.register.view', 'legal.register.export', 'legal.obligations.view'];
         $legalView = ['legal.register.view', 'legal.obligations.view'];
         $legalCreate = ['legal.register.view', 'legal.register.create', 'legal.register.update', 'legal.obligations.view'];
@@ -439,7 +455,7 @@ final class CorePermissions
         $contractorView = ['contractor.management.view'];
         $contractorCreate = ['contractor.management.view', 'contractor.management.create', 'contractor.management.update', 'contractor.management.evaluate'];
 
-        $assetFull = ['core.comments.create', 'asset.management.view', 'asset.management.create', 'asset.management.update', 'asset.management.export', 'asset.certificates.view', 'asset.certificates.create', 'asset.certificates.update', 'asset.certificates.export', 'asset.inspections.view', 'asset.inspections.create', 'asset.inspections.update', 'asset.inspections.export'];
+        $assetFull = ['core.comments.create', 'asset.management.view', 'asset.management.create', 'asset.management.update', 'asset.management.export', 'asset.management.delete', 'asset.certificates.view', 'asset.certificates.create', 'asset.certificates.update', 'asset.certificates.export', 'asset.certificates.delete', 'asset.inspections.view', 'asset.inspections.create', 'asset.inspections.update', 'asset.inspections.export', 'asset.inspections.delete'];
         $assetViewExport = ['asset.management.view', 'asset.management.export', 'asset.certificates.view', 'asset.inspections.view'];
         $assetView = ['asset.management.view', 'asset.certificates.view', 'asset.inspections.view'];
         $assetCreate = ['asset.management.view', 'asset.management.create', 'asset.management.update'];

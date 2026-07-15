@@ -277,32 +277,35 @@ it('rolls back asset creation and numbering when activity logging fails', functi
         ->and(GeneratedNumber::query()->where('module_name', 'asset')->count())->toBe(0);
 });
 
-it('uses status lifecycle without destructive asset or compliance-history routes', function () {
+it('exposes full CRUD including soft-delete routes for assets and compliance history', function () {
     $site = Site::factory()->create();
     $department = Department::factory()->for($site)->create();
     $officer = assetActor('QHSSE Officer', $site, $department);
     $manager = assetActor('QHSSE Manager', $site, $department);
     $asset = assetRecord($manager, $site, $department);
 
-    expect(Route::has('assets.destroy'))->toBeFalse()
-        ->and(Route::has('assets.certificates.destroy'))->toBeFalse()
-        ->and(Route::has('assets.inspections.destroy'))->toBeFalse();
+    // Full CRUD: destructive routes now exist (soft-delete backed).
+    expect(Route::has('assets.destroy'))->toBeTrue()
+        ->and(Route::has('assets.certificates.destroy'))->toBeTrue()
+        ->and(Route::has('assets.inspections.destroy'))->toBeTrue();
 
+    // Decommission remains a controlled, role-gated lifecycle transition.
     $this->actingAs($officer)->post(route('assets.decommission', $asset))->assertForbidden();
     $this->actingAs($manager)->post(route('assets.decommission', $asset))->assertRedirect();
     expect($asset->fresh()->status)->toBe('decommissioned');
 
+    // Status / update stay locked after decommission.
     $this->patch(route('assets.status', $asset), ['status' => 'active'])->assertForbidden();
     $this->put(route('assets.update', $asset), ['name' => 'Must stay locked'])->assertForbidden();
 });
 
-it('preserves asset certificate and inspection records without soft-delete columns', function () {
-    expect(Schema::hasColumn('assets', 'deleted_at'))->toBeFalse()
-        ->and(Schema::hasColumn('asset_certificates', 'deleted_at'))->toBeFalse()
-        ->and(Schema::hasColumn('asset_inspections', 'deleted_at'))->toBeFalse()
-        ->and(in_array(SoftDeletes::class, class_uses_recursive(Asset::class), true))->toBeFalse()
-        ->and(in_array(SoftDeletes::class, class_uses_recursive(AssetCertificate::class), true))->toBeFalse()
-        ->and(in_array(SoftDeletes::class, class_uses_recursive(AssetInspection::class), true))->toBeFalse();
+it('retains asset certificate and inspection records via soft-delete (audit preserved)', function () {
+    expect(Schema::hasColumn('assets', 'deleted_at'))->toBeTrue()
+        ->and(Schema::hasColumn('asset_certificates', 'deleted_at'))->toBeTrue()
+        ->and(Schema::hasColumn('asset_inspections', 'deleted_at'))->toBeTrue()
+        ->and(in_array(SoftDeletes::class, class_uses_recursive(Asset::class), true))->toBeTrue()
+        ->and(in_array(SoftDeletes::class, class_uses_recursive(AssetCertificate::class), true))->toBeTrue()
+        ->and(in_array(SoftDeletes::class, class_uses_recursive(AssetInspection::class), true))->toBeTrue();
 });
 
 it('authorizes certificate downloads against the exact asset certificate and private file', function () {
@@ -549,7 +552,7 @@ it('returns safe certificate evidence and per-record ability props for Inertia p
     $this->get(route('assets.certificates.index', $asset))
         ->assertInertia(fn (Assert $page) => $page
             ->where('certificates.0.can_update', true)
-            ->missing('certificates.0.deleted_at'));
+            ->where('certificates.0.deleted_at', null));
 
     $this->get(route('assets.certificates.show', [$asset, $certificate]))
         ->assertInertia(fn (Assert $page) => $page

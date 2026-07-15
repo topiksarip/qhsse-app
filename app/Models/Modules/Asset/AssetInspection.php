@@ -6,6 +6,7 @@ use App\Models\Concerns\Auditable;
 use App\Models\Contracts\ProvidesAuditContext;
 use App\Models\Modules\Capa\CapaAction;
 use App\Models\User;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class AssetInspection extends Model implements ProvidesAuditContext
 {
-    use Auditable, HasFactory;
+    use Auditable, HasFactory, SoftDeletes;
 
     protected $fillable = [
         'asset_id',

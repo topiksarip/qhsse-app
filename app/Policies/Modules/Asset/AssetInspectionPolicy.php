@@ -57,10 +57,22 @@ class AssetInspectionPolicy
         return app(AssetPolicy::class)->view($user, $inspection->asset);
     }
 
-    public function delete(User $user, ?AssetInspection $inspection = null): bool
+    public function delete(User $user, $model = null): bool
     {
-        // Asset inspections are compliance records and must not be deleted.
-        return false;
+        if (! $user->hasPermissionTo('asset.inspections.delete')) {
+            return false;
+        }
+
+        // $model is either the parent Asset (scope check from index) or an
+        // AssetInspection instance (record-level check), or null (class-string).
+        $asset = $model instanceof AssetInspection ? $model->asset : $model;
+
+        // Block delete of records belonging to a decommissioned asset.
+        if ($asset instanceof Asset && $asset->status === 'decommissioned') {
+            return false;
+        }
+
+        return true;
     }
 
     public function linkCapa(User $user, AssetInspection $inspection): bool
