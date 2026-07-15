@@ -1,4 +1,4 @@
-import ApplicationLogo from '@/Components/ApplicationLogo';
+import ApplicationLogoImage from '@/Components/ApplicationLogoImage';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import ThemeToggle from '@/Components/UI/ThemeToggle';
@@ -47,7 +47,7 @@ export default function Welcome({ auth }: PageProps) {
                 <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-gray-800 dark:bg-gray-900/90">
                     <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
                         <Link href="/" className="flex items-center gap-2">
-                            <ApplicationLogo className="block h-8 w-auto fill-current text-slate-800 dark:text-slate-200" />
+                            <ApplicationLogoImage className="block h-8 w-auto" />
                             <span className="text-sm font-bold uppercase tracking-[0.24em] text-slate-700 dark:text-slate-200">
                                 QHSSE
                             </span>

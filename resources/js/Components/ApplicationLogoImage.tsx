@@ -15,7 +15,7 @@ export default function ApplicationLogoImage({ className = '', ...props }: ImgHT
             width={1247}
             height={200}
             {...props}
-            className={`block h-auto w-auto select-none ${className}`}
+            className={`block select-none ${className}`}
         />
     );
 }

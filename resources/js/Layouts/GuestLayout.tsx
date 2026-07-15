@@ -1,4 +1,4 @@
-import ApplicationLogo from '@/Components/ApplicationLogo';
+import ApplicationLogoImage from '@/Components/ApplicationLogoImage';
 import ThemeToggle from '@/Components/UI/ThemeToggle';
 import { Link } from '@inertiajs/react';
 import { PropsWithChildren } from 'react';
@@ -8,7 +8,7 @@ export default function Guest({ children }: PropsWithChildren) {
         <div className="flex min-h-screen flex-col bg-slate-100 text-slate-900 dark:bg-gray-950 dark:text-gray-100">
             <header className="flex items-center justify-between px-4 py-4 sm:px-6">
                 <Link href="/" className="flex items-center gap-2">
-                    <ApplicationLogo className="block h-8 w-auto fill-current text-slate-800 dark:text-slate-200" />
+                    <ApplicationLogoImage className="block h-8 w-auto" />
                     <span className="text-sm font-bold uppercase tracking-[0.24em] text-slate-700 dark:text-slate-200">
                         QHSSE
                     </span>
