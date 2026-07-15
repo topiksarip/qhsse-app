@@ -4,6 +4,9 @@ import { PageProps, PaginatedData, SecurityIncident, Site } from '@/types';
 import { useState } from 'react';
 import EmptyState from '@/Components/UI/EmptyState';
 import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
+import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
+import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
 import TypeBadge from '@/Components/Security/TypeBadge';
 import StatusBadge from '@/Components/Security/StatusBadge';
 import SeverityBadge from '@/Components/Security/SeverityBadge';
@@ -74,134 +77,124 @@ export default function Index({ auth, incidents, filters, sites, types, statuses
             header={
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Insiden Keamanan</h2>
-                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Kelola insiden keamanan: akses tidak sah, pencurian, vandalisme</p>
+                        <p className="text-xs font-bold uppercase tracking-[0.28em] text-emerald-600 dark:text-emerald-400">Keamanan</p>
+                        <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950 dark:text-white">Insiden Keamanan</h2>
                     </div>
-                    {canCreate && (
-                        <Link href={route('security.incidents.create')} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-                            + Laporkan Insiden
-                        </Link>
-                    )}
+                    <div className="flex gap-2">
+                        {canExport && (
+                            <SecondaryButton size="sm" href={route('security.incidents.export') + '?' + new URLSearchParams(buildParams()).toString()}>Export CSV</SecondaryButton>
+                        )}
+                        {canCreate && (
+                            <PrimaryButton size="sm" href={route('security.incidents.create')}>Laporkan Insiden</PrimaryButton>
+                        )}
+                    </div>
                 </div>
             }
         >
             <Head title="Insiden Keamanan" />
             <div className="py-6">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="mb-4 rounded-lg bg-white p-4 shadow dark:bg-gray-800">
+                <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+                    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
                         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
                             <div className="lg:col-span-2">
-                                <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && applyFilters()} placeholder="Cari nomor, judul..." className="w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                                <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && applyFilters()} placeholder="Cari nomor, judul..." className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
                             </div>
                             <div>
-                                <select value={type} onChange={(e) => setType(e.target.value)} className="w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm">
+                                <select value={type} onChange={(e) => setType(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
                                     <option value="">Semua Tipe</option>
                                     {typeEntries.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm">
+                                <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
                                     <option value="">Semua Status</option>
                                     {statusEntries.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <select value={siteId} onChange={(e) => setSiteId(e.target.value)} className="w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm">
+                                <select value={siteId} onChange={(e) => setSiteId(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
                                     <option value="">Semua Site</option>
                                     {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm" />
+                                <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
                             </div>
                             <div>
-                                <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm" />
+                                <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
                             </div>
                             <div className="flex items-end gap-2">
-                                <button onClick={applyFilters} className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Filter</button>
-                                <button onClick={resetFilters} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">Reset</button>
+                                <PrimaryButton type="button" onClick={applyFilters}>Filter</PrimaryButton>
+                                <SecondaryButton type="button" onClick={resetFilters}>Reset</SecondaryButton>
                             </div>
                         </div>
                     </div>
 
-                    <div className="mb-3 flex items-center justify-between">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Menampilkan {incidents.from ?? 0}–{incidents.to ?? 0} dari {incidents.total} insiden</p>
-                        {canExport && (
-                            <a href={route('security.incidents.export') + '?' + new URLSearchParams(buildParams()).toString()} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">
-                                ⬇ Export CSV
-                            </a>
-                        )}
-                    </div>
-
-                    <div className="overflow-x-auto rounded-lg bg-white shadow dark:bg-gray-800">
-                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead className="bg-gray-50 dark:bg-gray-900">
-                                <tr className="text-left text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
-                                    <th className="px-4 py-3">Nomor</th>
-                                    <th className="px-4 py-3">Judul</th>
-                                    <th className="px-4 py-3">Tipe</th>
-                                    <th className="px-4 py-3">Severity</th>
-                                    <th className="px-4 py-3 text-center">Status</th>
-                                    <th className="px-4 py-3 text-center">Tanggal</th>
-                                    <th className="px-4 py-3">Pelapor</th>
-                                    <th className="px-4 py-3 text-center">Aksi</th>
+                    <TableWrapper>
+                        <TableHead>
+                            <tr>
+                                <th className="px-4 py-3">Nomor</th>
+                                <th className="px-4 py-3">Judul</th>
+                                <th className="px-4 py-3">Tipe</th>
+                                <th className="px-4 py-3">Severity</th>
+                                <th className="px-4 py-3 text-center">Status</th>
+                                <th className="px-4 py-3 text-center">Tanggal</th>
+                                <th className="px-4 py-3">Pelapor</th>
+                                <th className="px-4 py-3 text-center">Aksi</th>
+                            </tr>
+                        </TableHead>
+                        <TableBody>
+                            {incidents.data.length === 0 ? (
+                                <tr>
+                                    <td colSpan={8} className="px-4 py-12">
+                                        <EmptyState
+                                            title="Belum ada insiden keamanan"
+                                            description="Laporkan insiden keamanan seperti akses tidak sah, pencurian, atau vandalisme"
+                                            action={canCreate ? <PrimaryButton href={route('security.incidents.create')}>Laporkan Insiden</PrimaryButton> : undefined}
+                                        />
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                {incidents.data.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={8} className="px-4 py-12">
-                                            <EmptyState
-                                                title="Belum ada insiden keamanan"
-                                                description="Laporkan insiden keamanan seperti akses tidak sah, pencurian, atau vandalisme"
-                                                action={
-                                                    canCreate ? (
-                                                        <Link
-                                                            href={route('security.incidents.create')}
-                                                            className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
-                                                        >
-                                                            Laporkan Insiden
-                                                        </Link>
-                                                    ) : undefined
-                                                }
-                                            />
-                                        </td>
-                                    </tr>
-                                ) : incidents.data.map((i) => (
-                                    <tr key={i.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                        <td className="whitespace-nowrap px-4 py-3 font-mono text-sm">{i.security_number}</td>
-                                        <td className="max-w-xs px-4 py-3 text-sm">
-                                            <Link href={route('security.incidents.show', i.id)} className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">{i.title}</Link>
-                                        </td>
-                                        <td className="px-4 py-3"><TypeBadge type={i.type} /></td>
-                                        <td className="px-4 py-3"><SeverityBadge severity={i.severity} /></td>
-                                        <td className="px-4 py-3 text-center"><StatusBadge status={i.status} /></td>
-                                        <td className="whitespace-nowrap px-4 py-3 text-center text-sm">{fmtDate(i.occurred_at)}</td>
-                                        <td className="px-4 py-3 text-sm">{i.reporter?.name ?? '-'}</td>
-                                        <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
-                                            <Link href={route('security.incidents.show', i.id)} className="text-indigo-600 hover:underline dark:text-indigo-400">👁</Link>
-                                            <>{canEdit(i) && <Link href={route('security.incidents.edit', i.id)} className="ml-2 text-gray-600 hover:underline dark:text-gray-300">✏</Link>}                                            <DeleteWithConfirm
-                                                routeName="security.incidents.destroy"
-                                                id={i.id}
-                                                permission="security.incidents.delete"
-                                                itemLabel={i.security_number}
-                                                asLink
-                                                className="ml-2 text-red-600 hover:underline dark:text-red-400"
-                                            >
-                                                🗑
-                                            </DeleteWithConfirm></>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                            ) : incidents.data.map((i) => (
+                                <tr key={i.id} className="hover:bg-slate-50 dark:hover:bg-gray-800">
+                                    <td className="whitespace-nowrap px-4 py-3 font-mono text-sm">
+                                        <Link href={route('security.incidents.show', i.id)} className="font-medium text-emerald-600 hover:text-emerald-800 dark:text-emerald-400">{i.security_number}</Link>
+                                    </td>
+                                    <td className="max-w-xs px-4 py-3 text-sm">
+                                        <Link href={route('security.incidents.show', i.id)} className="font-medium text-slate-800 hover:text-emerald-700 dark:text-slate-100 dark:hover:text-emerald-400">{i.title}</Link>
+                                    </td>
+                                    <td className="px-4 py-3"><TypeBadge type={i.type} /></td>
+                                    <td className="px-4 py-3"><SeverityBadge severity={i.severity} /></td>
+                                    <td className="px-4 py-3 text-center"><StatusBadge status={i.status} /></td>
+                                    <td className="whitespace-nowrap px-4 py-3 text-center text-sm text-gray-500 dark:text-gray-400">{fmtDate(i.occurred_at)}</td>
+                                    <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{i.reporter?.name ?? '-'}</td>
+                                    <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
+                                        <Link href={route('security.incidents.show', i.id)} className="text-emerald-600 hover:underline dark:text-emerald-400">👁</Link>
+                                        {canEdit(i) && (
+                                            <>
+                                                <Link href={route('security.incidents.edit', i.id)} className="ml-2 text-gray-600 hover:underline dark:text-gray-300">✏</Link>
+                                                <DeleteWithConfirm
+                                                    routeName="security.incidents.destroy"
+                                                    id={i.id}
+                                                    permission="security.incidents.delete"
+                                                    itemLabel={i.security_number}
+                                                    asLink
+                                                    className="ml-2 text-red-600 hover:underline dark:text-red-400"
+                                                >
+                                                    🗑
+                                                </DeleteWithConfirm>
+                                            </>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </TableBody>
+                    </TableWrapper>
 
                     {incidents.last_page > 1 && (
                         <div className="mt-4 flex items-center justify-center gap-2">
-                            <button disabled={incidents.current_page <= 1} onClick={() => router.get(route('security.incidents.index'), buildParams({ page: incidents.current_page - 1 }), { preserveState: true, replace: true })} className="rounded-md bg-gray-200 px-3 py-1 text-sm disabled:opacity-50 dark:bg-gray-700">‹ Sebelumnya</button>
+                            <button disabled={incidents.current_page <= 1} onClick={() => router.get(route('security.incidents.index'), buildParams({ page: incidents.current_page - 1 }), { preserveState: true, replace: true })} className="rounded-md bg-gray-100 px-3 py-1 text-sm text-gray-700 disabled:opacity-50 dark:bg-gray-800 dark:text-gray-200">‹ Sebelumnya</button>
                             <span className="text-sm text-gray-600 dark:text-gray-400">{incidents.current_page} / {incidents.last_page}</span>
-                            <button disabled={incidents.current_page >= incidents.last_page} onClick={() => router.get(route('security.incidents.index'), buildParams({ page: incidents.current_page + 1 }), { preserveState: true, replace: true })} className="rounded-md bg-gray-200 px-3 py-1 text-sm disabled:opacity-50 dark:bg-gray-700">Berikutnya ›</button>
+                            <button disabled={incidents.current_page >= incidents.last_page} onClick={() => router.get(route('security.incidents.index'), buildParams({ page: incidents.current_page + 1 }), { preserveState: true, replace: true })} className="rounded-md bg-gray-100 px-3 py-1 text-sm text-gray-700 disabled:opacity-50 dark:bg-gray-800 dark:text-gray-200">Berikutnya ›</button>
                         </div>
                     )}
                 </div>

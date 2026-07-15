@@ -16,7 +16,7 @@ export default function Pagination({ links }: { links: PaginationLink[] }) {
                     className={[
                         'rounded-md px-3 py-2 text-sm',
                         link.active
-                            ? 'bg-indigo-600 text-white'
+                            ? 'bg-emerald-600 text-white'
                             : 'bg-white text-gray-700 ring-1 ring-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:ring-gray-700',
                         !link.url ? 'pointer-events-none opacity-50' : '',
                     ].join(' ')}
