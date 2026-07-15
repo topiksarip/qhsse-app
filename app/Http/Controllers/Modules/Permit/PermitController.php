@@ -134,9 +134,9 @@ class PermitController extends Controller
 
             // Generate permit number
             $permitNumber = $this->numberingService->generate(
-                key: 'permit',
-                siteId: $request->input('site_id'),
-                includeSiteCode: true
+                'permit',
+                $user,
+                Site::find($request->input('site_id'))?->code
             );
 
             // Calculate validity hours
@@ -165,21 +165,27 @@ class PermitController extends Controller
 
             // Audit trail
             $this->auditService->log(
-                moduleName: 'permit',
-                action: 'create',
-                referenceId: $permit->id,
-                details: "Permit {$permit->permit_number} dibuat",
-                userId: $user->id
+                'permit.created',
+                $permit,
+                [],
+                $permit->getAttributes(),
+                $user,
+                'permit',
+                $permit->id,
+                ['detail' => "Permit {$permit->permit_number} dibuat"]
             );
 
             // Activity log
             $this->activityService->log(
-                moduleName: 'permit',
-                referenceId: $permit->id,
-                action: 'create',
-                description: "Permit {$permit->permit_number} dibuat oleh {$user->name}",
-                userId: $user->id
+                'permit',
+                $permit->id,
+                'created',
+                "Permit {$permit->permit_number} dibuat oleh {$user->name}",
+                $user->id
             );
+
+            // Start workflow instance (status: draft)
+            $this->workflowService->start('permit', $permit->id, $user);
 
             return redirect()->route('permit.work.show', $permit)
                 ->with('success', "Permit berhasil dibuat dengan nomor {$permit->permit_number}");
@@ -317,11 +323,14 @@ class PermitController extends Controller
 
             // Audit trail
             $this->auditService->log(
-                moduleName: 'permit',
-                action: 'update',
-                referenceId: $permit->id,
-                details: "Permit {$permit->permit_number} diupdate",
-                userId: $user->id
+                'permit.updated',
+                $permit,
+                [],
+                $permit->getAttributes(),
+                $user,
+                'permit',
+                $permit->id,
+                ['detail' => "Permit {$permit->permit_number} diupdate"]
             );
 
             return redirect()->route('permit.work.show', $permit)
@@ -366,18 +375,44 @@ class PermitController extends Controller
             'reason' => 'nullable|string',
         ]);
 
-        return DB::transaction(function () use ($request, $permit) {
-            $user = $request->user();
-            $action = $request->input('action');
+        $user = $request->user();
+        $action = $request->input('action');
 
-            // Execute workflow transition
+        // WS-1: business rule enforcement (WORKFLOW.md §4)
+        if (in_array($action, ['close', 'reject'], true)) {
+            $request->validate(['reason' => 'required|min:10']);
+        }
+
+        if ($action === 'approve') {
+            abort_if($permit->created_by === $user->id, 422, 'Tidak dapat approve permit yang dibuat sendiri.');
+        }
+
+        if ($action === 'activate') {
+            $unsigned = \App\Models\Modules\Permit\PermitChecklist::where('permit_id', $permit->id)
+                ->where('is_checked', false)
+                ->count();
+            abort_if($unsigned > 0, 422, "{$unsigned} item checklist belum di-sign.");
+        }
+
+        return DB::transaction(function () use ($request, $permit, $user, $action) {
+            // Sync workflow instance to permit's actual status (permit is source of truth)
+            $definition = \App\Models\Core\Workflow\WorkflowDefinition::where('module_name', 'permit')
+                ->where('is_active', true)
+                ->firstOrFail();
+            $instance = \App\Models\Core\Workflow\WorkflowInstance::firstOrCreate(
+                ['module_name' => 'permit', 'reference_id' => $permit->id],
+                ['workflow_definition_id' => $definition->id, 'current_status' => $permit->status]
+            );
+            if ($instance->current_status !== $permit->status) {
+                $instance->update(['current_status' => $permit->status]);
+            }
+
             $this->workflowService->transition(
-                moduleName: 'permit',
-                referenceId: $permit->id,
-                currentStatus: $permit->status,
-                actionKey: $action,
-                reason: $request->input('reason'),
-                userId: $user->id
+                'permit',
+                $permit->id,
+                $action,
+                $user,
+                $request->input('reason')
             );
 
             // Update permit status based on action
@@ -412,11 +447,14 @@ class PermitController extends Controller
 
             // Audit trail
             $this->auditService->log(
-                moduleName: 'permit',
-                action: $action,
-                referenceId: $permit->id,
-                details: "Permit {$permit->permit_number} status changed to {$newStatus}",
-                userId: $user->id
+                "permit.{$action}",
+                $permit,
+                [],
+                ['status' => $newStatus],
+                $user,
+                'permit',
+                $permit->id,
+                ['detail' => "Permit {$permit->permit_number} status changed to {$newStatus}"]
             );
 
             return back()->with('success', "Permit berhasil di-{$action}");

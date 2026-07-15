@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Modules\Reporting;
 
 use App\Core\Activity\ActivityService;
+use App\Core\Audit\AuditService;
 use App\Core\Query\ListQuery;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Modules\Reporting\StoreReportTemplateRequest;
@@ -19,7 +20,8 @@ class ReportTemplateController extends Controller
     use \Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
     public function __construct(
-        protected ActivityService $activityService
+        protected ActivityService $activityService,
+        protected AuditService $auditService,
     ) {}
 
     public function index(Request $request): Response
@@ -76,13 +78,18 @@ class ReportTemplateController extends Controller
             ]);
 
             $this->activityService->log(
-                moduleName: 'reporting',
-                action: 'template.created',
-                description: "Report template created: {$template->name}",
-                referenceId: $template->id,
-                referenceType: ReportTemplate::class,
-                metadata: ['type' => $template->type]
+                'reporting',
+                $template->id,
+                'template.created',
+                "Report template created: {$template->name}",
+                $user,
+                [],
+                'template.created',
+                null,
+                ['type' => $template->type]
             );
+
+            $this->auditService->created($template, $user, 'reporting', $template->id);
 
             DB::commit();
 
@@ -120,18 +127,25 @@ class ReportTemplateController extends Controller
     {
         DB::beginTransaction();
         try {
+            $old = $reportTemplate->getOriginal();
             $reportTemplate->update([
                 ...$request->validated(),
                 'updated_by' => $request->user()->id,
             ]);
 
             $this->activityService->log(
-                moduleName: 'reporting',
-                action: 'template.updated',
-                description: "Report template updated: {$reportTemplate->name}",
-                referenceId: $reportTemplate->id,
-                referenceType: ReportTemplate::class
+                'reporting',
+                $reportTemplate->id,
+                'template.updated',
+                "Report template updated: {$reportTemplate->name}",
+                $request->user(),
+                [],
+                'template.updated',
+                null,
+                ['type' => $reportTemplate->type]
             );
+
+            $this->auditService->updated($reportTemplate, $old, $request->user(), 'reporting', $reportTemplate->id);
 
             DB::commit();
 
@@ -155,15 +169,22 @@ class ReportTemplateController extends Controller
         DB::beginTransaction();
         try {
             $templateName = $reportTemplate->name;
+            $templateId = $reportTemplate->id;
             $reportTemplate->delete();
 
             $this->activityService->log(
-                moduleName: 'reporting',
-                action: 'template.deleted',
-                description: "Report template deleted: {$templateName}",
-                referenceId: $reportTemplate->id,
-                referenceType: ReportTemplate::class
+                'reporting',
+                $templateId,
+                'template.deleted',
+                "Report template deleted: {$templateName}",
+                auth()->user(),
+                [],
+                'template.deleted',
+                null,
+                ['type' => $reportTemplate->type]
             );
+
+            $this->auditService->deleted($reportTemplate, auth()->user(), 'reporting', $templateId);
 
             DB::commit();
 
@@ -190,11 +211,23 @@ class ReportTemplateController extends Controller
 
             $action = $newStatus ? 'activated' : 'deactivated';
             $this->activityService->log(
-                moduleName: 'reporting',
-                action: "template.{$action}",
-                description: "Report template {$action}: {$reportTemplate->name}",
-                referenceId: $reportTemplate->id,
-                referenceType: ReportTemplate::class
+                'reporting',
+                $reportTemplate->id,
+                "template.{$action}",
+                "Report template {$action}: {$reportTemplate->name}",
+                auth()->user(),
+                [],
+                "template.{$action}",
+                null,
+                ['is_active' => $newStatus]
+            );
+
+            $this->auditService->updated(
+                $reportTemplate,
+                ['is_active' => !$newStatus],
+                auth()->user(),
+                'reporting',
+                $reportTemplate->id
             );
 
             DB::commit();

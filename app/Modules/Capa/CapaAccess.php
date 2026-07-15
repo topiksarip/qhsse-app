@@ -2,7 +2,6 @@
 
 namespace App\Modules\Capa;
 
-use App\Models\Core\Employee\Employee;
 use App\Models\Modules\Capa\CapaAction;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,8 +10,8 @@ use Illuminate\Support\Facades\Auth;
 class CapaAccess
 {
     /**
-     * Apply organization scope to CAPA query based on authenticated user's employee context.
-     * Fails closed: if no employee or inactive employee, returns empty result.
+     * Apply organization scope to CAPA query based on authenticated user's scope.
+     * Uses permission-based scoping (core.scope.*) — NOT hardcoded role names.
      */
     public function scope(Builder $query, ?User $user = null): Builder
     {
@@ -22,29 +21,42 @@ class CapaAccess
             return $query->whereRaw('1 = 0');
         }
 
-        /** @var Employee|null $employee */
-        $employee = $user->employee()->where('is_active', true)->first();
-
-        if (! $employee) {
-            return $query->whereRaw('1 = 0');
+        if ($user->can('core.scope.all')) {
+            return $query;
         }
 
-        $siteIds = $this->getSiteIds($employee);
-        $departmentIds = $this->getDepartmentIds($employee);
+        $employee = $user->employee;
 
-        // CAPA is scoped by site_id and department_id
-        return $query->where(function (Builder $q) use ($siteIds, $departmentIds): void {
-            if (! empty($siteIds)) {
-                $q->whereIn('site_id', $siteIds);
+        $scoped = false;
+        $query->where(function (Builder $q) use ($user, $employee, &$scoped): void {
+            if ($user->can('core.scope.own')) {
+                $q->orWhere('assigned_to', $user->id);
+                $q->orWhere('assigned_by', $user->id);
+                $scoped = true;
             }
-            if (! empty($departmentIds)) {
-                $q->whereIn('department_id', $departmentIds);
+
+            if ($user->can('core.scope.department') && $employee?->department_id) {
+                $q->orWhere('department_id', $employee->department_id);
+                $scoped = true;
+            }
+
+            if ($user->can('core.scope.site') && $employee?->site_id) {
+                $q->orWhere('site_id', $employee->site_id);
+                $scoped = true;
             }
         });
+
+        if (! $scoped) {
+            $query->whereRaw('1 = 0');
+        }
+
+        return $query;
     }
 
     /**
      * Check if user can access a specific CAPA action.
+     * Permission-based — Super Admin / Admin / QHSSE Manager reach via core.scope.all,
+     * and NO employee record is required (unlike the old hardcode-role logic).
      */
     public function canAccess(CapaAction $capa, ?User $user = null): bool
     {
@@ -54,70 +66,24 @@ class CapaAccess
             return false;
         }
 
-        /** @var Employee|null $employee */
-        $employee = $user->employee()->where('is_active', true)->first();
-
-        if (! $employee) {
-            return false;
+        if ($user->can('core.scope.all')) {
+            return true;
         }
 
-        $siteIds = $this->getSiteIds($employee);
-        $departmentIds = $this->getDepartmentIds($employee);
+        $employee = $user->employee;
 
-        $inSiteScope = in_array($capa->site_id, $siteIds, true);
-        $inDepartmentScope = in_array($capa->department_id, $departmentIds, true);
-
-        return $inSiteScope && $inDepartmentScope;
-    }
-
-    private function getSiteIds(Employee $employee): array
-    {
-        $roles = $employee->roles;
-
-        // System Admin or QHSSE Manager sees all sites
-        if ($roles->contains('name', 'System Admin') || $roles->contains('name', 'QHSSE Manager')) {
-            return \App\Models\Core\MasterData\Site::query()->pluck('id')->toArray();
+        if ($user->can('core.scope.site') && $employee?->site_id && $capa->site_id === $employee->site_id) {
+            return true;
         }
 
-        // Otherwise: employee's own site + their department's site if assigned
-        $siteIds = [];
-        if ($employee->site_id) {
-            $siteIds[] = $employee->site_id;
-        }
-        if ($employee->department && $employee->department->site_id) {
-            $siteIds[] = $employee->department->site_id;
+        if ($user->can('core.scope.department') && $employee?->department_id && $capa->department_id === $employee->department_id) {
+            return true;
         }
 
-        return array_unique(array_filter($siteIds));
-    }
-
-    private function getDepartmentIds(Employee $employee): array
-    {
-        $roles = $employee->roles;
-
-        // System Admin or QHSSE Manager sees all departments
-        if ($roles->contains('name', 'System Admin') || $roles->contains('name', 'QHSSE Manager')) {
-            return \App\Models\Core\MasterData\Department::query()->pluck('id')->toArray();
+        if ($user->can('core.scope.own') && ($capa->assigned_to === $user->id || $capa->assigned_by === $user->id)) {
+            return true;
         }
 
-        // QHSSE Officer: their site's departments
-        if ($roles->contains('name', 'QHSSE Officer') && $employee->site_id) {
-            return \App\Models\Core\MasterData\Department::query()
-                ->where('site_id', $employee->site_id)
-                ->pluck('id')
-                ->toArray();
-        }
-
-        // Department Head: own department
-        if ($roles->contains('name', 'Department Head') && $employee->department_id) {
-            return [$employee->department_id];
-        }
-
-        // Supervisor / Contractor: own department
-        if ($employee->department_id) {
-            return [$employee->department_id];
-        }
-
-        return [];
+        return false;
     }
 }

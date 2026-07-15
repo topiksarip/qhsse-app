@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Modules\Communication;
 
 use App\Core\Activity\ActivityService;
+use App\Core\Notifications\NotificationService;
 use App\Core\Numbering\NumberingService;
 use App\Core\Query\ListQuery;
 use App\Http\Controllers\Controller;
@@ -24,7 +25,8 @@ class CampaignController extends Controller
 
     public function __construct(
         protected ActivityService $activityService,
-        protected NumberingService $numberingService
+        protected NumberingService $numberingService,
+        protected NotificationService $notificationService,
     ) {}
 
     public function index(Request $request): Response
@@ -69,10 +71,11 @@ class CampaignController extends Controller
             $user = $request->user();
             
             $campaignNumber = $this->numberingService->generate(
-                moduleName: 'communication',
-                actor: $user,
-                siteCode: null,
-                referenceType: 'campaign'
+                'communication',
+                $user,
+                null,
+                false,
+                'campaign'
             );
 
             $campaign = Campaign::create([
@@ -85,12 +88,11 @@ class CampaignController extends Controller
             ]);
 
             $this->activityService->log(
-                moduleName: 'communication',
-                action: 'campaign.created',
-                description: "Campaign {$campaign->campaign_number} created: {$campaign->title}",
-                referenceId: $campaign->id,
-                referenceType: Campaign::class,
-                metadata: ['type' => $campaign->type, 'target_audience' => $campaign->target_audience]
+                'communication',
+                $campaign->id,
+                'campaign.created',
+                "Campaign {$campaign->campaign_number} created: {$campaign->title}",
+                $user
             );
 
             DB::commit();
@@ -152,11 +154,11 @@ class CampaignController extends Controller
             ]);
 
             $this->activityService->log(
-                moduleName: 'communication',
-                action: 'campaign.updated',
-                description: "Campaign {$campaign->campaign_number} updated: {$campaign->title}",
-                referenceId: $campaign->id,
-                referenceType: Campaign::class
+                'communication',
+                $campaign->id,
+                'campaign.updated',
+                "Campaign {$campaign->campaign_number} updated: {$campaign->title}",
+                $request->user()
             );
 
             DB::commit();
@@ -180,11 +182,11 @@ class CampaignController extends Controller
             $campaign->delete();
 
             $this->activityService->log(
-                moduleName: 'communication',
-                action: 'campaign.deleted',
-                description: "Campaign {$campaignNumber} deleted",
-                referenceId: $campaign->id,
-                referenceType: Campaign::class
+                'communication',
+                $campaign->id,
+                'campaign.deleted',
+                "Campaign {$campaignNumber} deleted",
+                auth()->user()
             );
 
             DB::commit();
@@ -210,15 +212,27 @@ class CampaignController extends Controller
                 'updated_by' => auth()->id(),
             ]);
 
-            // TODO: Send notification blast to target audience
-            // $this->notificationService->notifyMany(...)
+            // M11 WS-1: notify the resolved target audience
+            $recipients = $campaign->audienceUsers()->get();
+            $this->notificationService->notifyMany(
+                $recipients,
+                'campaign.published',
+                [
+                    'title' => $campaign->title,
+                    'message' => "New campaign published: {$campaign->title}",
+                ],
+                auth()->user(),
+                'communication',
+                $campaign->id,
+                route('campaigns.show', $campaign)
+            );
 
             $this->activityService->log(
-                moduleName: 'communication',
-                action: 'campaign.published',
-                description: "Campaign {$campaign->campaign_number} published: {$campaign->title}",
-                referenceId: $campaign->id,
-                referenceType: Campaign::class
+                'communication',
+                $campaign->id,
+                'campaign.published',
+                "Campaign {$campaign->campaign_number} published: {$campaign->title}",
+                auth()->user()
             );
 
             DB::commit();
@@ -239,11 +253,11 @@ class CampaignController extends Controller
             CampaignAcknowledgment::acknowledge($campaign, $request->user(), $request->ip());
 
             $this->activityService->log(
-                moduleName: 'communication',
-                action: 'campaign.acknowledged',
-                description: "Campaign {$campaign->campaign_number} acknowledged by " . $request->user()->name,
-                referenceId: $campaign->id,
-                referenceType: Campaign::class
+                'communication',
+                $campaign->id,
+                'campaign.acknowledged',
+                "Campaign {$campaign->campaign_number} acknowledged by " . $request->user()->name,
+                $request->user()
             );
 
             DB::commit();

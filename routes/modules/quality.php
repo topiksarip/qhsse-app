@@ -13,6 +13,7 @@ Route::middleware(['auth', 'verified', 'active'])->prefix('quality')->name('qual
         Route::get('/{ncr}', [NcrController::class, 'show'])->name('show')->middleware('permission:quality.ncrs.view');
         Route::get('/{ncr}/edit', [NcrController::class, 'edit'])->name('edit')->middleware('permission:quality.ncrs.update');
         Route::put('/{ncr}', [NcrController::class, 'update'])->name('update')->middleware('permission:quality.ncrs.update');
+        Route::post('/{ncr}/transition/{action}', [NcrController::class, 'transition'])->name('transition')->middleware('permission:quality.ncrs.update');
     });
 
     Route::prefix('complaints')->name('complaints.')->group(function () {

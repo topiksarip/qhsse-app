@@ -19,23 +19,34 @@ class IncidentAccess
 
         $employee = $user->employee;
 
-        return $query->where(function (Builder $builder) use ($user, $employee): void {
+        $scoped = false;
+        $query->where(function (Builder $builder) use ($user, $employee, &$scoped): void {
             if ($user->can('core.scope.own')) {
                 $builder->orWhere('reporter_id', $user->id);
+                $scoped = true;
             }
 
             if ($user->can('core.scope.department') && $employee?->department_id) {
                 $builder->orWhere('department_id', $employee->department_id);
+                $scoped = true;
             }
 
             if ($user->can('core.scope.site') && $employee?->site_id) {
                 $builder->orWhere('site_id', $employee->site_id);
+                $scoped = true;
             }
 
             if ($user->can('core.scope.company') && $user->company_id) {
                 $builder->orWhereHas('reporter', fn (Builder $reporter) => $reporter->where('company_id', $user->company_id));
+                $scoped = true;
             }
         });
+
+        if (! $scoped) {
+            $query->whereRaw('1 = 0');
+        }
+
+        return $query;
     }
 
     public function ensureVisible(User $user, IncidentReport $incident): void

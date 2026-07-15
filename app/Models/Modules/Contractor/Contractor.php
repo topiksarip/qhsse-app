@@ -48,6 +48,9 @@ class Contractor extends Model implements ProvidesAuditContext
         'approved_by',
         'approved_at',
         'approval_notes',
+        'is_prequalified',
+        'prequalified_until',
+        'safety_rating',
         'created_by',
         'updated_by',
     ];
@@ -61,6 +64,8 @@ class Contractor extends Model implements ProvidesAuditContext
         'approved_at' => 'datetime',
         'safety_induction_required' => 'boolean',
         'insurance_required' => 'boolean',
+        'is_prequalified' => 'boolean',
+        'prequalified_until' => 'date',
         'performance_rating' => 'decimal:2',
         'incident_count' => 'integer',
         'violation_count' => 'integer',
@@ -83,6 +88,11 @@ class Contractor extends Model implements ProvidesAuditContext
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function evaluations()
+    {
+        return $this->hasMany(ContractorEvaluation::class);
     }
 
     // Accessors

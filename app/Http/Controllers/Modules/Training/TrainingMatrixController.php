@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Modules\Training;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Training\TrainingAccess;
 use App\Models\Core\MasterData\Department;
 use App\Models\Core\MasterData\Site;
 use App\Models\Core\Users\Employee;
@@ -17,7 +18,7 @@ class TrainingMatrixController extends Controller
     /**
      * Display the training matrix.
      */
-    public function index(Request $request): Response
+    public function index(Request $request, TrainingAccess $access): Response
     {
         $this->authorize('training.records.view');
 
@@ -28,21 +29,8 @@ class TrainingMatrixController extends Controller
             ->where('is_active', true)
             ->with(['department', 'site']);
 
-        // Apply scope based on role
-        if (! $user->hasRole(['Super Admin', 'Admin', 'QHSSE Manager', 'Auditor'])) {
-            if ($user->hasRole('QHSSE Officer')) {
-                if ($user->employee && $user->employee->site_id) {
-                    $employeesQuery->where('site_id', $user->employee->site_id);
-                }
-            } elseif ($user->hasRole(['Supervisor', 'Department Head'])) {
-                if ($user->employee && $user->employee->department_id) {
-                    $employeesQuery->where('department_id', $user->employee->department_id);
-                }
-            } else {
-                // Employee can only see themselves
-                $employeesQuery->where('id', $user->employee?->id);
-            }
-        }
+        // Apply scope via core.scope.* permissions (not hardcoded roles)
+        $access->employeeScope($employeesQuery, $user);
 
         // Filter by department if requested
         if ($request->get('department_id')) {

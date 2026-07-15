@@ -1,5 +1,32 @@
 # Changelog
 
+## [Tier-1 Module Hardening — Notifications, Audit, Permissions] - 2026-07-15
+
+**Status:** ✅ VERIFIED — all workstreams tested; `npm run build` passing
+
+### Scope
+Cross-module hardening of Tier-1 business modules: notifications, audit trails, and permission/workflow consistency.
+
+### Modules / Workstreams Completed
+- **M15 WS-1 — Emergency Drill notifications**: `EmergencyDrillController` now notifies the observer on schedule and execution, and the QHSSE Manager on `fail`/`needs_improvement`. Fixed all `activityService->log` named-arg calls (would have fataled at runtime) to positional args. Test: `EmergencyDrillNotificationTest` (4 passed).
+- **M19 WS-1 — ReportTemplate/SavedReport audit**: `ReportTemplateController` & `SavedReportController` now write `AuditService` audit trails (created/updated/deleted) and use correct positional `ActivityService::log`. Fixed broken named-arg activity calls. Created `ReportTemplateFactory` & `SavedReportFactory`. Test: `ReportAuditTest` (6 passed).
+- **M20 WS-1 — UserAdmin audit + guards**: `UserAdminController` now audits create/update; blocks self-deactivation (`back()` with error) and blocks deactivating/locking the last active Super Admin (lockout prevention). Test: `UserAdminAuditTest` (6 passed).
+- **CORE WS-1/2 — CAPA 403 / permission matrix**: Root cause found — `$capaFull` (QHSSE Manager/Officer permission set) omitted `core.workflow.transition`, which every CAPA workflow transition requires. Added `core.workflow.transition` to `$capaFull`, making CAPA consistent with Document/Audit modules. Test: `CapaWorkflowPermissionTest` (4 passed).
+
+### Bugs Fixed
+- `ReportTemplateController::destroy` referenced undefined `$request` variable (would 500 on delete) — now uses `auth()->user()`.
+- CAPA transitions silently failed (functional 403): route middleware passed but `WorkflowService::transition()` threw `UnauthorizedException` for missing `core.workflow.transition`, swallowed into `back()->withErrors`. Now resolved by granting the permission.
+
+### Verification
+```bash
+✅ EmergencyDrillNotificationTest: 4 passed / 16 assertions
+✅ ReportAuditTest: 6 passed / 14 assertions
+✅ UserAdminAuditTest: 6 passed / 16 assertions
+✅ CapaWorkflowPermissionTest: 4 passed / 16 assertions
+✅ npm run build: passing (7.15s)
+```
+Note: full `php artisan test` exceeds the session time cap due to per-test heavy seeding under RefreshDatabase; module test files pass when run individually/in targeted batches.
+
 ## [Phase 1 Incident Reporting - Complete] - 2026-07-14
 
 **Status:** ✅ PRODUCTION-READY — All features verified and tested

@@ -255,6 +255,7 @@ class AuditController extends Controller
     {
         $actor = $request->user();
         abort_unless($this->canExecute($audit), 403);
+        $this->ensureVisible($actor, $audit);
 
         // Only allow starting audits in 'planned' status
         abort_if($audit->status !== 'planned', 403, 'Audit harus berstatus planned untuk dimulai.');
@@ -276,6 +277,7 @@ class AuditController extends Controller
     {
         $actor = $request->user();
         abort_unless($this->canExecute($audit), 403);
+        $this->ensureVisible($actor, $audit);
 
         // Only allow generating report for audits in 'in_progress' status
         abort_if($audit->status !== 'in_progress', 403, 'Audit harus berstatus in_progress untuk membuat laporan.');
@@ -299,6 +301,7 @@ class AuditController extends Controller
     {
         $actor = $request->user();
         abort_unless($this->canClose($audit), 403);
+        $this->ensureVisible($actor, $audit);
         abort_unless($audit->allFindingsClosed(), 422, 'Semua temuan harus ditutup sebelum audit dapat ditutup.');
         abort_unless($audit->majorFindingsHaveCapa(), 422, 'Semua temuan major harus memiliki CAPA sebelum audit dapat ditutup.');
 

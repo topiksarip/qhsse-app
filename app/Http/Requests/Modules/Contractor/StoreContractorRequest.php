@@ -38,7 +38,7 @@ class StoreContractorRequest extends FormRequest
             'contract_start_date' => ['nullable', 'date'],
             'contract_end_date' => ['nullable', 'date', 'after_or_equal:contract_start_date'],
             'contract_status' => ['required', 'string', Rule::in([
-                'pending', 'active', 'suspended', 'expired', 'terminated'
+                'pending', 'active', 'suspended', 'expired', 'terminated', 'blacklisted'
             ])],
             'contract_terms' => ['nullable', 'string', 'max:2000'],
             

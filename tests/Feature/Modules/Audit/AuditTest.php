@@ -568,6 +568,69 @@ test('can filter audits by audit type', function () {
     );
 });
 
+// === WS-5: transition must respect organization scope (no cross-dept exec) ===
+
+test('QHSSE Officer cannot start audit of other department (WS-5 scope)', function () {
+    $officer = User::factory()->create();
+    $officer->assignRole('QHSSE Officer');
+    $employee = Employee::factory()->create();
+    $officer->update(['employee_id' => $employee->id]);
+    $officer->givePermissionTo(['audit.management.execute', 'audit.management.view', 'core.scope.site', 'core.scope.department']);
+
+    $otherSite = Site::factory()->create();
+    $otherDept = Department::factory()->create(['site_id' => $otherSite->id]);
+    $audit = Audit::factory()->create([
+        'status' => 'planned',
+        'department_id' => $otherDept->id,
+    ]);
+
+    actingAs($officer)
+        ->post(route('audits.start', $audit))
+        ->assertForbidden();
+
+    expect(Audit::find($audit->id)->status)->toBe('planned');
+});
+
+test('QHSSE Officer can start audit of own department (WS-5 scope sanity)', function () {
+    $officer = User::factory()->create();
+    $officer->assignRole('QHSSE Officer');
+    $employee = Employee::factory()->create();
+    $officer->update(['employee_id' => $employee->id]);
+    $officer->givePermissionTo(['audit.management.execute', 'audit.management.view', 'core.scope.site', 'core.scope.department']);
+
+    $audit = Audit::factory()->create([
+        'status' => 'planned',
+        'department_id' => $employee->department_id,
+    ]);
+
+    actingAs($officer)
+        ->post(route('audits.start', $audit))
+        ->assertRedirect();
+
+    expect(Audit::find($audit->id)->status)->toBe('in_progress');
+});
+
+test('QHSSE Officer cannot close audit of other department (WS-5 scope)', function () {
+    $officer = User::factory()->create();
+    $officer->assignRole('QHSSE Officer');
+    $employee = Employee::factory()->create();
+    $officer->update(['employee_id' => $employee->id]);
+    $officer->givePermissionTo(['audit.management.close', 'audit.management.view', 'core.scope.site', 'core.scope.department']);
+
+    $otherSite = Site::factory()->create();
+    $otherDept = Department::factory()->create(['site_id' => $otherSite->id]);
+    $audit = Audit::factory()->create([
+        'status' => 'report_ready',
+        'department_id' => $otherDept->id,
+    ]);
+
+    actingAs($officer)
+        ->post(route('audits.close', $audit))
+        ->assertForbidden();
+
+    expect(Audit::find($audit->id)->status)->toBe('report_ready');
+});
+
 test('can add comment to audit', function () {
     actingAs($this->admin);
 

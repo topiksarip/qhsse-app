@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Modules\LegalCompliance;
 
 use App\Core\Activity\ActivityService;
+use App\Core\Audit\AuditService;
+use App\Core\Notifications\NotificationService;
 use App\Core\Numbering\NumberingService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Modules\LegalCompliance\StoreLegalRegisterRequest;
@@ -14,6 +16,7 @@ use App\Models\Core\MasterData\Site;
 use App\Models\Modules\DocumentControl\ControlledDocument;
 use App\Models\Modules\LegalCompliance\LegalRegister;
 use App\Models\User;
+use App\Modules\LegalCompliance\LegalAccess;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,6 +30,9 @@ class LegalRegisterController extends Controller
     public function __construct(
         private readonly NumberingService $numberingService,
         private readonly ActivityService $activityService,
+        private readonly AuditService $auditService,
+        private readonly NotificationService $notificationService,
+        private readonly LegalAccess $legalAccess,
     ) {}
 
     public function index(Request $request): Response
@@ -68,17 +74,8 @@ class LegalRegisterController extends Controller
             $query->where('owner_id', $ownerId);
         }
 
-        // Scope filtering
-        $user = $request->user();
-        if (! $user->hasAnyRole(['Super Admin', 'Admin', 'QHSSE Manager', 'Top Management', 'Auditor'])) {
-            if ($user->hasRole('QHSSE Officer')) {
-                $query->whereIn('site_id', $user->employee->sites->pluck('id'));
-            } elseif ($user->hasAnyRole(['Supervisor', 'Department Head'])) {
-                $query->where('department_id', $user->employee->department_id);
-            } else {
-                $query->where('owner_id', $user->id);
-            }
-        }
+        // Scope filtering (WS-3: replace hardcode role with core.scope.*)
+        $query = $this->legalAccess->scope($query, $request->user());
 
         // Sort
         $sortBy = $request->input('sort_by', 'created_at');
@@ -124,6 +121,8 @@ class LegalRegisterController extends Controller
 
         $register = LegalRegister::create($validated);
 
+        $this->auditService->created($register, $request->user(), 'legal', $register->id);
+
         $this->activityService->log(
             'legal',
             $register->id,
@@ -131,6 +130,24 @@ class LegalRegisterController extends Controller
             "Register {$register->register_number} dibuat",
             $request->user(),
         );
+
+        // Notify QHSSE team of new register (WS-1)
+        foreach (User::role(['QHSSE Manager', 'QHSSE Officer'])->where('is_active', true)->get() as $recipient) {
+            $this->notificationService->notify(
+                recipient: $recipient,
+                type: 'legal.register.created',
+                context: [
+                    'register_id' => $register->id,
+                    'register_number' => $register->register_number,
+                    'title' => $register->title,
+                    'created_by' => $request->user()->name,
+                ],
+                actor: $request->user(),
+                moduleName: 'legal',
+                referenceId: $register->id,
+                actionUrl: route('legal.registers.show', $register),
+            );
+        }
 
         return redirect()->route('legal.registers.show', $register)
             ->with('success', "Register {$register->register_number} berhasil dibuat.");
@@ -178,9 +195,14 @@ class LegalRegisterController extends Controller
     {
         $this->authorize('update', $register);
 
+        // WS-5 G7: inactive registers are read-only
+        abort_if($register->status !== 'active', 403, 'Register dengan status inactive tidak dapat diperbarui.');
+
         $oldComplianceStatus = $register->compliance_status;
 
         $register->update($request->validated());
+
+        $this->auditService->updated($register, ['compliance_status' => $oldComplianceStatus], $request->user(), 'legal', $register->id);
 
         // Log compliance status change
         if ($oldComplianceStatus !== $register->compliance_status) {
@@ -196,9 +218,24 @@ class LegalRegisterController extends Controller
                 ],
             );
 
-            // Send notification if changed to non_compliant
+            // Send notification if changed to non_compliant (WS-1)
             if ($register->compliance_status === 'non_compliant') {
-                // TODO: Send notification to QHSSE Manager
+                foreach (User::role(['QHSSE Manager', 'QHSSE Officer'])->where('is_active', true)->get() as $recipient) {
+                    $this->notificationService->notify(
+                        recipient: $recipient,
+                        type: 'legal.compliance.changed',
+                        context: [
+                            'register_id' => $register->id,
+                            'register_number' => $register->register_number,
+                            'old_status' => $oldComplianceStatus,
+                            'new_status' => $register->compliance_status,
+                        ],
+                        actor: $request->user(),
+                        moduleName: 'legal',
+                        referenceId: $register->id,
+                        actionUrl: route('legal.registers.show', $register),
+                    );
+                }
             }
         } else {
             $this->activityService->log(
@@ -218,7 +255,12 @@ class LegalRegisterController extends Controller
     {
         $this->authorize('delete', $register);
 
+        // WS-5 G6: inactive registers are read-only and cannot be deleted
+        abort_if($register->status === 'inactive', 403, 'Register dengan status inactive tidak dapat dihapus.');
+
         $registerNumber = $register->register_number;
+
+        $this->auditService->deleted($register, request()->user(), 'legal', $register->id);
 
         $this->activityService->log(
             'legal',
@@ -259,17 +301,8 @@ class LegalRegisterController extends Controller
             $query->where('compliance_status', $complianceStatus);
         }
 
-        // Scope filtering
-        $user = $request->user();
-        if (! $user->hasAnyRole(['Super Admin', 'Admin', 'QHSSE Manager', 'Top Management', 'Auditor'])) {
-            if ($user->hasRole('QHSSE Officer')) {
-                $query->whereIn('site_id', $user->employee->sites->pluck('id'));
-            } elseif ($user->hasAnyRole(['Supervisor', 'Department Head'])) {
-                $query->where('department_id', $user->employee->department_id);
-            } else {
-                $query->where('owner_id', $user->id);
-            }
-        }
+        // Scope filtering (WS-3: replace hardcode role with core.scope.*)
+        $query = $this->legalAccess->scope($query, $request->user());
 
         $registers = $query->get();
 

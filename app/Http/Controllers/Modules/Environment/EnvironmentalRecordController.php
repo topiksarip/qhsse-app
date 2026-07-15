@@ -10,9 +10,14 @@ use App\Core\Query\ListQuery;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Modules\Environment\StoreEnvironmentalRecordRequest;
 use App\Http\Requests\Modules\Environment\UpdateEnvironmentalRecordRequest;
+use App\Core\Notifications\NotificationService;
 use App\Models\Core\MasterData\Area;
+use App\Models\Core\MasterData\Priority;
 use App\Models\Core\MasterData\Site;
+use App\Models\Modules\Capa\CapaAction;
 use App\Models\Modules\Environment\EnvironmentalRecord;
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -24,6 +29,7 @@ class EnvironmentalRecordController extends Controller
         protected NumberingService $numberingService,
         protected AuditService $auditService,
         protected ActivityService $activityService,
+        protected NotificationService $notificationService,
     ) {
         $this->authorizeResource(EnvironmentalRecord::class, 'environmental_record');
     }
@@ -225,6 +231,167 @@ class EnvironmentalRecordController extends Controller
             return redirect()->route('environment.records.show', $environmentalRecord)
                 ->with('success', 'Environmental record berhasil diupdate');
         });
+    }
+
+    public function investigate(EnvironmentalRecord $environmentalRecord, Request $request): RedirectResponse
+    {
+        $this->authorize('investigate', $environmentalRecord);
+        abort_if($environmentalRecord->status !== 'recorded', 400, 'Record tidak dapat diinvestigasi dari status saat ini.');
+
+        $actor = $request->user();
+        $oldStatus = $environmentalRecord->status;
+
+        $environmentalRecord->update(['status' => 'investigated']);
+
+        $this->auditService->log(
+            'environment.investigated',
+            $environmentalRecord,
+            ['status' => $oldStatus],
+            ['status' => 'investigated'],
+            $actor,
+            'environment',
+            $environmentalRecord->id,
+        );
+
+        $this->activityService->log(
+            moduleName: 'environment',
+            referenceId: $environmentalRecord->id,
+            action: 'environment.investigated',
+            description: "Record {$environmentalRecord->record_number} mulai diinvestigasi oleh {$actor->name}",
+            userId: $actor->id,
+        );
+
+        if ($environmentalRecord->reporter_id) {
+            $this->notificationService->notify(
+                User::findOrFail($environmentalRecord->reporter_id),
+                'environment.investigated',
+                [
+                    'record_number' => $environmentalRecord->record_number,
+                    'title' => $environmentalRecord->title,
+                ],
+                $actor,
+                'environment',
+                $environmentalRecord->id,
+                route('environment.records.show', $environmentalRecord),
+            );
+        }
+
+        return back()->with('success', 'Record mulai diinvestigasi.');
+    }
+
+    public function openAction(EnvironmentalRecord $environmentalRecord, Request $request): RedirectResponse
+    {
+        $this->authorize('investigate', $environmentalRecord);
+        abort_if($environmentalRecord->status !== 'investigated', 400, 'CAPA hanya dapat dibuka dari status investigated.');
+
+        $actor = $request->user();
+        $oldStatus = $environmentalRecord->status;
+
+        $capaAction = DB::transaction(function () use ($environmentalRecord, $actor): CapaAction {
+            $capaAction = CapaAction::create([
+                'action_number' => 'TEMP-'.uniqid(),
+                'title' => "CAPA: {$environmentalRecord->record_number}",
+                'description' => $environmentalRecord->description,
+                'source_module' => 'environment',
+                'source_reference_id' => $environmentalRecord->id,
+                'source_type' => EnvironmentalRecord::class,
+                'site_id' => $environmentalRecord->site_id,
+                'department_id' => $environmentalRecord->area?->department_id,
+                'assigned_to' => $actor->id,
+                'assigned_by' => $actor->id,
+                'assigned_at' => now(),
+                'priority_id' => Priority::firstOrCreate(
+                    ['code' => 'medium'],
+                    ['name' => 'Medium', 'sla_days' => 7, 'color' => '#f59e0b', 'is_active' => true],
+                )->id,
+                'status' => 'open',
+            ]);
+
+            $generated = $this->numberingService->generate(
+                moduleName: 'capa',
+                actor: $actor,
+                referenceType: CapaAction::class,
+                referenceId: $capaAction->id,
+            );
+            $capaAction->update(['action_number' => $generated->number]);
+
+            return $capaAction;
+        });
+
+        $environmentalRecord->update([
+            'status' => 'action_open',
+            'capa_action_id' => $capaAction->id,
+        ]);
+
+        $this->auditService->log(
+            'environment.action_opened',
+            $environmentalRecord,
+            ['status' => $oldStatus],
+            ['status' => 'action_open', 'capa_action_id' => $capaAction->id],
+            $actor,
+            'environment',
+            $environmentalRecord->id,
+        );
+
+        $this->activityService->log(
+            moduleName: 'environment',
+            referenceId: $environmentalRecord->id,
+            action: 'environment.action_opened',
+            description: "CAPA {$capaAction->action_number} dibuka untuk record {$environmentalRecord->record_number}",
+            userId: $actor->id,
+        );
+
+        return back()->with('success', 'CAPA berhasil dibuka.');
+    }
+
+    public function close(EnvironmentalRecord $environmentalRecord, Request $request): RedirectResponse
+    {
+        $this->authorize('close', $environmentalRecord);
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'min:10', 'max:1000'],
+        ]);
+        abort_if($environmentalRecord->status === 'closed', 400, 'Record sudah ditutup.');
+
+        $actor = $request->user();
+        $oldStatus = $environmentalRecord->status;
+
+        $environmentalRecord->update(['status' => 'closed']);
+
+        $this->auditService->log(
+            'environment.closed',
+            $environmentalRecord,
+            ['status' => $oldStatus],
+            ['status' => 'closed', 'reason' => $validated['reason']],
+            $actor,
+            'environment',
+            $environmentalRecord->id,
+        );
+
+        $this->activityService->log(
+            moduleName: 'environment',
+            referenceId: $environmentalRecord->id,
+            action: 'environment.closed',
+            description: "Record {$environmentalRecord->record_number} ditutup oleh {$actor->name}. Alasan: {$validated['reason']}",
+            userId: $actor->id,
+        );
+
+        if ($environmentalRecord->reporter_id) {
+            $this->notificationService->notify(
+                User::findOrFail($environmentalRecord->reporter_id),
+                'environment.closed',
+                [
+                    'record_number' => $environmentalRecord->record_number,
+                    'title' => $environmentalRecord->title,
+                    'reason' => $validated['reason'],
+                ],
+                $actor,
+                'environment',
+                $environmentalRecord->id,
+                route('environment.records.show', $environmentalRecord),
+            );
+        }
+
+        return back()->with('success', 'Record berhasil ditutup.');
     }
 
     public function export(Request $request)

@@ -88,6 +88,39 @@ class WorkflowSeeder extends Seeder
                     $this->transition('report_ready', 'closed', 'close', 'Close Audit', false, 'core.workflow.transition'),
                 ],
             ],
+            [
+                'module_name' => 'quality',
+                'code' => 'QUALITY_NCR_WORKFLOW',
+                'name' => 'Quality NCR Workflow',
+                'initial_status' => 'open',
+                'is_active' => true,
+                'transitions' => [
+                    $this->transition('open', 'under_review', 'submit', 'Submit for Review', false, 'core.workflow.transition'),
+                    $this->transition('under_review', 'in_progress', 'review', 'Start Review', false, 'core.workflow.transition'),
+                    $this->transition('in_progress', 'closed', 'close', 'Close', true, 'core.workflow.transition'),
+                    $this->transition('under_review', 'rejected', 'reject', 'Reject', true, 'core.workflow.transition'),
+                    $this->transition('in_progress', 'rejected', 'reject', 'Reject', true, 'core.workflow.transition'),
+                    $this->transition('rejected', 'under_review', 'reopen', 'Reopen', false, 'core.workflow.transition'),
+                ],
+            ],
+            [
+                'module_name' => 'permit',
+                'code' => 'PERMIT_WORKFLOW',
+                'name' => 'Permit to Work Workflow',
+                'initial_status' => 'draft',
+                'is_active' => true,
+                'transitions' => [
+                    $this->transition('draft', 'submitted', 'submit', 'Submit', false, 'core.workflow.transition'),
+                    $this->transition('submitted', 'under_review', 'review', 'Review', false, 'core.workflow.transition'),
+                    $this->transition('under_review', 'approved', 'approve', 'Approve', false, 'core.workflow.transition'),
+                    $this->transition('approved', 'active', 'activate', 'Activate', false, 'core.workflow.transition'),
+                    $this->transition('active', 'closed', 'close', 'Close', true, 'core.workflow.transition'),
+                    $this->transition('submitted', 'rejected', 'reject', 'Reject', true, 'core.workflow.transition'),
+                    $this->transition('under_review', 'rejected', 'reject', 'Reject', true, 'core.workflow.transition'),
+                    $this->transition('approved', 'rejected', 'reject', 'Reject', true, 'core.workflow.transition'),
+                    $this->transition('rejected', 'draft', 'revise', 'Revise', false, 'core.workflow.transition'),
+                ],
+            ],
         ];
     }
 

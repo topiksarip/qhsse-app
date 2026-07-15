@@ -10,6 +10,7 @@ use App\Core\Notifications\NotificationService;
 use App\Core\Numbering\NumberingService;
 use App\Core\Query\ListQuery;
 use App\Http\Controllers\Controller;
+use App\Modules\Training\TrainingAccess;
 use App\Http\Requests\Modules\Training\StoreTrainingRecordRequest;
 use App\Http\Requests\Modules\Training\UpdateTrainingRecordRequest;
 use App\Models\Core\Users\Employee;
@@ -29,6 +30,7 @@ class TrainingRecordController extends Controller
         private readonly AuditService $auditService,
         private readonly ActivityService $activityService,
         private readonly NotificationService $notificationService,
+        private readonly TrainingAccess $access,
     ) {}
 
     /**
@@ -50,27 +52,8 @@ class TrainingRecordController extends Controller
             })
             ->orderBy('created_at', 'desc');
 
-        // Apply scope based on role
-        if (! $user->hasRole(['Super Admin', 'Admin', 'QHSSE Manager', 'Auditor'])) {
-            if ($user->hasRole('QHSSE Officer')) {
-                // Officer can see their site's records
-                $query->whereHas('employee', function ($q) use ($user) {
-                    if ($user->employee && $user->employee->site_id) {
-                        $q->where('site_id', $user->employee->site_id);
-                    }
-                });
-            } elseif ($user->hasRole(['Supervisor', 'Department Head'])) {
-                // Can see their department's records
-                $query->whereHas('employee', function ($q) use ($user) {
-                    if ($user->employee && $user->employee->department_id) {
-                        $q->where('department_id', $user->employee->department_id);
-                    }
-                });
-            } else {
-                // Employee can only see own records
-                $query->where('employee_id', $user->employee?->id);
-            }
-        }
+        // Apply scope via core.scope.* permissions (not hardcoded roles)
+        $this->access->scope($query, $user);
 
         $records = $listQuery->paginate(
             $query,
@@ -103,17 +86,8 @@ class TrainingRecordController extends Controller
         $user = auth()->user();
         $employeeQuery = Employee::where('is_active', true);
 
-        // Apply organizational scope based on user role
-        if ($user->hasRole(['Super Admin', 'Admin', 'QHSSE Manager'])) {
-            // Can create records for any employee
-        } elseif ($user->hasRole('QHSSE Officer') && $user->employee) {
-            $employeeQuery->where('site_id', $user->employee->site_id);
-        } elseif ($user->hasRole(['Supervisor', 'Department Head']) && $user->employee) {
-            $employeeQuery->where('department_id', $user->employee->department_id);
-        } else {
-            // Fail closed - no employees visible for other roles
-            $employeeQuery->whereRaw('1 = 0');
-        }
+        // Apply organizational scope via core.scope.* (not hardcoded roles)
+        $this->access->employeeScope($employeeQuery, $user);
 
         return Inertia::render('Modules/Training/Records/CreateOrEdit', [
             'record' => null,
@@ -199,17 +173,8 @@ class TrainingRecordController extends Controller
         $user = auth()->user();
         $employeeQuery = Employee::where('is_active', true);
 
-        // Apply organizational scope based on user role
-        if ($user->hasRole(['Super Admin', 'Admin', 'QHSSE Manager'])) {
-            // Can edit records for any employee
-        } elseif ($user->hasRole('QHSSE Officer') && $user->employee) {
-            $employeeQuery->where('site_id', $user->employee->site_id);
-        } elseif ($user->hasRole(['Supervisor', 'Department Head']) && $user->employee) {
-            $employeeQuery->where('department_id', $user->employee->department_id);
-        } else {
-            // Fail closed - no employees visible for other roles
-            $employeeQuery->whereRaw('1 = 0');
-        }
+        // Apply organizational scope via core.scope.* (not hardcoded roles)
+        $this->access->employeeScope($employeeQuery, $user);
 
         return Inertia::render('Modules/Training/Records/CreateOrEdit', [
             'record' => $record,
@@ -298,19 +263,8 @@ class TrainingRecordController extends Controller
             ->when($request->get('status'), fn ($q, $status) => $q->where('status', $status))
             ->when($request->get('program_id'), fn ($q, $programId) => $q->where('training_program_id', $programId));
 
-        // Apply organizational scope based on user role (same as index)
-        if (! $user->hasRole(['Super Admin', 'Admin', 'QHSSE Manager', 'Auditor'])) {
-            if ($user->hasRole('QHSSE Officer') && $user->employee) {
-                $query->whereHas('employee', fn ($q) => $q->where('site_id', $user->employee->site_id));
-            } elseif ($user->hasRole(['Supervisor', 'Department Head']) && $user->employee) {
-                $query->whereHas('employee', fn ($q) => $q->where('department_id', $user->employee->department_id));
-            } elseif ($user->employee) {
-                $query->where('employee_id', $user->employee->id);
-            } else {
-                // Fail closed - no records for users without employee relation
-                $query->whereRaw('1 = 0');
-            }
-        }
+        // Apply organizational scope via core.scope.* (not hardcoded roles)
+        $this->access->scope($query, $user);
 
         $query->orderBy('created_at', 'desc');
         $records = $query->get();

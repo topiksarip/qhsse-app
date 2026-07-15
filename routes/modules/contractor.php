@@ -20,4 +20,14 @@ Route::middleware(['auth', 'verified'])->prefix('contractors')->group(function (
             'update' => 'contractors.update',
             'destroy' => 'contractors.destroy',
         ]);
+
+    // Prequalification transitions
+    Route::post('contractors/{contractor}/prequalify', [ContractorController::class, 'setPrequalified'])
+        ->name('contractors.prequalify');
+    Route::delete('contractors/{contractor}/prequalify', [ContractorController::class, 'revokePrequalified'])
+        ->name('contractors.prequalify.revoke');
+
+    // Evaluations (append-only)
+    Route::post('contractors/{contractor}/evaluations', [ContractorController::class, 'storeEvaluation'])
+        ->name('contractors.evaluations.store');
 });

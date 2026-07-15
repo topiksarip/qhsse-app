@@ -533,3 +533,64 @@ test('cannot implement controls without additional_controls field', function ():
 });
 
 // Category 2: Permission & Authorization
+
+// === WS-2: cross-site scope enforced via Policy + index query ===
+
+test('QHSSE Officer in site A cannot view risk register of site B (WS-2 policy)', function (): void {
+    $officer = User::factory()->create();
+    $officer->assignRole('QHSSE Officer');
+    $employee = \App\Models\Core\Users\Employee::factory()->create();
+    $officer->update(['employee_id' => $employee->id]);
+    $officer->givePermissionTo(['risk.registers.view', 'core.scope.site']);
+
+    $otherSite = \App\Models\Core\MasterData\Site::factory()->create();
+    $otherDept = \App\Models\Core\MasterData\Department::factory()->create(['site_id' => $otherSite->id]);
+    $register = RiskRegister::factory()->create([
+        'site_id' => $otherSite->id,
+        'department_id' => $otherDept->id,
+        'owner_id' => $officer->id,
+    ]);
+
+    expect($officer->can('view', $register))->toBeFalse();
+
+    $this->actingAs($officer);
+    $response = $this->get(route('risk.registers.index'));
+    $response->assertStatus(200);
+    $response->assertInertia(fn ($p) => $p->has('items')
+        ->where('items.data', fn ($data) => collect($data)->every(fn ($r) => $r['site_id'] !== $otherSite->id)));
+});
+
+test('QHSSE Officer can view risk register of own site (WS-2 policy sanity)', function (): void {
+    $officer = User::factory()->create();
+    $officer->assignRole('QHSSE Officer');
+    $employee = \App\Models\Core\Users\Employee::factory()->create();
+    $officer->update(['employee_id' => $employee->id]);
+    $officer->givePermissionTo(['risk.registers.view', 'core.scope.site']);
+
+    $register = RiskRegister::factory()->create([
+        'site_id' => $employee->site_id,
+        'department_id' => $employee->department_id,
+        'owner_id' => $officer->id,
+    ]);
+
+    expect($officer->can('view', $register))->toBeTrue();
+});
+
+test('Super Admin with scope.all sees all risk registers (WS-2 scope.all)', function (): void {
+    $admin = adminUser();
+    $admin->givePermissionTo('core.scope.all');
+
+    $otherSite = \App\Models\Core\MasterData\Site::factory()->create();
+    $otherDept = \App\Models\Core\MasterData\Department::factory()->create(['site_id' => $otherSite->id]);
+    RiskRegister::factory()->create([
+        'site_id' => $otherSite->id,
+        'department_id' => $otherDept->id,
+        'owner_id' => $admin->id,
+    ]);
+
+    $this->actingAs($admin);
+    $response = $this->get(route('risk.registers.index'));
+    $response->assertStatus(200);
+    $response->assertInertia(fn ($p) => $p->has('items')
+        ->where('items.data', fn ($data) => collect($data)->contains(fn ($r) => $r['site_id'] === $otherSite->id)));
+});

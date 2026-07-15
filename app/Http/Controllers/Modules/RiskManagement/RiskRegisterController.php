@@ -40,8 +40,25 @@ class RiskRegisterController extends Controller
     {
         $this->authorize('viewAny', RiskRegister::class);
 
+        $user = request()->user();
         $query = RiskRegister::query()
             ->with(['site', 'area', 'department', 'owner', 'severity', 'riskLevel', 'residualSeverity', 'residualRiskLevel']);
+
+        // Organization scope (core.scope.*) — fails open for scope.all
+        if (! $user->can('core.scope.all')) {
+            $employee = $user->employee;
+            $query->where(function ($q) use ($user, $employee): void {
+                if ($user->can('core.scope.own')) {
+                    $q->orWhere('owner_id', $user->id);
+                }
+                if ($user->can('core.scope.department') && $employee?->department_id) {
+                    $q->orWhere('department_id', $employee->department_id);
+                }
+                if ($user->can('core.scope.site') && $employee?->site_id) {
+                    $q->orWhere('site_id', $employee->site_id);
+                }
+            });
+        }
 
         // Search
         if (request('search')) {
@@ -470,8 +487,25 @@ class RiskRegisterController extends Controller
     {
         $this->authorize('export', RiskRegister::class);
 
+        $user = request()->user();
         $query = RiskRegister::query()
             ->with(['site', 'area', 'department', 'owner', 'severity', 'riskLevel', 'residualSeverity', 'residualRiskLevel']);
+
+        // Organization scope (core.scope.*) — fails open for scope.all
+        if (! $user->can('core.scope.all')) {
+            $employee = $user->employee;
+            $query->where(function ($q) use ($user, $employee): void {
+                if ($user->can('core.scope.own')) {
+                    $q->orWhere('owner_id', $user->id);
+                }
+                if ($user->can('core.scope.department') && $employee?->department_id) {
+                    $q->orWhere('department_id', $employee->department_id);
+                }
+                if ($user->can('core.scope.site') && $employee?->site_id) {
+                    $q->orWhere('site_id', $employee->site_id);
+                }
+            });
+        }
 
         // Apply same filters as index
         if (request('search')) {

@@ -243,3 +243,40 @@ test('duplicate action_number cannot occur', function () {
     expect(count($numbers))->toBe(2);
     expect(count(array_unique($numbers)))->toBe(2);
 });
+
+// === WS-1 REGRESSION: CapaAccess no longer hardcodes role + no employee required ===
+
+test('admin WITHOUT employee record can start CAPA (WS-1 root cause 403 fixed)', function () {
+    // $this->admin has role Admin, no employee linked -> old CapaAccess returned 403
+    $action = CapaAction::factory()->create(['status' => 'open']);
+
+    actingAs($this->admin)
+        ->post(route('capa.actions.start', $action))
+        ->assertRedirect(route('capa.actions.show', $action));
+
+    expect(CapaAction::find($action->id)->status)->toBe('in_progress');
+});
+
+test('QHSSE Officer in different site cannot start cross-site CAPA (WS-1 scope)', function () {
+    $user = User::factory()->create();
+    $user->assignRole('QHSSE Officer');
+    $employee = \App\Models\Core\Users\Employee::factory()->create();
+    $user->update(['employee_id' => $employee->id]);
+
+    $ownSite = $employee->site_id;
+    $otherSite = \App\Models\Core\MasterData\Site::factory()->create();
+    $action = CapaAction::factory()->create(['status' => 'open', 'site_id' => $otherSite->id]);
+
+    $user->givePermissionTo('core.scope.site');
+
+    actingAs($user)
+        ->post(route('capa.actions.start', $action))
+        ->assertForbidden();
+
+    expect(CapaAction::find($action->id)->status)->toBe('open');
+
+    $sameSiteAction = CapaAction::factory()->create(['status' => 'open', 'site_id' => $ownSite]);
+    actingAs($user)
+        ->post(route('capa.actions.start', $sameSiteAction))
+        ->assertRedirect(route('capa.actions.show', $sameSiteAction));
+});

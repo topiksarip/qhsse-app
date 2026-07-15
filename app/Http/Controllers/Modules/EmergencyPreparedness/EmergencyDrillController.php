@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Modules\EmergencyPreparedness;
 
 use App\Core\Activity\ActivityService;
+use App\Core\Notifications\NotificationService;
 use App\Core\Numbering\NumberingService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Modules\EmergencyPreparedness\ExecuteEmergencyDrillRequest;
@@ -26,7 +27,8 @@ class EmergencyDrillController extends Controller
 
     public function __construct(
         private readonly NumberingService $numberingService,
-        private readonly ActivityService $activityService
+        private readonly ActivityService $activityService,
+        private readonly NotificationService $notificationService,
     ) {}
 
     public function index(Request $request): Response
@@ -119,12 +121,28 @@ class EmergencyDrillController extends Controller
         $drill = EmergencyDrill::create($validated);
 
         $this->activityService->log(
-            moduleName: 'emergency',
-            referenceId: $drill->id,
-            event: 'emergency.drill.created',
-            description: "Emergency drill {$drill->drill_number} scheduled",
-            actor: $request->user()
+            'emergency',
+            $drill->id,
+            'emergency.drill.scheduled',
+            "Emergency drill {$drill->drill_number} scheduled",
+            $request->user()
         );
+
+        // M15 WS-1: notify the assigned observer that a drill is scheduled
+        if ($drill->observer_id) {
+            $this->notificationService->notify(
+                $drill->observer,
+                'emergency.drill.scheduled',
+                [
+                    'title' => 'Emergency Drill Scheduled',
+                    'message' => "You are assigned as observer for drill {$drill->drill_number}.",
+                ],
+                $request->user(),
+                'emergency',
+                $drill->id,
+                route('emergency.drills.show', $drill)
+            );
+        }
 
         return redirect()->route('emergency.drills.show', $drill)
             ->with('success', "Latihan darurat {$drill->drill_number} berhasil dijadwalkan.");
@@ -168,11 +186,11 @@ class EmergencyDrillController extends Controller
         $drill->update($request->validated());
 
         $this->activityService->log(
-            moduleName: 'emergency',
-            referenceId: $drill->id,
-            event: 'emergency.drill.updated',
-            description: "Emergency drill {$drill->drill_number} updated",
-            actor: $request->user()
+            'emergency',
+            $drill->id,
+            'emergency.drill.updated',
+            "Emergency drill {$drill->drill_number} updated",
+            $request->user()
         );
 
         return redirect()->route('emergency.drills.show', $drill)
@@ -201,13 +219,41 @@ class EmergencyDrillController extends Controller
             actor: $request->user()
         );
 
-        // Send notification if failed or needs improvement
+        // Notify the observer that the drill was executed
+        if ($drill->observer_id) {
+            $this->notificationService->notify(
+                $drill->observer,
+                'emergency.drill.executed',
+                [
+                    'title' => 'Emergency Drill Executed',
+                    'message' => "Drill {$drill->drill_number} was executed with result: {$drill->result_label}.",
+                ],
+                $request->user(),
+                'emergency',
+                $drill->id,
+                route('emergency.drills.show', $drill)
+            );
+        }
+
+        // M15 WS-1: failed / needs-improvement -> notify QHSSE Manager
         if (in_array($validated['result'], ['fail', 'needs_improvement'])) {
-            // TODO: Send notification to QHSSE Manager
+            $managers = User::role('QHSSE Manager')->where('is_active', true)->get();
+            $this->notificationService->notifyMany(
+                $managers,
+                'emergency.drill.failed',
+                [
+                    'title' => 'Emergency Drill Needs Attention',
+                    'message' => "Drill {$drill->drill_number} result: {$drill->result_label}.",
+                ],
+                $request->user(),
+                'emergency',
+                $drill->id,
+                route('emergency.drills.show', $drill)
+            );
         }
 
         return redirect()->route('emergency.drills.show', $drill)
-            ->with('success', "Latihan darurat berhasil dieksekusi dengan hasil: {$drill->result_label}");
+            ->with('success', "Latihan darurat berhasil dieksekusi dengan hasil: {$drill->result_label}.");
     }
 
     public function destroy(EmergencyDrill $drill): RedirectResponse
@@ -217,11 +263,11 @@ class EmergencyDrillController extends Controller
         $drillNumber = $drill->drill_number;
 
         $this->activityService->log(
-            moduleName: 'emergency',
-            referenceId: $drill->id,
-            event: 'emergency.drill.deleted',
-            description: "Emergency drill {$drillNumber} deleted",
-            actor: request()->user()
+            'emergency',
+            $drill->id,
+            'emergency.drill.deleted',
+            "Emergency drill {$drillNumber} deleted",
+            request()->user()
         );
 
         $drill->delete();

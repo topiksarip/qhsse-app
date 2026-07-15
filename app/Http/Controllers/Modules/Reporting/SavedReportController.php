@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Modules\Reporting;
 
 use App\Core\Activity\ActivityService;
+use App\Core\Audit\AuditService;
 use App\Core\Query\ListQuery;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Modules\Reporting\GenerateReportRequest;
@@ -28,6 +29,7 @@ class SavedReportController extends Controller
     public function __construct(
         protected ActivityService $activityService,
         protected ReportingScopeService $reportingScope,
+        protected AuditService $auditService,
     ) {}
 
     public function index(Request $request): Response
@@ -120,13 +122,18 @@ class SavedReportController extends Controller
                 ]);
 
                 $this->activityService->log(
-                    moduleName: 'reporting',
-                    action: 'report.generated',
-                    description: "Report generation started: {$report->name}",
-                    referenceId: $report->id,
-                    referenceType: SavedReport::class,
-                    metadata: ['template_id' => $report->template_id, 'format' => $report->format]
+                    'reporting',
+                    $report->id,
+                    'report.generated',
+                    "Report generation started: {$report->name}",
+                    $user,
+                    [],
+                    'report.generated',
+                    null,
+                    ['template_id' => $report->template_id, 'format' => $report->format]
                 );
+
+                $this->auditService->created($report, $user, 'reporting', $report->id);
 
                 return $report;
             });
@@ -158,12 +165,15 @@ class SavedReportController extends Controller
 
         // Log download activity
         $this->activityService->log(
-            moduleName: 'reporting',
-            action: 'report.downloaded',
-            description: "Report downloaded: {$savedReport->name}",
-            referenceId: $savedReport->id,
-            referenceType: SavedReport::class,
-            metadata: ['format' => $savedReport->format, 'ip' => request()->ip()]
+            'reporting',
+            $savedReport->id,
+            'report.downloaded',
+            "Report downloaded: {$savedReport->name}",
+            auth()->user(),
+            [],
+            'report.downloaded',
+            null,
+            ['format' => $savedReport->format, 'ip' => request()->ip()]
         );
 
         return response()->download(
@@ -201,13 +211,18 @@ class SavedReportController extends Controller
                 ]);
 
                 $this->activityService->log(
-                    moduleName: 'reporting',
-                    action: 'report.regenerated',
-                    description: "Report regenerated: {$newReport->name}",
-                    referenceId: $newReport->id,
-                    referenceType: SavedReport::class,
-                    metadata: ['original_report_id' => $savedReport->id]
+                    'reporting',
+                    $newReport->id,
+                    'report.regenerated',
+                    "Report regenerated: {$newReport->name}",
+                    $user,
+                    [],
+                    'report.regenerated',
+                    null,
+                    ['original_report_id' => $savedReport->id]
                 );
+
+                $this->auditService->created($newReport, $user, 'reporting', $newReport->id);
 
                 return $newReport;
             });
@@ -238,12 +253,18 @@ class SavedReportController extends Controller
                 $savedReport->delete();
 
                 $this->activityService->log(
-                    moduleName: 'reporting',
-                    action: 'report.deleted',
-                    description: "Report deleted: {$reportName}",
-                    referenceId: $savedReport->id,
-                    referenceType: SavedReport::class
+                    'reporting',
+                    $savedReport->id,
+                    'report.deleted',
+                    "Report deleted: {$reportName}",
+                    auth()->user(),
+                    [],
+                    'report.deleted',
+                    null,
+                    []
                 );
+
+                $this->auditService->deleted($savedReport, auth()->user(), 'reporting', $savedReport->id);
             });
 
             if ($filePath && Storage::exists($filePath) && ! Storage::delete($filePath)) {

@@ -94,4 +94,59 @@ class EnvironmentalRecordPolicy
     {
         return $user->can('environment.records.export');
     }
+
+    /**
+     * Determine whether the user can start investigation / open CAPA on the record.
+     * Only QHSSE roles may transition recorded/investigated records.
+     */
+    public function investigate(User $user, EnvironmentalRecord $environmentalRecord): bool
+    {
+        if (! $user->can('environment.records.approve')) {
+            return false;
+        }
+
+        if ($user->hasAnyRole(['Super Admin', 'Admin', 'QHSSE Manager', 'QHSSE Officer'])) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine whether the user can close the record (requires reason).
+     */
+    public function close(User $user, EnvironmentalRecord $environmentalRecord): bool
+    {
+        if (! $user->can('environment.records.close')) {
+            return false;
+        }
+
+        if ($user->hasAnyRole(['Super Admin', 'Admin', 'QHSSE Manager', 'QHSSE Officer'])) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Available transitions for the current status (for UI + guard reference).
+     */
+    public static function getAvailableTransitions(string $status): array
+    {
+        return match ($status) {
+            'recorded' => [
+                ['action' => 'investigate', 'label' => 'Mulai Investigasi', 'permission' => 'environment.records.approve', 'requires_reason' => false],
+                ['action' => 'close', 'label' => 'Tutup Langsung', 'permission' => 'environment.records.close', 'requires_reason' => true],
+            ],
+            'investigated' => [
+                ['action' => 'open_action', 'label' => 'Buka CAPA', 'permission' => 'environment.records.approve', 'requires_reason' => false],
+                ['action' => 'close', 'label' => 'Tutup', 'permission' => 'environment.records.close', 'requires_reason' => true],
+            ],
+            'action_open' => [
+                ['action' => 'close', 'label' => 'Tutup', 'permission' => 'environment.records.close', 'requires_reason' => true],
+            ],
+            'closed' => [],
+            default => [],
+        };
+    }
 }

@@ -234,4 +234,23 @@ class Campaign extends Model implements ProvidesAuditContext
             'status' => $this->status,
         ];
     }
+
+    /**
+     * Resolve the target audience into a User query for notification blasts.
+     *  - all: every active user
+     *  - specific_site: active users whose employee belongs to the campaign site
+     *  - specific_department: active users whose employee belongs to the department
+     *  - specific_role: active users assigned the given role
+     */
+    public function audienceUsers(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = User::query()->where('is_active', true);
+
+        return match ($this->target_audience) {
+            'specific_site' => $query->whereHas('employee', fn ($q) => $q->where('site_id', $this->site_id)),
+            'specific_department' => $query->whereHas('employee', fn ($q) => $q->where('department_id', $this->department_id)),
+            'specific_role' => $query->whereHas('roles', fn ($q) => $q->where('name', $this->target_role)),
+            default => $query,
+        };
+    }
 }

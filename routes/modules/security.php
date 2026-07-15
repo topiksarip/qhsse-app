@@ -15,6 +15,7 @@ Route::middleware(['auth', 'verified', 'active'])->prefix('security')->name('sec
         Route::get('/{security_incident}', [SecurityIncidentController::class, 'show'])->name('show')->middleware('permission:security.incidents.view');
         Route::get('/{security_incident}/edit', [SecurityIncidentController::class, 'edit'])->name('edit')->middleware('permission:security.incidents.update');
         Route::put('/{security_incident}', [SecurityIncidentController::class, 'update'])->name('update')->middleware('permission:security.incidents.update');
+        Route::post('/{security_incident}/transition', [SecurityIncidentController::class, 'transition'])->name('transition')->middleware('permission:security.incidents.update');
     });
 
     Route::prefix('visitors')->name('visitors.')->group(function () {

@@ -161,6 +161,7 @@ final class CorePermissions
             'contractor.management.delete',
             'contractor.management.export',
             'contractor.management.approve',
+            'contractor.management.evaluate',
 
             // Asset & Equipment Safety
             'asset.management.view',
@@ -323,6 +324,7 @@ final class CorePermissions
             'capa.actions.view', 'capa.actions.create', 'capa.actions.update',
             'capa.actions.submit', 'capa.actions.verify', 'capa.actions.close',
             'capa.actions.reject', 'capa.actions.export',
+            'core.workflow.transition',
         ];
 
         $capaViewExport = ['capa.actions.view', 'capa.actions.export'];
@@ -380,10 +382,10 @@ final class CorePermissions
         $qualityView = ['quality.ncrs.view', 'quality.complaints.view'];
         $qualityCreate = ['quality.ncrs.view', 'quality.ncrs.create', 'quality.ncrs.update', 'quality.complaints.view', 'quality.complaints.create', 'quality.complaints.update'];
 
-        $contractorFull = ['contractor.management.view', 'contractor.management.create', 'contractor.management.update', 'contractor.management.delete', 'contractor.management.export', 'contractor.management.approve'];
+        $contractorFull = ['contractor.management.view', 'contractor.management.create', 'contractor.management.update', 'contractor.management.delete', 'contractor.management.export', 'contractor.management.approve', 'contractor.management.evaluate'];
         $contractorViewExport = ['contractor.management.view', 'contractor.management.export'];
         $contractorView = ['contractor.management.view'];
-        $contractorCreate = ['contractor.management.view', 'contractor.management.create', 'contractor.management.update'];
+        $contractorCreate = ['contractor.management.view', 'contractor.management.create', 'contractor.management.update', 'contractor.management.evaluate'];
 
         $assetFull = ['core.comments.create', 'asset.management.view', 'asset.management.create', 'asset.management.update', 'asset.management.export', 'asset.certificates.view', 'asset.certificates.create', 'asset.certificates.update', 'asset.inspections.view', 'asset.inspections.create'];
         $assetViewExport = ['asset.management.view', 'asset.management.export', 'asset.certificates.view', 'asset.inspections.view'];

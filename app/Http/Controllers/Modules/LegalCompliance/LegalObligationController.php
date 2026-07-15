@@ -8,6 +8,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Modules\LegalCompliance\CompleteLegalObligationRequest;
 use App\Http\Requests\Modules\LegalCompliance\StoreLegalObligationRequest;
 use App\Http\Requests\Modules\LegalCompliance\UpdateLegalObligationRequest;
+use App\Core\Audit\AuditService;
+use App\Core\Notifications\NotificationService;
 use App\Models\Modules\LegalCompliance\LegalObligation;
 use App\Models\Modules\LegalCompliance\LegalRegister;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -17,6 +19,11 @@ use Illuminate\Http\Request;
 class LegalObligationController extends Controller
 {
     use AuthorizesRequests;
+
+    public function __construct(
+        private readonly AuditService $auditService,
+        private readonly NotificationService $notificationService,
+    ) {}
 
     public function store(StoreLegalObligationRequest $request, LegalRegister $register): RedirectResponse
     {
@@ -33,15 +40,24 @@ class LegalObligationController extends Controller
 
         $obligation = LegalObligation::create($validated);
 
-        activity()
-            ->performedOn($register)
-            ->causedBy($request->user())
-            ->withProperties([
-                'module_name' => 'legal',
-                'reference_id' => $register->id,
-                'obligation_id' => $obligation->id,
-            ])
-            ->log('legal.obligation.created');
+        $this->auditService->created($obligation, $request->user(), 'legal', $obligation->id);
+
+        // WS-1: notify register owner of new obligation
+        if ($register->owner_id) {
+            $this->notificationService->notify(
+                recipient: $register->owner,
+                type: 'legal.obligation.created',
+                context: [
+                    'register_id' => $register->id,
+                    'obligation_id' => $obligation->id,
+                    'obligation_description' => $obligation->obligation_description,
+                ],
+                actor: $request->user(),
+                moduleName: 'legal',
+                referenceId: $obligation->id,
+                actionUrl: route('legal.registers.show', $register),
+            );
+        }
 
         return redirect()->route('legal.registers.show', $register)
             ->with('success', 'Kewajiban berhasil ditambahkan.');
@@ -64,15 +80,7 @@ class LegalObligationController extends Controller
 
         $obligation->update($validated);
 
-        activity()
-            ->performedOn($register)
-            ->causedBy($request->user())
-            ->withProperties([
-                'module_name' => 'legal',
-                'reference_id' => $register->id,
-                'obligation_id' => $obligation->id,
-            ])
-            ->log('legal.obligation.updated');
+        $this->auditService->updated($obligation, [], $request->user(), 'legal', $obligation->id);
 
         return redirect()->route('legal.registers.show', $register)
             ->with('success', 'Kewajiban berhasil diperbarui.');
@@ -103,17 +111,25 @@ class LegalObligationController extends Controller
             'status' => 'completed',
         ]);
 
-        activity()
-            ->performedOn($register)
-            ->causedBy($request->user())
-            ->withProperties([
-                'module_name' => 'legal',
-                'reference_id' => $register->id,
-                'obligation_id' => $obligation->id,
-                'last_completed' => $validated['last_completed'],
-                'next_due' => $nextDue,
-            ])
-            ->log('legal.obligation.completed');
+        $this->auditService->updated($obligation, ['status' => 'pending'], $request->user(), 'legal', $obligation->id);
+
+        // WS-1: notify register owner of completion
+        if ($register->owner_id) {
+            $this->notificationService->notify(
+                recipient: $register->owner,
+                type: 'legal.obligation.completed',
+                context: [
+                    'register_id' => $register->id,
+                    'obligation_id' => $obligation->id,
+                    'last_completed' => $validated['last_completed'],
+                    'next_due' => $nextDue?->toDateString(),
+                ],
+                actor: $request->user(),
+                moduleName: 'legal',
+                referenceId: $obligation->id,
+                actionUrl: route('legal.registers.show', $register),
+            );
+        }
 
         return redirect()->route('legal.registers.show', $register)
             ->with('success', 'Kewajiban berhasil diselesaikan. Next due: ' . $nextDue);
@@ -127,15 +143,7 @@ class LegalObligationController extends Controller
             abort(404);
         }
 
-        activity()
-            ->performedOn($register)
-            ->causedBy(request()->user())
-            ->withProperties([
-                'module_name' => 'legal',
-                'reference_id' => $register->id,
-                'obligation_id' => $obligation->id,
-            ])
-            ->log('legal.obligation.deleted');
+        $this->auditService->deleted($obligation, request()->user(), 'legal', $obligation->id);
 
         $obligation->delete();
 

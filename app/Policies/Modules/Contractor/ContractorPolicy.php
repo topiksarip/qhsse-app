@@ -4,6 +4,7 @@ namespace App\Policies\Modules\Contractor;
 
 use App\Models\Modules\Contractor\Contractor;
 use App\Models\User;
+use App\Modules\Contractor\ContractorAccess;
 
 class ContractorPolicy
 {
@@ -14,7 +15,11 @@ class ContractorPolicy
 
     public function view(User $user, Contractor $contractor): bool
     {
-        return $user->can('contractor.management.view');
+        if (! $user->can('contractor.management.view')) {
+            return false;
+        }
+
+        return app(ContractorAccess::class)->canView($user, $contractor);
     }
 
     public function create(User $user): bool
@@ -59,6 +64,10 @@ class ContractorPolicy
             && in_array($contractor->approval_status, ['submitted']);
     }
 
+    public function evaluate(User $user, Contractor $contractor): bool
+    {
+        return $user->can('contractor.management.evaluate');
+    }
     public function suspend(User $user, Contractor $contractor): bool
     {
         return $user->can('contractor.management.update')

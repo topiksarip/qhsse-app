@@ -32,8 +32,12 @@ class RiskRegisterPolicy
 
         // QHSSE Officer can view in their site scope
         if ($user->hasRole('QHSSE Officer')) {
-            // TODO: implement site scope check when employee->sites relationship is available
-            return true;
+            if ($user->can('core.scope.all')) {
+                return true;
+            }
+            if ($user->employee && $user->employee->site_id && $riskRegister->site_id === $user->employee->site_id) {
+                return true;
+            }
         }
 
         // Supervisor can view in their department
@@ -74,8 +78,12 @@ class RiskRegisterPolicy
 
         // QHSSE Officer can update in their site scope
         if ($user->hasRole('QHSSE Officer')) {
-            // TODO: implement site scope check when employee->sites relationship is available
-            return true;
+            if ($user->can('core.scope.all')) {
+                return true;
+            }
+            if ($user->employee && $user->employee->site_id && $riskRegister->site_id === $user->employee->site_id) {
+                return true;
+            }
         }
 
         // Supervisor can update in their department

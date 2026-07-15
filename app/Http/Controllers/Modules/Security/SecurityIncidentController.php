@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Modules\Security;
 use App\Core\Activity\ActivityService;
 use App\Core\Audit\AuditService;
 use App\Core\Export\CsvExporter;
+use App\Core\Notifications\NotificationService;
 use App\Core\Numbering\NumberingService;
 use App\Core\Query\ListQuery;
 use App\Http\Controllers\Controller;
@@ -16,6 +17,7 @@ use App\Models\Core\MasterData\Site;
 use App\Models\Modules\Security\SecurityIncident;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -25,6 +27,7 @@ class SecurityIncidentController extends Controller
         protected NumberingService $numberingService,
         protected AuditService $auditService,
         protected ActivityService $activityService,
+        protected NotificationService $notificationService,
     ) {
         $this->authorizeResource(SecurityIncident::class, 'security_incident');
     }
@@ -35,14 +38,16 @@ class SecurityIncidentController extends Controller
             ->with(['site', 'area', 'reporter', 'severity'])
             ->select('security_incidents.*');
 
-        // Organization scope
-        $scope = $request->input('scope', 'all');
+        // Organization scope (fail closed — no implicit 'all' for users without core.scope.all)
         $user = $request->user();
-
-        if ($scope === 'site' && $user->employee?->site_id) {
+        if ($user->can('core.scope.all')) {
+            // full access
+        } elseif ($user->employee?->site_id) {
             $query->where('security_incidents.site_id', $user->employee->site_id);
-        } elseif ($scope === 'own') {
+        } elseif ($user->employee) {
             $query->where('security_incidents.reported_by', $user->id);
+        } else {
+            $query->whereRaw('1 = 0');
         }
 
         // Filters
@@ -73,7 +78,7 @@ class SecurityIncidentController extends Controller
 
         return Inertia::render('Modules/Security/Incidents/Index', [
             'incidents' => $incidents,
-            'filters' => $request->only(['scope', 'site_id', 'type', 'status', 'search']),
+            'filters' => $request->only(['site_id', 'type', 'status', 'search']),
             'sites' => Site::select('id', 'name')->orderBy('name')->get(),
             'types' => SecurityIncident::getTypes(),
             'statuses' => SecurityIncident::getStatuses(),
@@ -96,31 +101,35 @@ class SecurityIncidentController extends Controller
             $user = $request->user();
 
             $securityNumber = $this->numberingService->generate(
-                key: 'security',
-                siteId: null,
-                includeSiteCode: false
+                'security',
+                $user,
+                null,
+                false
             );
 
             $data = $request->validated();
             $data['security_number'] = $securityNumber;
             $data['reported_by'] = $user->id;
+            $data['status'] = 'reported';
 
             $incident = SecurityIncident::create($data);
 
             $this->auditService->log(
-                moduleName: 'security',
-                action: 'create',
-                referenceId: $incident->id,
-                details: "Security incident {$incident->security_number} created",
-                userId: $user->id
+                'security.incident.created',
+                $incident,
+                [],
+                ['security_number' => $incident->security_number],
+                $user,
+                'security',
+                $incident->id
             );
 
             $this->activityService->log(
-                moduleName: 'security',
-                referenceId: $incident->id,
-                action: 'create',
-                description: "Security incident {$incident->security_number} reported by {$user->name}",
-                userId: $user->id
+                'security',
+                $incident->id,
+                'created',
+                "Security incident {$incident->security_number} reported by {$user->name}",
+                $user
             );
 
             return redirect()->route('security.incidents.show', $incident)
@@ -134,6 +143,7 @@ class SecurityIncidentController extends Controller
 
         return Inertia::render('Modules/Security/Incidents/Show', [
             'incident' => $securityIncident,
+            'available_transitions' => $this->availableTransitions($securityIncident),
         ]);
     }
 
@@ -151,25 +161,109 @@ class SecurityIncidentController extends Controller
 
     public function update(UpdateSecurityIncidentRequest $request, SecurityIncident $securityIncident)
     {
+        // Closed incidents are terminal — cannot be edited via update.
+        abort_if($securityIncident->status === 'closed', 403, 'Closed security incidents cannot be edited.');
+
         return DB::transaction(function () use ($request, $securityIncident) {
             $user = $request->user();
-
-            if ($request->input('status') === 'closed' && $securityIncident->status !== 'closed') {
-                $securityIncident->resolved_at = now();
-            }
+            $oldData = $securityIncident->getAttributes();
 
             $securityIncident->update($request->validated());
 
             $this->auditService->log(
-                moduleName: 'security',
-                action: 'update',
-                referenceId: $securityIncident->id,
-                details: "Security incident {$securityIncident->security_number} updated",
-                userId: $user->id
+                'security.incident.updated',
+                $securityIncident,
+                $oldData,
+                $securityIncident->getAttributes(),
+                $user,
+                'security',
+                $securityIncident->id
             );
 
             return redirect()->route('security.incidents.show', $securityIncident)
                 ->with('success', 'Security incident updated successfully');
+        });
+    }
+
+    /**
+     * M10 WS-1: explicit transition workflow.
+     *  - investigate: reported -> under_investigation
+     *  - close:      under_investigation -> closed (requires resolution min 10)
+     *  - closed is terminal (no transitions allowed)
+     */
+    public function transition(Request $request, SecurityIncident $securityIncident)
+    {
+        abort_if($securityIncident->status === 'closed', 403, 'Closed security incidents cannot be transitioned.');
+
+        $validator = Validator::make($request->all(), [
+            'action' => ['required', 'in:investigate,close'],
+            'resolution' => ['required_if:action,close', 'string', 'min:10'],
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('security.incidents.show', $securityIncident)
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        $action = $request->input('action');
+
+        if ($action === 'investigate' && $securityIncident->status !== 'reported') {
+            abort(422, 'Only reported incidents can be set under investigation.');
+        }
+
+        if ($action === 'close' && $securityIncident->status !== 'under_investigation') {
+            abort(422, 'Only incidents under investigation can be closed.');
+        }
+
+        $user = $request->user();
+
+        return DB::transaction(function () use ($request, $securityIncident, $action, $user) {
+            if ($action === 'investigate') {
+                $securityIncident->status = 'under_investigation';
+            } elseif ($action === 'close') {
+                $securityIncident->status = 'closed';
+                $securityIncident->resolution = $request->input('resolution');
+                $securityIncident->resolved_at = now();
+            }
+
+            $securityIncident->save();
+
+            $this->auditService->log(
+                "security.incident.{$action}",
+                $securityIncident,
+                [],
+                ['status' => $securityIncident->status],
+                $user,
+                'security',
+                $securityIncident->id
+            );
+
+            $this->activityService->log(
+                'security',
+                $securityIncident->id,
+                $action,
+                "Security incident {$securityIncident->security_number} {$action}d by {$user->name}",
+                $user
+            );
+
+            if ($action === 'close' && $securityIncident->reporter) {
+                $this->notificationService->notify(
+                    $securityIncident->reporter,
+                    'security.incident.closed',
+                    [
+                        'title' => 'Security Incident Closed',
+                        'message' => "Security incident {$securityIncident->security_number} has been closed.",
+                    ],
+                    $user,
+                    'security',
+                    $securityIncident->id,
+                    route('security.incidents.show', $securityIncident)
+                );
+            }
+
+            return redirect()->route('security.incidents.show', $securityIncident)
+                ->with('success', "Security incident {$action}d successfully");
         });
     }
 
@@ -179,13 +273,15 @@ class SecurityIncidentController extends Controller
 
         $query = SecurityIncident::query()->with(['site', 'reporter', 'severity']);
 
-        $scope = $request->input('scope', 'all');
         $user = $request->user();
-
-        if ($scope === 'site' && $user->employee?->site_id) {
+        if ($user->can('core.scope.all')) {
+            // full access
+        } elseif ($user->employee?->site_id) {
             $query->where('security_incidents.site_id', $user->employee->site_id);
-        } elseif ($scope === 'own') {
+        } elseif ($user->employee) {
             $query->where('security_incidents.reported_by', $user->id);
+        } else {
+            $query->whereRaw('1 = 0');
         }
 
         if ($request->filled('site_id')) {
@@ -209,5 +305,18 @@ class SecurityIncidentController extends Controller
                 'created_at' => 'Created At',
             ]
         );
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    protected function availableTransitions(SecurityIncident $incident): array
+    {
+        return match ($incident->status) {
+            'reported' => ['investigate'],
+            'under_investigation' => ['close'],
+            'closed' => [],
+            default => [],
+        };
     }
 }

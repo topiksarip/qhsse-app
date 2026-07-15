@@ -11,3 +11,5 @@ Artisan::command('inspire', function () {
 Schedule::command('documents:check-expiry')->dailyAt('08:00')->withoutOverlapping();
 Schedule::command('assets:check-certificates')->dailyAt('06:00')->withoutOverlapping();
 Schedule::command('assets:check-inspections')->dailyAt('06:30')->withoutOverlapping();
+Schedule::command('contractor:check-prequalification-expiry')->dailyAt('08:00')->withoutOverlapping();
+Schedule::command('legal:check-overdue')->dailyAt('00:01')->withoutOverlapping();
