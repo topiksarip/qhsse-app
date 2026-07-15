@@ -169,7 +169,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                                                     href={route(item.routeName)}
                                                     onClick={onClose}
                                                     aria-current={active ? 'page' : undefined}
-                                                    className={`block rounded-md py-2 pl-9 pr-3 text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                                                    className={`block rounded-md py-2 pl-9 pr-3 text-[13px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                                                         active
                                                             ? 'bg-emerald-100 font-medium text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200'
                                                             : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-gray-800 dark:hover:text-white'
