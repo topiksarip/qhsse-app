@@ -2,6 +2,9 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Pagination from '@/Components/Qhsse/Pagination';
 import EmptyState from '@/Components/UI/EmptyState';
 import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
+import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
+import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
 import { Paginated } from '@/types/core';
 import { PageProps } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
@@ -23,85 +26,101 @@ export default function Index({ items, filters, auth }: PageProps<{ items: Pagin
     function submit(e: FormEvent) { e.preventDefault(); router.get(route('inspection.checklists.index'), { search, status }, { preserveState: true, replace: true }); }
 
     return (
-        <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Inspeksi</h2>}>
-            <Head title="Inspeksi" />
-            <div className="py-12"><div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inspeksi</h1>
+        <AuthenticatedLayout
+            header={
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.28em] text-emerald-600 dark:text-emerald-400">Pemeriksaan</p>
+                        <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950 dark:text-white">Inspeksi</h2>
+                    </div>
                     <div className="flex gap-2">
-                        {permissions.has('inspection.checklists.export') && <Link href={route('inspection.checklists.export')} className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200">Export CSV</Link>}
-                        {permissions.has('inspection.checklists.create') && <Link href={route('inspection.checklists.create')} className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Buat Inspeksi</Link>}
+                        {permissions.has('inspection.checklists.export') && (
+                            <SecondaryButton size="sm" href={route('inspection.checklists.export')}>Export CSV</SecondaryButton>
+                        )}
+                        {permissions.has('inspection.checklists.create') && (
+                            <PrimaryButton size="sm" href={route('inspection.checklists.create')}>Buat Inspeksi</PrimaryButton>
+                        )}
                     </div>
                 </div>
-                <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-gray-800">
-                    <form onSubmit={submit} className="flex gap-3">
-                        <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari nomor..." className="flex-1 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
-                        <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200">
-                            <option value="">Semua Status</option><option value="pending">Pending</option><option value="in_progress">In Progress</option><option value="completed">Completed</option>
-                        </select>
-                        <button type="submit" className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Filter</button>
-                    </form>
-                </div>
-                <div className="overflow-hidden rounded-lg bg-white shadow-sm dark:bg-gray-800">
-                    <div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead className="bg-gray-50 dark:bg-gray-900"><tr>
-                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Nomor</th>
-                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Template</th>
-                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Site</th>
-                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Inspector</th>
-                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Status</th>
-                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Result</th>
-                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Jadwal</th>
-                        </tr></thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            }
+        >
+            <Head title="Inspeksi" />
+            <div className="py-6">
+                <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+                    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                        <form onSubmit={submit} className="flex flex-wrap gap-3">
+                            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari nomor..." className="flex-1 rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
+                            <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                                <option value="">Semua Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                            <PrimaryButton type="submit">Filter</PrimaryButton>
+                            <SecondaryButton onClick={() => router.get(route('inspection.checklists.index'))}>Reset</SecondaryButton>
+                        </form>
+                    </div>
+
+                    <TableWrapper>
+                        <TableHead>
+                            <tr>
+                                <th className="px-4 py-3">Nomor</th>
+                                <th className="px-4 py-3">Template</th>
+                                <th className="px-4 py-3">Site</th>
+                                <th className="px-4 py-3">Inspector</th>
+                                <th className="px-4 py-3">Status</th>
+                                <th className="px-4 py-3">Result</th>
+                                <th className="px-4 py-3">Jadwal</th>
+                                <th className="px-4 py-3 text-center">Aksi</th>
+                            </tr>
+                        </TableHead>
+                        <TableBody>
                             {items.data.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-4 py-12">
+                                    <td colSpan={8} className="px-4 py-12">
                                         <EmptyState
                                             title="Belum ada inspeksi"
                                             description="Mulai dengan membuat inspeksi pertama Anda"
                                             action={
                                                 permissions.has('inspection.checklists.create') ? (
-                                                    <Link
-                                                        href={route('inspection.checklists.create')}
-                                                        className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
-                                                    >
-                                                        Buat Inspeksi
-                                                    </Link>
+                                                    <PrimaryButton href={route('inspection.checklists.create')}>Buat Inspeksi</PrimaryButton>
                                                 ) : undefined
                                             }
                                         />
                                     </td>
                                 </tr>
-                            ) :
+                            ) : (
                                 items.data.map((item) => (
-                                    <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                        <td className="px-4 py-3 text-sm"><Link href={route('inspection.checklists.show', item.id)} className="font-medium text-indigo-600 hover:text-indigo-800 dark:text-indigo-400">{item.inspection_number}</Link></td>
+                                    <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-gray-800">
+                                        <td className="px-4 py-3 text-sm">
+                                            <Link href={route('inspection.checklists.show', item.id)} className="font-medium text-emerald-600 hover:text-emerald-800 dark:text-emerald-400">{item.inspection_number}</Link>
+                                        </td>
                                         <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-200">{item.template?.name ?? '-'}</td>
                                         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{item.site?.name ?? '-'}</td>
                                         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{item.inspector?.name ?? '-'}</td>
-                                        <td className="px-4 py-3 text-sm"><span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${statusColors[item.status] ?? ''}`}>{item.status}</span></td>
-                                        <td className="px-4 py-3 text-sm"><span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${resultColors[item.overall_result] ?? ''}`}>{item.overall_result}</span></td>
-                                            <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
-                                                <DeleteWithConfirm
-                                                    routeName="inspection.checklists.destroy"
-                                                    id={item.id}
-                                                    permission="inspection.checklists.delete"
-                                                    itemLabel={item.inspection_number}
-                                                    asLink
-                                                    className="text-red-600 hover:underline dark:text-red-400"
-                                                >
-                                                    🗑 Hapus
-                                                </DeleteWithConfirm>
-                                            </td>
-                                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{new Date(item.scheduled_at).toLocaleDateString('id-ID')}</td>
+                                        <td className="whitespace-nowrap px-4 py-3 text-sm"><span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${statusColors[item.status] ?? ''}`}>{item.status}</span></td>
+                                        <td className="whitespace-nowrap px-4 py-3 text-sm"><span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${resultColors[item.overall_result] ?? ''}`}>{item.overall_result}</span></td>
+                                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{new Date(item.scheduled_at).toLocaleDateString('id-ID')}</td>
+                                        <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
+                                            <DeleteWithConfirm
+                                                routeName="inspection.checklists.destroy"
+                                                id={item.id}
+                                                permission="inspection.checklists.delete"
+                                                itemLabel={item.inspection_number}
+                                                asLink
+                                                className="text-red-600 hover:underline dark:text-red-400"
+                                            >
+                                                🗑 Hapus
+                                            </DeleteWithConfirm>
+                                        </td>
                                     </tr>
-                                ))}
-                        </tbody>
-                    </table></div>
+                                ))
+                            )}
+                        </TableBody>
+                    </TableWrapper>
+                    <Pagination links={items.links} />
                 </div>
-                <Pagination links={items.links} />
-            </div></div>
+            </div>
         </AuthenticatedLayout>
     );
 }

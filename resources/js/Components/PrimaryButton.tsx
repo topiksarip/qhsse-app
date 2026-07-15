@@ -1,4 +1,5 @@
 import { ButtonHTMLAttributes, ReactNode } from 'react';
+import { Link } from '@inertiajs/react';
 
 type Size = 'sm' | 'md';
 
@@ -27,6 +28,7 @@ const variant = {
 type CommonProps = {
     size?: Size;
     loading?: boolean;
+    href?: string;
     children?: ReactNode;
 };
 
@@ -44,15 +46,22 @@ export default function PrimaryButton({
     disabled,
     size = 'md',
     loading = false,
+    href,
     children,
     ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & CommonProps) {
+    const cls = `${base} ${sizes[size]} ${variant.primary} ${className}`;
+
+    if (href) {
+        return (
+            <Link href={href} className={cls}>
+                {children}
+            </Link>
+        );
+    }
+
     return (
-        <button
-            {...props}
-            disabled={disabled || loading}
-            className={`${base} ${sizes[size]} ${variant.primary} ${className}`}
-        >
+        <button {...props} disabled={disabled || loading} className={cls}>
             {loading && <Spinner />}
             {children}
         </button>
