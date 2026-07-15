@@ -1,4 +1,4 @@
-import ApplicationLogo from '@/Components/ApplicationLogo';
+import ApplicationLogoImage from '@/Components/ApplicationLogoImage';
 import { Link, usePage } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { useEffect, useMemo, useState } from 'react';
@@ -128,7 +128,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             >
                 <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 px-4 dark:border-gray-800">
                     <Link href={route('dashboard')} onClick={onClose} className="flex items-center gap-2">
-                        <ApplicationLogo className="block h-8 w-auto fill-current text-slate-800 dark:text-slate-200" />
+                        <ApplicationLogoImage className="h-7 w-auto max-w-[200px]" />
                         <span className="text-sm font-bold uppercase tracking-[0.24em] text-slate-700 dark:text-slate-200">QHSSE</span>
                     </Link>
                     <button
