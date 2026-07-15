@@ -4,7 +4,7 @@ import KpiCard from '@/Components/Dashboard/KpiCard';
 import QuickActionCard from '@/Components/Dashboard/QuickActionCard';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { useMemo } from 'react';
 
 type Option = { id: number; name: string; site_id?: number | null };
@@ -75,9 +75,18 @@ export default function Dashboard({ filters, filterOptions, kpis, widgets, quick
                         <p className="text-xs font-bold uppercase tracking-[0.28em] text-emerald-600 dark:text-emerald-400">QHSSE Operations</p>
                         <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950 dark:text-white">Dashboard & KPI</h2>
                     </div>
-                    <div className="text-sm text-slate-500 dark:text-slate-400">
-                        {notificationSummary.unread} notifikasi belum dibaca
-                    </div>
+                    {notificationSummary.unread > 0 && (
+                        <Link
+                            href={route('core.notifications.index')}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 dark:hover:bg-emerald-900"
+                        >
+                            <span className="relative flex h-2 w-2">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                            </span>
+                            {notificationSummary.unread} notifikasi belum dibaca
+                        </Link>
+                    )}
                 </div>
             }
         >
