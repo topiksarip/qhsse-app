@@ -82,8 +82,9 @@ Terapkan primitif Phase 1 + TableWrapper + sidebar baru. Urutan:
 ## Status
 - Intent: CONFIRMED.
 - Spec: draft di plan ini.
-- Plan: ACTIVE — eksekusi berjalan (Phase 0 & 1 SELESAI + deployed).
-- Execution: Phase 0 (sidebar/dark/table wrapper) + Phase 1 (primitives) done & deployed ke Ubuntu-5.
+- Plan: ACTIVE — eksekusi berjalan (Phase 0, 1, 2 SELESAI + deployed).
+- Execution: Phase 0 (sidebar/dark/table wrapper) + Phase 1 (primitives) + Phase 2 (public pages:
+  landing/login/register/guest shell) done & deployed ke Ubuntu-5.
 
 ## ⚠️ Deploy Gotcha (learned 2026-07-15)
 `php artisan optimize:clear` menghapus `bootstrap/cache/`. Di Ubuntu-5 direktori tidak otomatis dibuat ulang
