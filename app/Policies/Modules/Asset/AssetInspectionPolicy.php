@@ -57,7 +57,7 @@ class AssetInspectionPolicy
         return app(AssetPolicy::class)->view($user, $inspection->asset);
     }
 
-    public function delete(User $user, AssetInspection $inspection): bool
+    public function delete(User $user, ?AssetInspection $inspection = null): bool
     {
         // Asset inspections are compliance records and must not be deleted.
         return false;

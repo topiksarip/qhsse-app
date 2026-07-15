@@ -57,7 +57,7 @@ class AssetCertificatePolicy
         return app(AssetPolicy::class)->view($user, $certificate->asset);
     }
 
-    public function delete(User $user, AssetCertificate $certificate): bool
+    public function delete(User $user, ?AssetCertificate $certificate = null): bool
     {
         // Asset certificates are compliance records and must not be deleted.
         return false;
