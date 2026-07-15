@@ -126,21 +126,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 }`}
                 aria-label="Navigasi utama"
             >
-                <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 px-4 dark:border-gray-800">
-                    <Link href={route('dashboard')} onClick={onClose} className="flex items-center gap-2">
+                <div className="flex h-16 shrink-0 items-center border-b border-slate-200 px-4 dark:border-gray-800">
+                    <Link href={route('dashboard')} onClick={onClose} className="flex items-center">
                         <ApplicationLogoImage className="h-7 w-auto max-w-[200px]" />
-                        <span className="text-sm font-bold uppercase tracking-[0.24em] text-slate-700 dark:text-slate-200">QHSSE</span>
                     </Link>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        aria-label="Tutup navigasi"
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-400 dark:hover:bg-gray-800 dark:hover:text-white"
-                    >
-                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                            <path d="M6 6l12 12M18 6L6 18" />
-                        </svg>
-                    </button>
                 </div>
 
                 <nav className="flex-1 space-y-2 overflow-y-auto px-3 py-4">
