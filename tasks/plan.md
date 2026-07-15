@@ -1,116 +1,86 @@
-# Implementation Plan: QHSSE Phase 0 Core Foundation
+# Plan: QHSSE App — UI Overhaul (Frontend Only)
 
-## Overview
+> Intent: `docs/intent/ui-overhaul.md` (CONFIRMED 2026-07-15)
+> Constraint HARD: hanya kode frontend (`resources/js`, `resources/css`, komponen UI).
+> Backend Laravel TIDAK diubah.
 
-Build the Core Foundation for the QHSSE Web Application using Laravel 12, Inertia React, PostgreSQL, Redis, Tailwind CSS, and modular monolith architecture. This phase creates the shared platform used by all future modules: auth, users, roles, permissions, master data, files, numbering, workflow, audit trail, comments, notifications, export base, and dashboard shell.
+## Tujuan
+Romawk seluruh tampilan frontend agar rapih, compact, konsisten (button/form),
+responsif (mobile/tablet/desktop), dengan sidebar auto-hide (semua ukuran),
+tabel horizontal-scroll, dan light/dark mode (default ikut OS + toggle persist).
 
-## Architecture Decisions
+## Keputusan Spec (konfirmasi / refine)
+- [x] Sidebar: tombol buka + **auto-hide di semua ukuran** (tutup saat klik luar / pilih menu).
+- [x] Tabel: **horizontal scroller** (`overflow-x-auto`), tidak melebar viewport.
+- [x] Dark mode: **default = sistem OS** (`prefers-color-scheme`), toggle manual **tersimpan** (localStorage).
+- [x] Konsistensi: **konvensi kelas Tailwind** (tanpa design-token system baru).
+- [ ] 🔲 Palet warna pasti (light & dark): asumsi = putih/abu netral + 1 aksen biru/indigo; perlu Anda setujui atau kasih hex.
+- [ ] 🔲 Urutan prioritas rombak 12 modul: asumsi = ikut urutan modul现有 (Incident → Audit → ... → NCR).
+- [ ] 🔲 Apakah Landing page konten ikut dirapih atau hanya layout? asumsi = layout + sedikit penyederhanaan visual, tidak ubah copy/teks.
 
-- Use modular monolith, not microservices.
-- Use Laravel + Inertia React to move fast while keeping full-stack cohesion.
-- Use PostgreSQL and Redis as enterprise-ready defaults.
-- Use spatie/laravel-permission for RBAC.
-- Build reusable Core services before business modules.
-- Use generic reference patterns for cross-module concerns.
-- Keep workflow status-based in Phase 0.
+## Phases (urutan eksekusi)
 
-## Phase 0 Task List
+### Phase 0 — Foundation (shell + theming)
+- [ ] Buat `ThemeProvider`/hook dark mode: baca `prefers-color-scheme` → fallback, simpan ke localStorage, toggle manual, apply class `dark` di `<html>`.
+- [ ] Overhaul `AuthenticatedLayout`:
+  - Sidebar: tombol toggle, overlay/drawer di semua ukuran, auto-hide (klik luar / link).
+  - Nav grup collapsible agar "baris banyak di mobile" teratasi.
+  - Header konsisten (logo, user menu, theme toggle).
+  - Pastikan tidak melebar di mobile/tablet/desktop.
+- [ ] Setup `dark:` variants di Tailwind (pastikan `darkMode: 'class'` di tailwind.config).
 
-### Foundation Setup
+### Phase 1 — Shared UI Primitives (konsistensi)
+- [ ] `Button` / `DangerButton` ukuran seragam (sm/md/lg), padding & radius konsisten.
+- [ ] `Card` / panel compact.
+- [ ] `TableWrapper` horizontal-scroll + header sticky (gunakan di semua tabel).
+- [ ] Input/Select/Textarea/Label seragam (sudah ada di `Components/UI`? validasi & samakan).
+- [ ] `Badge`/`StatusBadge` konsisten di light & dark.
+- [ ] Pastikan semua primitif punya `dark:` style.
 
-- [ ] Task 0.1: Bootstrap Laravel/Inertia project
-- [ ] Task 0.2: Establish project rules and modular structure
+### Phase 2 — Public Pages
+- [ ] Landing page (responsif + light/dark).
+- [ ] Login page (responsif, compact, theme toggle).
+- [ ] Register page (jika aktif).
 
-### Identity and Access
+### Phase 3 — Dashboard
+- [ ] Layout KPI cards responsif (grid yang tidak melebar), tema terang/gelap.
 
-- [ ] Task 0.3: Authentication
-- [ ] Task 0.4: User, employee, company core
-- [ ] Task 0.5: Role, permission, and scope
+### Phase 4 — 12 Module Pages (Index / Show / Form)
+Terapkan primitif Phase 1 + TableWrapper + sidebar baru. Urutan:
+1. Incident (Index/Show/Form)
+2. Audit
+3. Security Incidents
+4. Permit to Work
+5. Environmental
+6. Risk Management
+7. Document Control
+8. Investigation
+9. Training Records
+10. Inspection
+11. CAPA
+12. Quality / NCR
+- Setiap modul: cek tombol Delete (sudah ada) tetap jalan & konsisten.
 
-### Master Data
+## HARD Rules selama eksekusi
+- Tidak ubah Controller/Model/Policy/Route/Seeder/Migration/Service.
+- Tidak ubah respons data server / prop Inertia (hanya cara menampilkan).
+- Jika ternyata butuh data baru dari backend → STOP & laporkan (bukan ubah sendiri).
 
-- [ ] Task 0.6: Organization master
-- [ ] Task 0.7: General QHSSE master data
+## Verifikasi
+- `npm run build` bersih (tsc + vite) setelah setiap phase.
+- Cek manual responsif (mobile/tablet/desktop) lewat browser preview.
+- Dark mode: default ikut OS, toggle persist (reload tetap pilihannya).
+- Sidebar auto-hide di semua ukuran.
+- Tabel tidak melebar (horizontal scroll muncul di layar kecil).
+- Tombol Delete & alur CRUD tetap berfungsi (regresi visual only).
+- (Opsional) deploy ke Ubuntu-5 setelah semua phase + build hijau.
 
-### Shared Core Services
+## Out of Scope
+- Backend, API, DB, permission, role, logic bisnis.
+- Fitur baru.
 
-- [ ] Task 0.8: File service
-- [ ] Task 0.9: Numbering service
-- [ ] Task 0.10: Workflow core
-- [ ] Task 0.11: Audit trail
-- [ ] Task 0.12: Comments and activity log
-- [ ] Task 0.13: Notification core
-
-### UI/Reporting Base
-
-- [ ] Task 0.14: Search, filter, pagination, export base
-- [ ] Task 0.15: Dashboard shell
-
-### Verification and Handoff
-
-- [ ] Task 0.16: Core UAT, documentation, and handoff
-
-## Checkpoint 1: Bootstrap Complete
-
-After Tasks 0.1-0.2:
-
-- [ ] App runs locally.
-- [ ] Inertia page renders.
-- [ ] Project structure exists.
-- [ ] `AGENTS.md` exists.
-
-## Checkpoint 2: Access Control Complete
-
-After Tasks 0.3-0.5:
-
-- [ ] Login/logout works.
-- [ ] Admin can create user.
-- [ ] Role permission protects backend route/action.
-- [ ] Scope model is established.
-
-## Checkpoint 3: Master Data Complete
-
-After Tasks 0.6-0.7:
-
-- [ ] Site/area/department/company/employee masters work.
-- [ ] Severity/priority/status/category/risk matrix exists.
-- [ ] Incident phase has required master data.
-
-## Checkpoint 4: Core Services Complete
-
-After Tasks 0.8-0.13:
-
-- [ ] File upload/download secure.
-- [ ] Numbering unique.
-- [ ] Workflow transition history works.
-- [ ] Audit trail captures critical changes.
-- [ ] Comment/activity works.
-- [ ] Notification center works.
-
-## Checkpoint 5: Phase 0 Complete
-
-After Tasks 0.14-0.16:
-
-- [ ] Core list/export pattern works.
-- [ ] Dashboard shell works.
-- [ ] Tests/build run.
-- [ ] Handoff created.
-- [ ] Ready for Phase 1 Incident Reporting.
-
-## Risks and Mitigations
-
-| Risk | Impact | Mitigation |
-|---|---|---|
-| Building too much at once | High | Follow task order and checkpoints |
-| Permission bypass | High | Server-side checks and tests |
-| File access leak | High | Private storage and authorized endpoint |
-| Workflow over-engineering | Medium | Status-based workflow only |
-| Missing handoff | Medium | Phase cannot close without handoff |
-
-## Open Questions
-
-- Confirm final hosting target.
-- Confirm Docker requirement.
-- Confirm company PDF templates.
-- Confirm SSO roadmap.
-- Confirm field-level permission for medical/security data.
+## Status
+- Intent: CONFIRMED.
+- Spec: draft di plan ini (🔲 butuh konfirmasi 3 poin di atas).
+- Plan: DRAFT — menunggu konfirmasi user.
+- Execution: BELUM dimulai.
