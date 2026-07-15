@@ -27,7 +27,6 @@ export default function Dashboard({ filters, filterOptions, kpis, widgets, quick
     const permissions = new Set(auth.permissions ?? []);
     const visibleQuickLinks = quickLinks.filter((item) => permissions.has(item.permission));
 
-    // Icon mapping for quick actions
     const quickLinkIcons: Record<string, JSX.Element> = {
         'incident.reports.index': (
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -56,6 +55,18 @@ export default function Dashboard({ filters, filterOptions, kpis, widgets, quick
         ),
     };
 
+    const sectionTitle = useMemo(
+        () => ({
+            quick: 'Tindakan Cepat',
+            quickSub: 'Akses cepat ke modul operasional utama',
+            kpi: 'Indikator Kinerja Utama',
+            kpiSub: 'Ringkasan metrik QHSSE terkini',
+            charts: 'Tren & Distribusi',
+            chartsSub: 'Visualisasi data operasional',
+        }),
+        [],
+    );
+
     return (
         <AuthenticatedLayout
             header={
@@ -64,50 +75,41 @@ export default function Dashboard({ filters, filterOptions, kpis, widgets, quick
                         <p className="text-xs font-bold uppercase tracking-[0.28em] text-emerald-600 dark:text-emerald-400">QHSSE Operations</p>
                         <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950 dark:text-white">Dashboard & KPI</h2>
                     </div>
-                    <div className="text-sm text-slate-500 dark:text-slate-400">{notificationSummary.unread} unread notifications</div>
+                    <div className="text-sm text-slate-500 dark:text-slate-400">
+                        {notificationSummary.unread} notifikasi belum dibaca
+                    </div>
                 </div>
             }
         >
             <Head title="Dashboard" />
 
-            <div className="py-10">
-                <div className="mx-auto max-w-7xl space-y-8 sm:px-6 lg:px-8">
+            <div className="py-6">
+                <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
                     {/* Filters */}
-                    <section className="rounded-xl bg-white border border-slate-200 shadow-sm dark:bg-gray-900 dark:border-gray-700">
-                        <div className="p-8">
-                            <div className="grid gap-8 lg:grid-cols-[1.25fr_0.75fr]">
-                                <div>
-                                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-600 dark:text-emerald-400">Live Dashboard</p>
-                                    <h1 className="mt-4 max-w-3xl text-4xl font-black tracking-tight text-slate-900 dark:text-white sm:text-5xl">Real-time KPI dari 5 modul operasional.</h1>
-                                    <p className="mt-4 max-w-2xl text-base text-slate-600 dark:text-slate-300">Insiden, Investigasi, CAPA, Inspeksi, dan Asset — filter berdasarkan site, department, dan rentang tanggal.</p>
-                                </div>
-                                <DashboardFilters
-                                    filters={filters}
-                                    filterOptions={filterOptions}
-                                    route="dashboard"
-                                />
-                            </div>
-                        </div>
+                    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900 sm:p-5">
+                        <DashboardFilters filters={filters} filterOptions={filterOptions} route="dashboard" />
                     </section>
 
-                    {/* Quick Actions - Promoted to high priority */}
+                    {/* Quick Actions */}
                     {visibleQuickLinks.length > 0 && (
                         <section>
-                            <div className="mb-4">
-                                <h3 className="text-lg font-bold text-slate-950 dark:text-white">Quick Actions</h3>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Fast access to key operational modules</p>
+                            <div className="mb-3">
+                                <h3 className="text-base font-bold text-slate-950 dark:text-white">{sectionTitle.quick}</h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">{sectionTitle.quickSub}</p>
                             </div>
-                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
                                 {visibleQuickLinks.slice(0, 5).map((item) => (
                                     <QuickActionCard
                                         key={item.route}
                                         label={item.label}
                                         route={route(item.route)}
-                                        icon={quickLinkIcons[item.route] || (
-                                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                            </svg>
-                                        )}
+                                        icon={
+                                            quickLinkIcons[item.route] || (
+                                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                </svg>
+                                            )
+                                        }
                                     />
                                 ))}
                             </div>
@@ -115,14 +117,32 @@ export default function Dashboard({ filters, filterOptions, kpis, widgets, quick
                     )}
 
                     {/* KPI Cards */}
-                    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                        {kpis.map((kpi) => <KpiCard key={kpi.label} {...kpi} />)}
+                    <section>
+                        <div className="mb-3">
+                            <h3 className="text-base font-bold text-slate-950 dark:text-white">{sectionTitle.kpi}</h3>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">{sectionTitle.kpiSub}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-5">
+                            {kpis.map((kpi) => (
+                                <KpiCard key={kpi.label} {...kpi} />
+                            ))}
+                        </div>
                     </section>
 
                     {/* Charts */}
-                    <section className="grid gap-6 xl:grid-cols-2">
-                        {widgets.map((widget) => <ChartPlaceholder key={widget.title} {...widget} />)}
-                    </section>
+                    {widgets.length > 0 && (
+                        <section>
+                            <div className="mb-3">
+                                <h3 className="text-base font-bold text-slate-950 dark:text-white">{sectionTitle.charts}</h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">{sectionTitle.chartsSub}</p>
+                            </div>
+                            <div className="grid gap-4 lg:grid-cols-2">
+                                {widgets.map((widget) => (
+                                    <ChartPlaceholder key={widget.title} {...widget} />
+                                ))}
+                            </div>
+                        </section>
+                    )}
                 </div>
             </div>
         </AuthenticatedLayout>
