@@ -1,6 +1,6 @@
 import Checkbox from '@/Components/Checkbox';
+import Field from '@/Components/UI/Field';
 import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
@@ -32,16 +32,19 @@ export default function Login({
         <GuestLayout>
             <Head title="Log in" />
 
+            <div className="mb-6">
+                <h1 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Selamat datang</h1>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Masuk ke sistem QHSSE.</p>
+            </div>
+
             {status && (
-                <div className="mb-4 text-sm font-medium text-green-600">
+                <div className="mb-4 rounded-md bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
                     {status}
                 </div>
             )}
 
-            <form onSubmit={submit}>
-                <div>
-                    <InputLabel htmlFor="email" value="Email" />
-
+            <form onSubmit={submit} className="space-y-4">
+                <Field label="Email" error={errors.email} required>
                     <TextInput
                         id="email"
                         type="email"
@@ -52,13 +55,9 @@ export default function Login({
                         isFocused={true}
                         onChange={(e) => setData('email', e.target.value)}
                     />
+                </Field>
 
-                    <InputError message={errors.email} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
-
+                <Field label="Password" error={errors.password} required>
                     <TextInput
                         id="password"
                         type="password"
@@ -68,41 +67,28 @@ export default function Login({
                         autoComplete="current-password"
                         onChange={(e) => setData('password', e.target.value)}
                     />
+                </Field>
 
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
+                <label className="flex items-center">
+                    <Checkbox
+                        name="remember"
+                        checked={data.remember}
+                        onChange={(e) => setData('remember', e.target.checked as boolean)}
+                    />
+                    <span className="ms-2 text-sm text-slate-600 dark:text-slate-400">Ingat saya</span>
+                </label>
 
-                <div className="mt-4 block">
-                    <label className="flex items-center">
-                        <Checkbox
-                            name="remember"
-                            checked={data.remember}
-                            onChange={(e) =>
-                                setData(
-                                    'remember',
-                                    (e.target.checked || false) as false,
-                                )
-                            }
-                        />
-                        <span className="ms-2 text-sm text-gray-600 dark:text-gray-400">
-                            Remember me
-                        </span>
-                    </label>
-                </div>
-
-                <div className="mt-4 flex items-center justify-end">
+                <div className="flex items-center justify-between gap-3 pt-2">
                     {canResetPassword && (
                         <Link
                             href={route('password.request')}
-                            className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:text-gray-400 dark:hover:text-gray-100 dark:focus:ring-offset-gray-800"
+                            className="text-sm text-slate-500 underline hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-400 dark:hover:text-slate-100"
                         >
-                            Forgot your password?
+                            Lupa password?
                         </Link>
                     )}
 
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Log in
-                    </PrimaryButton>
+                    <PrimaryButton disabled={processing}>Masuk</PrimaryButton>
                 </div>
             </form>
         </GuestLayout>

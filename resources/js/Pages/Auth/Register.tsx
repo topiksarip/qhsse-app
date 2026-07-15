@@ -1,5 +1,5 @@
+import Field from '@/Components/UI/Field';
 import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
@@ -26,10 +26,13 @@ export default function Register() {
         <GuestLayout>
             <Head title="Register" />
 
-            <form onSubmit={submit}>
-                <div>
-                    <InputLabel htmlFor="name" value="Name" />
+            <div className="mb-6">
+                <h1 className="text-xl font-semibold text-slate-800 dark:text-slate-100">Buat akun</h1>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Daftar untuk mengakses sistem QHSSE.</p>
+            </div>
 
+            <form onSubmit={submit} className="space-y-4">
+                <Field label="Nama" error={errors.name} required>
                     <TextInput
                         id="name"
                         name="name"
@@ -40,13 +43,9 @@ export default function Register() {
                         onChange={(e) => setData('name', e.target.value)}
                         required
                     />
+                </Field>
 
-                    <InputError message={errors.name} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="email" value="Email" />
-
+                <Field label="Email" error={errors.email} required>
                     <TextInput
                         id="email"
                         type="email"
@@ -57,13 +56,9 @@ export default function Register() {
                         onChange={(e) => setData('email', e.target.value)}
                         required
                     />
+                </Field>
 
-                    <InputError message={errors.email} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
-
+                <Field label="Password" error={errors.password} required>
                     <TextInput
                         id="password"
                         type="password"
@@ -74,16 +69,9 @@ export default function Register() {
                         onChange={(e) => setData('password', e.target.value)}
                         required
                     />
+                </Field>
 
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel
-                        htmlFor="password_confirmation"
-                        value="Confirm Password"
-                    />
-
+                <Field label="Konfirmasi Password" error={errors.password_confirmation} required>
                     <TextInput
                         id="password_confirmation"
                         type="password"
@@ -91,29 +79,20 @@ export default function Register() {
                         value={data.password_confirmation}
                         className="mt-1 block w-full"
                         autoComplete="new-password"
-                        onChange={(e) =>
-                            setData('password_confirmation', e.target.value)
-                        }
+                        onChange={(e) => setData('password_confirmation', e.target.value)}
                         required
                     />
+                </Field>
 
-                    <InputError
-                        message={errors.password_confirmation}
-                        className="mt-2"
-                    />
-                </div>
-
-                <div className="mt-4 flex items-center justify-end">
+                <div className="flex items-center justify-between gap-3 pt-2">
                     <Link
                         href={route('login')}
-                        className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:text-gray-400 dark:hover:text-gray-100 dark:focus:ring-offset-gray-800"
+                        className="text-sm text-slate-500 underline hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-400 dark:hover:text-slate-100"
                     >
-                        Already registered?
+                        Sudah punya akun?
                     </Link>
 
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Register
-                    </PrimaryButton>
+                    <PrimaryButton disabled={processing}>Daftar</PrimaryButton>
                 </div>
             </form>
         </GuestLayout>
