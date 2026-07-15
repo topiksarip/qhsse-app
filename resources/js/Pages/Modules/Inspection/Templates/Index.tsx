@@ -6,6 +6,7 @@ import { Head, Link } from '@inertiajs/react';
 import EmptyState from '@/Components/UI/EmptyState';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 
 type Template = { id: number; code: string; name: string; category: string; is_active: boolean; items_count: number };
 
@@ -45,7 +46,11 @@ export default function TemplateIndex({ items, auth }: PageProps<{ items: Pagina
                                 </tr>
                             ) : items.data.map((t) => (
                                 <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-gray-800">
-                                    <td className="px-4 py-3 text-sm"><Link href={route('inspection.templates.show', t.id)} className="font-medium text-emerald-600 hover:text-emerald-800 dark:text-emerald-400">{t.code}</Link></td>
+                                    <td className="px-4 py-3 text-sm">
+                                        <Link href={route('inspection.templates.show', t.id)} className="font-medium text-emerald-600 hover:text-emerald-800 dark:text-emerald-400">{t.code}</Link>
+                                        <Link href={route('inspection.templates.edit', t.id)} className="ml-3 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">Edit</Link>
+                                        <DeleteWithConfirm routeName="inspection.templates.destroy" id={t.id} permission="inspection.checklists.delete" itemLabel={t.name} asLink className="ml-3 text-red-600 hover:underline dark:text-red-400">🗑 Hapus</DeleteWithConfirm>
+                                    </td>
                                     <td className="px-4 py-3 text-sm text-slate-800 dark:text-slate-200">{t.name}</td>
                                     <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{t.category}</td>
                                     <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{t.items_count}</td>

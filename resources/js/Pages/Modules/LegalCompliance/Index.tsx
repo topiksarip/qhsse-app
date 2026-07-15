@@ -8,6 +8,7 @@ import RegisterStatusBadge from '@/Components/LegalCompliance/RegisterStatusBadg
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import { useState } from 'react';
 
 interface IndexProps extends PageProps {
@@ -134,6 +135,7 @@ export default function Index({ auth, registers, filters }: IndexProps) {
                                             {canUpdate && (
                                                 <Link href={route('legal.registers.edit', r.id)} className="ml-2 text-gray-600 hover:underline dark:text-gray-300">✏</Link>
                                             )}
+                                            <DeleteWithConfirm routeName="legal.registers.destroy" id={r.id} permission="legal.register.delete" itemLabel={r.title} asLink className="ml-2 text-red-600 hover:underline dark:text-red-400">🗑</DeleteWithConfirm>
                                         </td>
                                     </tr>
                                 );

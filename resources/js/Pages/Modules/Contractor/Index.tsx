@@ -6,6 +6,7 @@ import EmptyState from '@/Components/UI/EmptyState';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 
 interface Contractor {
     id: number;
@@ -164,6 +165,7 @@ export default function Index({
                                     <td className="whitespace-nowrap px-4 py-3 text-center text-sm font-medium">
                                         <Link href={route('contractors.show', contractor.id)} className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400">View</Link>
                                         <Link href={route('contractors.edit', contractor.id)} className="ml-3 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">Edit</Link>
+                                        <DeleteWithConfirm routeName="contractors.destroy" id={contractor.id} permission="contractor.management.delete" itemLabel={contractor.company_name} asLink className="ml-3 text-red-600 hover:underline dark:text-red-400">🗑 Hapus</DeleteWithConfirm>
                                     </td>
                                 </tr>
                             ))}
