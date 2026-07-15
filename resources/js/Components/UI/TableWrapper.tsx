@@ -2,13 +2,16 @@ import { PropsWithChildren } from 'react';
 
 /**
  * Wraps wide tables so they scroll horizontally on small screens instead of
- * overflowing the viewport. Header stays visible while scrolling vertically.
- * Pass `className` to size the container (e.g. max height).
+ * overflowing the viewport (or squishing into an unreadable mess). On screens
+ * narrower than `tableClassName`'s min-width the container scrolls; on larger
+ * screens the table fills 100% of the container. Header stays visible while
+ * scrolling vertically. Pass `className` to size the container (e.g. max height)
+ * and `tableClassName` to override the min-width (e.g. very wide matrix tables).
  */
-export default function TableWrapper({ children, className = '' }: PropsWithChildren<{ className?: string }>) {
+export default function TableWrapper({ children, className = '', tableClassName = 'min-w-[max(100%,640px)]' }: PropsWithChildren<{ className?: string; tableClassName?: string }>) {
     return (
         <div className={`w-full overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900 ${className}`}>
-            <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-gray-700">{children}</table>
+            <table className={`${tableClassName} divide-y divide-slate-200 text-sm dark:divide-gray-700`}>{children}</table>
         </div>
     );
 }

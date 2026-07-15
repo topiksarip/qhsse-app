@@ -6,6 +6,7 @@ import MatrixCell from '@/Components/Training/MatrixCell';
 import EmptyState from '@/Components/UI/EmptyState';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import TableWrapper from '@/Components/UI/TableWrapper';
 
 interface MatrixIndexProps extends PageProps {
     programs: TrainingProgram[];
@@ -96,7 +97,7 @@ export default function Index({ auth, programs, employees, matrix, sites, depart
                         <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20"><div className="text-sm font-medium text-red-600 dark:text-red-400">Expired</div><div className="mt-1 text-2xl font-bold text-red-700 dark:text-red-300">{expiredCount}</div></div>
                     </div>
 
-                    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                    <TableWrapper tableClassName="min-w-[max(100%,1100px)]">
                         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-gray-700">
                             <p className="text-sm text-slate-600 dark:text-slate-400">Matrix {employees.length} karyawan × {programs.length} program</p>
                             <div className="flex gap-2">
@@ -107,8 +108,7 @@ export default function Index({ auth, programs, employees, matrix, sites, depart
                         {employees.length === 0 || programs.length === 0 ? (
                             <div className="p-12"><EmptyState title="Data belum tersedia" description="Matrix kompetensi membutuhkan data karyawan dan program pelatihan. Pastikan kedua data sudah tersedia." /></div>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full">
+                                <table className="min-w-[max(100%,1100px)]">
                                     <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-gray-900">
                                         <tr>
                                             <th className="sticky left-0 z-20 border-r border-slate-200 bg-slate-50 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:border-gray-700 dark:bg-gray-900">Karyawan</th>
@@ -133,9 +133,8 @@ export default function Index({ auth, programs, employees, matrix, sites, depart
                                         ))}
                                     </tbody>
                                 </table>
-                            </div>
                         )}
-                    </div>
+                    </TableWrapper>
 
                     <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
                         <h3 className="mb-3 text-sm font-medium text-slate-900 dark:text-slate-100">QUICK ACTIONS</h3>
