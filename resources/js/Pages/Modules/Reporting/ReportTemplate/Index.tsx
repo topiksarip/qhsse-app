@@ -8,13 +8,15 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import EmptyState from '@/Components/UI/EmptyState';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 
 interface Props {
     templates: { data: ReportTemplate[]; links: PaginationLink[] };
     filters: { search?: string; type?: string; is_active?: string };
+    can: { create: boolean; delete: boolean };
 }
 
-export default function Index({ templates, filters }: Props) {
+export default function Index({ templates, filters, can }: Props) {
     const [search, setSearch] = useState(filters.search || '');
     const [typeFilter, setTypeFilter] = useState(filters.type || '');
     const [activeFilter, setActiveFilter] = useState(filters.is_active || '');
@@ -111,6 +113,18 @@ export default function Index({ templates, filters }: Props) {
                                         <Link href={route('saved-reports.create', { template_id: template.id })} className="ml-2 text-green-600 hover:underline dark:text-green-400">Generate</Link>
                                         {!template.is_predefined && <Link href={route('report-templates.edit', template.id)} className="ml-2 text-yellow-600 hover:underline dark:text-yellow-400">Edit</Link>}
                                         <button onClick={() => handleToggleActive(template.id)} className="ml-2 text-gray-600 hover:underline dark:text-gray-300">{template.is_active ? 'Nonaktifkan' : 'Aktifkan'}</button>
+                                        {can.delete && !template.is_predefined && (
+                                            <DeleteWithConfirm
+                                                routeName="report-templates.destroy"
+                                                id={template.id}
+                                                permission="reporting.templates.delete"
+                                                itemLabel={template.name}
+                                                redirectTo="report-templates.index"
+                                                asLink
+                                            >
+                                                Hapus
+                                            </DeleteWithConfirm>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

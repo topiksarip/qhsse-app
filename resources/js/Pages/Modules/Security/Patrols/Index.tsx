@@ -7,13 +7,14 @@ import { Option, Patrol, statusClasses, statusLabels } from './types';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 
 interface Props extends PageProps {
     patrols: { data: Patrol[]; links: Array<{ url: string | null; label: string; active: boolean }>; from: number | null; to: number | null; total: number };
     filters: Record<string, string | undefined>;
     sites: Option[];
     statuses: Record<string, string>;
-    can: { create: boolean; export: boolean };
+    can: { create: boolean; export: boolean; delete: boolean };
 }
 
 export default function Index({ patrols, filters, sites, statuses, can }: Props) {
@@ -88,7 +89,20 @@ export default function Index({ patrols, filters, sites, statuses, can }: Props)
                                         <td className="whitespace-nowrap px-4 py-3">{new Date(patrol.scheduled_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</td>
                                         <td className="px-4 py-3"><span className="font-medium">{(patrol.results_count ?? 0) - (patrol.pending_count ?? 0)}/{patrol.results_count ?? 0}</span>{(patrol.issue_count ?? 0) > 0 && <div className="text-xs font-medium text-red-600">{patrol.issue_count} issue</div>}</td>
                                         <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusClasses[patrol.status]}`}>{statusLabels[patrol.status]}</span></td>
-                                        <td className="whitespace-nowrap px-4 py-3 text-center"><Link href={route('security.patrols.show', patrol.id)} className="font-medium text-emerald-600 hover:underline dark:text-emerald-400">Buka</Link></td>
+                                        <td className="whitespace-nowrap px-4 py-3 text-center"><Link href={route('security.patrols.show', patrol.id)} className="font-medium text-emerald-600 hover:underline dark:text-emerald-400">Buka</Link>
+                                            {can.delete && (
+                                                <DeleteWithConfirm
+                                                    routeName="security.patrols.destroy"
+                                                    id={patrol.id}
+                                                    permission="security.patrols.delete"
+                                                    itemLabel={patrol.patrol_number}
+                                                    redirectTo="security.patrols.index"
+                                                    asLink
+                                                >
+                                                    Hapus
+                                                </DeleteWithConfirm>
+                                            )}
+                                        </td>
                                     </tr>
                                 );
                             })}

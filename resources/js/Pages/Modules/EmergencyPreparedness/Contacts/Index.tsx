@@ -6,12 +6,13 @@ import EmptyState from '@/Components/UI/EmptyState';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 
 interface ContactIndexProps extends PageProps {
     contacts: PaginatedData<EmergencyContact>;
     filters: { search?: string; site_id?: number; is_active?: boolean };
     sites: Site[];
-    can: { create: boolean; update: boolean };
+    can: { create: boolean; update: boolean; delete: boolean };
 }
 
 const statusBadge = (active: boolean) =>
@@ -90,6 +91,18 @@ export default function Index({ auth, contacts, filters, sites, can }: ContactIn
                                     <td className="whitespace-nowrap px-4 py-3 text-center text-sm">{statusBadge(contact.is_active)}</td>
                                     <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
                                         {can.update && <Link href={route('emergency.contacts.edit', contact.id)} className="text-emerald-600 hover:underline dark:text-emerald-400">Edit</Link>}
+                                        {can.delete && (
+                                            <DeleteWithConfirm
+                                                routeName="emergency.contacts.destroy"
+                                                id={contact.id}
+                                                permission="emergency.contacts.delete"
+                                                itemLabel={contact.name}
+                                                redirectTo="emergency.contacts.index"
+                                                asLink
+                                            >
+                                                Delete
+                                            </DeleteWithConfirm>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

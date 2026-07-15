@@ -47,6 +47,7 @@ class TrainingProgramController extends Controller
             'can' => [
                 'create' => $request->user()->can('training.programs.create'),
                 'update' => $request->user()->can('training.programs.update'),
+                'delete' => $request->user()->can('training.programs.delete'),
             ],
         ]);
     }
@@ -155,5 +156,31 @@ class TrainingProgramController extends Controller
 
         return redirect()->route('training.programs.show', $program)
             ->with('success', 'Program pelatihan berhasil diperbarui.');
+    }
+
+    public function destroy(TrainingProgram $program): RedirectResponse
+    {
+        $this->authorize('delete', $program);
+
+        DB::transaction(function () use ($program): void {
+            $name = $program->name;
+            $program->delete();
+            $this->auditService->log(
+                'training',
+                'delete',
+                $program->id,
+                'Deleted training program: '.$name
+            );
+            $this->activityService->log(
+                'training',
+                $program->id,
+                'deleted',
+                'Program pelatihan "'.$name.'" dihapus',
+                null,
+                null
+            );
+        });
+
+        return redirect()->route('training.programs.index')->with('success', 'Program pelatihan berhasil dihapus.');
     }
 }

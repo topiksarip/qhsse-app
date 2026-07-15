@@ -4,12 +4,13 @@ import { PageProps } from '@/types';
 import EmptyState from '@/Components/UI/EmptyState';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import { formatDateOnly } from '@/Utils/date';
 
 interface Inspection { id: number; inspection_date: string; result: string; inspector: { id: number; name: string }; findings: string | null; capa_action: { id: number; action_number: string; status: string } | null; can_update: boolean; can_create_capa: boolean; created_at: string }
 interface Asset { id: number; asset_number: string; name: string }
 
-export default function Index({ asset, inspections, can }: PageProps<{ asset: Asset; inspections: Inspection[]; can: { create: boolean } }>) {
+export default function Index({ asset, inspections, can }: PageProps<{ asset: Asset; inspections: Inspection[]; can: { create: boolean; delete: boolean } }>) {
     const resultColor = (r: string) => ({ pass: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200', fail: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200', maintenance_required: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' }[r] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200');
     const resultLabel = (r: string) => ({ pass: 'Pass', fail: 'Fail', maintenance_required: 'Maintenance Required' }[r] || r);
 
@@ -57,6 +58,19 @@ export default function Index({ asset, inspections, can }: PageProps<{ asset: As
                                         <Link href={`/assets/${asset.id}/inspections/${inspection.id}`} className="text-emerald-600 hover:underline dark:text-emerald-400">View</Link>
                                         {inspection.can_update && <Link href={`/assets/${asset.id}/inspections/${inspection.id}/edit`} className="ml-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">Edit</Link>}
                                         {inspection.can_create_capa && !inspection.capa_action && <Link href={`/assets/${asset.id}/inspections/${inspection.id}/create-capa`} className="ml-2 text-orange-600 hover:underline dark:text-orange-400">Buat CAPA</Link>}
+                                        {can.delete && (
+                                            <DeleteWithConfirm
+                                                routeName="assets.inspections.destroy"
+                                                id={[asset.id, inspection.id]}
+                                                permission="asset.inspections.delete"
+                                                itemLabel={formatDateOnly(inspection.inspection_date)}
+                                                redirectTo="assets.inspections.index"
+                                                redirectParams={{ asset: asset.id }}
+                                                asLink
+                                            >
+                                                Delete
+                                            </DeleteWithConfirm>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

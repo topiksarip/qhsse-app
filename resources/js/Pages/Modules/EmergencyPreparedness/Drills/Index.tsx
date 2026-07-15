@@ -6,12 +6,13 @@ import EmptyState from '@/Components/UI/EmptyState';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 
 interface DrillIndexProps extends PageProps {
     drills: PaginatedData<EmergencyDrill & { emergency_plan: EmergencyPlan }>;
     filters: { search?: string; status?: string; result?: string; site_id?: number; from?: string; to?: string };
     sites: Site[];
-    can: { create: boolean; export: boolean; execute: boolean };
+    can: { create: boolean; export: boolean; execute: boolean; delete: boolean };
 }
 
 const drillStatusColors: Record<string, string> = { scheduled: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200', executed: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' };
@@ -121,6 +122,18 @@ export default function Index({ auth, drills, filters, sites, can }: DrillIndexP
                                         <Link href={route('emergency.drills.show', drill.id)} className="text-emerald-600 hover:underline dark:text-emerald-400">Lihat</Link>
                                         {drill.status === 'scheduled' && can.create && <Link href={route('emergency.drills.edit', drill.id)} className="ml-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">Edit</Link>}
                                         {drill.status === 'scheduled' && can.execute && <Link href={route('emergency.drills.execute', drill.id)} className="ml-2 text-green-600 hover:underline dark:text-green-400">Eksekusi</Link>}
+                                        {can.delete && (
+                                            <DeleteWithConfirm
+                                                routeName="emergency.drills.destroy"
+                                                id={drill.id}
+                                                permission="emergency.drills.delete"
+                                                itemLabel={drill.drill_number}
+                                                redirectTo="emergency.drills.index"
+                                                asLink
+                                            >
+                                                Delete
+                                            </DeleteWithConfirm>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

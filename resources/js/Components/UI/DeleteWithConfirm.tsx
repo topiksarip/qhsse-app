@@ -7,11 +7,13 @@ import SecondaryButton from '@/Components/SecondaryButton';
 
 interface DeleteWithConfirmProps {
     routeName: string;
-    id: number | string;
+    id: number | string | Array<number | string>;
     permission: string;
     itemLabel?: string;
     /** Optional route to redirect to after successful deletion (e.g. index). If omitted, stays on current page. */
     redirectTo?: string;
+    /** Params passed to the redirect route (e.g. for nested routes). */
+    redirectParams?: Record<string, unknown>;
     /** Extra inertia options passed to router.delete (e.g. onSuccess). */
     deleteOptions?: Record<string, unknown>;
     className?: string;
@@ -26,6 +28,7 @@ export default function DeleteWithConfirm({
     permission,
     itemLabel,
     redirectTo,
+    redirectParams,
     deleteOptions,
     className = '',
     asLink = false,
@@ -46,14 +49,16 @@ export default function DeleteWithConfirm({
 
     const handleDelete = () => {
         setProcessing(true);
-        router.delete(route(routeName, id), {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const url = route(routeName, id as any);
+        router.delete(url, {
             preserveScroll: true,
             ...deleteOptions,
             onSuccess: (...args: unknown[]) => {
                 setProcessing(false);
                 setConfirming(false);
                 if (redirectTo) {
-                    router.visit(route(redirectTo));
+                    router.visit(route(redirectTo, redirectParams));
                 }
                 const caller = deleteOptions?.onSuccess as ((...a: unknown[]) => void) | undefined;
                 caller?.(...args);

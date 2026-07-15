@@ -43,6 +43,7 @@ class AssetCertificateController extends Controller
             'certificates' => $certificates,
             'can' => [
                 'create' => $request->user()->can('create', [AssetCertificate::class, $asset]),
+                'delete' => $request->user()->can('delete', [AssetCertificate::class, $asset]),
             ],
         ]);
     }

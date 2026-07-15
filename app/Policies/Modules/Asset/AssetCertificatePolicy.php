@@ -59,6 +59,15 @@ class AssetCertificatePolicy
 
     public function delete(User $user, AssetCertificate $certificate): bool
     {
-        return false;
+        if (! $user->hasPermissionTo('asset.certificates.delete')) {
+            return false;
+        }
+
+        // Cannot delete certificates of decommissioned assets
+        if ($certificate->asset->status === 'decommissioned') {
+            return false;
+        }
+
+        return app(AssetPolicy::class)->view($user, $certificate->asset);
     }
 }

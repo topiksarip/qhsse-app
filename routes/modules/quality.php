@@ -25,6 +25,7 @@ Route::middleware(['auth', 'verified', 'active'])->prefix('quality')->name('qual
         Route::get('/{complaint}', [CustomerComplaintController::class, 'show'])->name('show')->middleware('permission:quality.complaints.view');
         Route::get('/{complaint}/edit', [CustomerComplaintController::class, 'edit'])->name('edit')->middleware('permission:quality.complaints.update');
         Route::put('/{complaint}', [CustomerComplaintController::class, 'update'])->name('update')->middleware('permission:quality.complaints.update');
+        Route::delete('/{complaint}', [CustomerComplaintController::class, 'destroy'])->name('destroy')->middleware('permission:quality.complaints.delete');
         Route::post('/{complaint}/close', [CustomerComplaintController::class, 'close'])->name('close')->middleware('permission:quality.complaints.close');
     });
 });

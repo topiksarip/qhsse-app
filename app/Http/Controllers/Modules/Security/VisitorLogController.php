@@ -86,8 +86,9 @@ class VisitorLogController extends Controller
             ],
             'sites' => $this->sites(),
             'can' => [
-                'create' => Auth::user()->can('create', VisitorLog::class),
-                'export' => Auth::user()->can('export', VisitorLog::class),
+                'create' => $request->user()->can('create', VisitorLog::class),
+                'export' => $request->user()->can('export', VisitorLog::class),
+                'delete' => $request->user()->can('delete', VisitorLog::class),
             ],
         ]);
     }
@@ -183,6 +184,20 @@ class VisitorLogController extends Controller
 
         return redirect()->route('security.visitors.show', $visitor)
             ->with('success', 'Pengunjung berhasil di-check-out.');
+    }
+
+    public function destroy(VisitorLog $visitor): RedirectResponse
+    {
+        $this->authorize('delete', $visitor);
+
+        DB::transaction(function () use ($visitor): void {
+            $name = $visitor->visitor_name;
+            $visitor->delete();
+            $this->audit->deleted($visitor, Auth::user(), 'security_visitor', $visitor->id);
+            $this->activity->log('security_visitor', $visitor->id, 'deleted', "Pengunjung {$name} dihapus.", Auth::user());
+        });
+
+        return redirect()->route('security.visitors.index')->with('success', 'Data pengunjung berhasil dihapus.');
     }
 
     public function export(): StreamedResponse

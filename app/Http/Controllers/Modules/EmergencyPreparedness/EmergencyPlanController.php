@@ -80,6 +80,7 @@ class EmergencyPlanController extends Controller
             'can' => [
                 'create' => $user->can('emergency.plans.create'),
                 'export' => $user->can('emergency.plans.export'),
+                'delete' => $user->can('emergency.plans.delete'),
             ],
         ]);
     }

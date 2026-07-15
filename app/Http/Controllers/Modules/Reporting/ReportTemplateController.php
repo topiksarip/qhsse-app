@@ -52,6 +52,10 @@ class ReportTemplateController extends Controller
         return Inertia::render('Modules/Reporting/ReportTemplate/Index', [
             'templates' => $templates,
             'filters' => $filters,
+            'can' => [
+                'create' => $request->user()->can('create', ReportTemplate::class),
+                'delete' => $request->user()->can('delete', ReportTemplate::class),
+            ],
         ]);
     }
 

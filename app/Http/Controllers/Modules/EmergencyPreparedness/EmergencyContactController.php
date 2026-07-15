@@ -68,7 +68,8 @@ class EmergencyContactController extends Controller
             'sites' => Site::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'can' => [
                 'create' => $user->can('emergency.contacts.create'),
-                'export' => false, // No export route for contacts yet
+                'update' => $user->can('emergency.contacts.update'),
+                'delete' => $user->can('emergency.contacts.delete'),
             ],
         ]);
     }

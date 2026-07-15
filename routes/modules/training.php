@@ -33,6 +33,10 @@ Route::middleware(['auth', 'verified'])
         Route::put('/{program}', [TrainingProgramController::class, 'update'])
             ->name('update')
             ->middleware('permission:training.programs.update');
+
+        Route::delete('/{program}', [TrainingProgramController::class, 'destroy'])
+            ->name('destroy')
+            ->middleware('permission:training.programs.delete');
     });
 
 // Training Records

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 
 interface CustomerComplaint { id: number; complaint_number: string; customer_name: string; title: string; status: 'open' | 'closed'; site: { id: number; name: string }; severity: { id: number; name: string; color: string }; created_at: string }
 
@@ -13,7 +14,7 @@ interface Props extends PageProps {
     filters: { search?: string; site_id?: number; status?: string; severity_id?: number };
     sites: Array<{ id: number; name: string }>;
     severities: Array<{ id: number; name: string; color: string }>;
-    can: { create: boolean; export: boolean };
+    can: { create: boolean; export: boolean; delete: boolean };
 }
 
 export default function Index({ complaints, filters, sites, severities, can }: Props) {
@@ -109,6 +110,18 @@ export default function Index({ complaints, filters, sites, severities, can }: P
                                     <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
                                         <Link href={route('quality.complaints.show', complaint.id)} className="text-emerald-600 hover:underline dark:text-emerald-400">Lihat</Link>
                                         {complaint.status === 'open' && can.create && <Link href={route('quality.complaints.edit', complaint.id)} className="ml-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">Edit</Link>}
+                                        {can.delete && (
+                                            <DeleteWithConfirm
+                                                routeName="quality.complaints.destroy"
+                                                id={complaint.id}
+                                                permission="quality.complaints.delete"
+                                                itemLabel={complaint.complaint_number}
+                                                redirectTo="quality.complaints.index"
+                                                asLink
+                                            >
+                                                Delete
+                                            </DeleteWithConfirm>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

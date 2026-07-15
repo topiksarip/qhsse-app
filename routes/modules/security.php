@@ -27,6 +27,7 @@ Route::middleware(['auth', 'verified', 'active'])->prefix('security')->name('sec
         Route::get('/{visitor}', [VisitorLogController::class, 'show'])->name('show')->middleware('permission:security.visitor.view');
         Route::get('/{visitor}/edit', [VisitorLogController::class, 'edit'])->name('edit')->middleware('permission:security.visitor.log');
         Route::put('/{visitor}', [VisitorLogController::class, 'update'])->name('update')->middleware('permission:security.visitor.log');
+        Route::delete('/{visitor}', [VisitorLogController::class, 'destroy'])->name('destroy')->middleware('permission:security.visitors.delete');
         Route::post('/{visitor}/check-out', [VisitorLogController::class, 'checkOut'])->name('check-out')->middleware('permission:security.visitor.log');
     });
 
@@ -38,6 +39,7 @@ Route::middleware(['auth', 'verified', 'active'])->prefix('security')->name('sec
         Route::get('/{patrol}', [PatrolChecklistController::class, 'show'])->name('show')->middleware('permission:security.patrols.view');
         Route::get('/{patrol}/edit', [PatrolChecklistController::class, 'edit'])->name('edit')->middleware('permission:security.patrols.create');
         Route::put('/{patrol}', [PatrolChecklistController::class, 'update'])->name('update')->middleware('permission:security.patrols.create');
+        Route::delete('/{patrol}', [PatrolChecklistController::class, 'destroy'])->name('destroy')->middleware('permission:security.patrols.delete');
         Route::post('/{patrol}/start', [PatrolChecklistController::class, 'start'])->name('start')->middleware('permission:security.patrols.execute');
         Route::post('/{patrol}/complete', [PatrolChecklistController::class, 'complete'])->name('complete')->middleware('permission:security.patrols.execute');
         Route::put('/{patrol}/results/{result}', [PatrolResultController::class, 'store'])->name('results.store')->middleware('permission:security.patrols.execute');

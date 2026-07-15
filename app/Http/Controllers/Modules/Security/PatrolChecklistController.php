@@ -75,6 +75,7 @@ class PatrolChecklistController extends Controller
             'can' => [
                 'create' => $request->user()->can('create', PatrolChecklist::class),
                 'export' => $request->user()->can('export', PatrolChecklist::class),
+                'delete' => $request->user()->can('delete', PatrolChecklist::class),
             ],
         ]);
     }
@@ -235,6 +236,20 @@ class PatrolChecklistController extends Controller
             'Petugas' => 'assignedTo.name', 'Terjadwal' => 'scheduled_at', 'Dimulai' => 'started_at',
             'Selesai' => 'completed_at', 'Status' => 'status', 'Checkpoint' => 'results_count', 'Issue' => 'issue_count',
         ], 'patrol_checklists_'.now()->format('Ymd_His').'.csv');
+    }
+
+    public function destroy(Request $request, PatrolChecklist $patrol): RedirectResponse
+    {
+        $this->authorize('delete', $patrol);
+
+        DB::transaction(function () use ($request, $patrol): void {
+            $patrolNumber = $patrol->patrol_number;
+            $patrol->delete();
+            $this->audit->deleted($patrol, $request->user(), 'security_patrol', $patrol->id);
+            $this->activity->log('security_patrol', $patrol->id, 'deleted', "Patroli {$patrolNumber} dihapus.", $request->user());
+        });
+
+        return redirect()->route('security.patrols.index')->with('success', 'Jadwal patroli berhasil dihapus.');
     }
 
     private function formOptions(Request $request): array

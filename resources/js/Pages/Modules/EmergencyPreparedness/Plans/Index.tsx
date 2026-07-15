@@ -6,12 +6,13 @@ import EmptyState from '@/Components/UI/EmptyState';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 
 interface PlanIndexProps extends PageProps {
     plans: PaginatedData<EmergencyPlan>;
     filters: { search?: string; type?: string; site_id?: number };
     sites: Site[];
-    can: { create: boolean; export: boolean };
+    can: { create: boolean; export: boolean; delete: boolean };
 }
 
 const planTypeColors: Record<string, string> = {
@@ -104,6 +105,18 @@ export default function Index({ auth, plans, filters, sites, can }: PlanIndexPro
                                     <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
                                         <Link href={route('emergency.plans.show', plan.id)} className="text-emerald-600 hover:underline dark:text-emerald-400">Lihat</Link>
                                         {can.create && <Link href={route('emergency.plans.edit', plan.id)} className="ml-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">Edit</Link>}
+                                        {can.delete && (
+                                            <DeleteWithConfirm
+                                                routeName="emergency.plans.destroy"
+                                                id={plan.id}
+                                                permission="emergency.plans.delete"
+                                                itemLabel={plan.plan_number}
+                                                redirectTo="emergency.plans.index"
+                                                asLink
+                                            >
+                                                Delete
+                                            </DeleteWithConfirm>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

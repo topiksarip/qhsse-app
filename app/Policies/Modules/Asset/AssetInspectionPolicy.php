@@ -59,7 +59,16 @@ class AssetInspectionPolicy
 
     public function delete(User $user, AssetInspection $inspection): bool
     {
-        return false;
+        if (! $user->hasPermissionTo('asset.inspections.delete')) {
+            return false;
+        }
+
+        // Cannot delete inspections of decommissioned assets
+        if ($inspection->asset->status === 'decommissioned') {
+            return false;
+        }
+
+        return app(AssetPolicy::class)->view($user, $inspection->asset);
     }
 
     public function linkCapa(User $user, AssetInspection $inspection): bool

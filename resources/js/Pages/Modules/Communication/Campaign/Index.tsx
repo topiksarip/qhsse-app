@@ -7,6 +7,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import { PaginationLink } from '@/types/core';
 import EmptyState from '@/Components/UI/EmptyState';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 
 interface Campaign {
     id: number; campaign_number: string; title: string; type: string; type_label: string;
@@ -14,7 +15,7 @@ interface Campaign {
     view_count: number; acknowledgments_count: number; author: { name: string }; created_at: string;
 }
 
-export default function Index({ campaigns, filters }: { campaigns: { data: Campaign[]; links: PaginationLink[] }; filters: { search?: string; type?: string; status?: string } }) {
+export default function Index({ campaigns, filters, can }: { campaigns: { data: Campaign[]; links: PaginationLink[] }; filters: { search?: string; type?: string; status?: string }; can: { create: boolean; delete: boolean } }) {
     const [search, setSearch] = useState(filters.search || '');
     const [typeFilter, setTypeFilter] = useState(filters.type || '');
     const [statusFilter, setStatusFilter] = useState(filters.status || '');
@@ -22,7 +23,6 @@ export default function Index({ campaigns, filters }: { campaigns: { data: Campa
     const handleSearch = () => router.get(route('campaigns.index'), { search, type: typeFilter, status: statusFilter }, { preserveState: true, preserveScroll: true });
     const handleClearFilters = () => { setSearch(''); setTypeFilter(''); setStatusFilter(''); router.get(route('campaigns.index')); };
 
-    const handleDelete = (id: number) => { if (confirm('Hapus campaign ini? Aksi tidak dapat dibatalkan.')) router.delete(route('campaigns.destroy', id), { preserveScroll: true }); };
     const handlePublish = (id: number) => { if (confirm('Publish campaign ini? Campaign akan terlihat oleh target audience.')) router.post(route('campaigns.publish', id), {}, { preserveScroll: true }); };
 
     const statusBadge = (status: string, label: string) => {
@@ -121,7 +121,18 @@ export default function Index({ campaigns, filters }: { campaigns: { data: Campa
                                                 <button onClick={() => handlePublish(campaign.id)} className="ml-2 text-green-600 hover:underline dark:text-green-400">📤 Publish</button>
                                             </>
                                         )}
-                                        <button onClick={() => handleDelete(campaign.id)} className="ml-2 text-red-600 hover:underline dark:text-red-400">Hapus</button>
+                                        {can.delete && (
+                                            <DeleteWithConfirm
+                                                routeName="campaigns.destroy"
+                                                id={campaign.id}
+                                                permission="communication.campaigns.delete"
+                                                itemLabel={campaign.campaign_number}
+                                                redirectTo="campaigns.index"
+                                                asLink
+                                            >
+                                                Hapus
+                                            </DeleteWithConfirm>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

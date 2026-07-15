@@ -5,6 +5,7 @@ import { useState } from 'react';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 
 interface VisitorLog {
     id: number; visitor_name: string; visitor_company: string | null; visitor_type: string; visitor_id_number: string;
@@ -17,7 +18,7 @@ interface Props extends PageProps {
     visitors: { data: VisitorLog[]; current_page: number; per_page: number; total: number; from: number | null; to: number | null };
     filters: { search?: string; site_id?: number; status?: string; visitor_type?: string; from?: string; to?: string };
     sites: Array<{ id: number; name: string }>;
-    can: { create: boolean; export: boolean };
+    can: { create: boolean; export: boolean; delete: boolean };
 }
 
 export default function Index({ auth, visitors, filters, sites, can }: Props) {
@@ -119,6 +120,18 @@ export default function Index({ auth, visitors, filters, sites, can }: Props) {
                                                     <Link href={route('security.visitors.edit', visitor.id)} className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">Edit</Link>
                                                     <button onClick={() => handleCheckOut(visitor.id)} className="text-green-600 hover:underline dark:text-green-400">Check-Out</button>
                                                 </>
+                                            )}
+                                            {can.delete && (
+                                                <DeleteWithConfirm
+                                                    routeName="security.visitors.destroy"
+                                                    id={visitor.id}
+                                                    permission="security.visitors.delete"
+                                                    itemLabel={visitor.visitor_name}
+                                                    redirectTo="security.visitors.index"
+                                                    asLink
+                                                >
+                                                    Hapus
+                                                </DeleteWithConfirm>
                                             )}
                                         </div>
                                     </td>

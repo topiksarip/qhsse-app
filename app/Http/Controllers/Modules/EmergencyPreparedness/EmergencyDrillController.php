@@ -89,6 +89,7 @@ class EmergencyDrillController extends Controller
             'can' => [
                 'create' => $user->can('emergency.drills.create'),
                 'export' => $user->can('emergency.drills.export'),
+                'delete' => $user->can('emergency.drills.delete'),
             ],
         ]);
     }

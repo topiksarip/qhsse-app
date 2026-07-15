@@ -4,12 +4,13 @@ import { PageProps } from '@/types';
 import EmptyState from '@/Components/UI/EmptyState';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
+import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import { formatDateOnly } from '@/Utils/date';
 
 interface Certificate { id: number; certificate_type: string; certificate_number: string; issued_date: string | null; expiry_date: string | null; status: string; issuing_body: string | null; notes: string | null; can_update: boolean }
 interface Asset { id: number; asset_number: string; name: string }
 
-export default function Index({ asset, certificates, can }: PageProps<{ asset: Asset; certificates: Certificate[]; can: { create: boolean } }>) {
+export default function Index({ asset, certificates, can }: PageProps<{ asset: Asset; certificates: Certificate[]; can: { create: boolean; delete: boolean } }>) {
     const statusColor = (s: string) => ({ valid: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200', expiring_soon: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200', expiring_critical: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200', expired: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }[s] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200');
     const statusLabel = (s: string) => ({ valid: 'Valid', expiring_soon: 'Expiring Soon', expiring_critical: 'Expiring Critical', expired: 'Expired' }[s] || s);
 
@@ -56,6 +57,19 @@ export default function Index({ asset, certificates, can }: PageProps<{ asset: A
                                     <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
                                         <Link href={`/assets/${asset.id}/certificates/${cert.id}`} className="text-emerald-600 hover:underline dark:text-emerald-400">View</Link>
                                         {cert.can_update && <Link href={`/assets/${asset.id}/certificates/${cert.id}/edit`} className="ml-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">Edit</Link>}
+                                        {can.delete && (
+                                            <DeleteWithConfirm
+                                                routeName="assets.certificates.destroy"
+                                                id={[asset.id, cert.id]}
+                                                permission="asset.certificates.delete"
+                                                itemLabel={cert.certificate_number}
+                                                redirectTo="assets.certificates.index"
+                                                redirectParams={{ asset: asset.id }}
+                                                asLink
+                                            >
+                                                Delete
+                                            </DeleteWithConfirm>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

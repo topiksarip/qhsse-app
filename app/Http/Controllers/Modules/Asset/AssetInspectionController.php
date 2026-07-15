@@ -40,6 +40,7 @@ class AssetInspectionController extends Controller
             'inspections' => $inspections,
             'can' => [
                 'create' => $request->user()->can('create', [AssetInspection::class, $asset]),
+                'delete' => $request->user()->can('delete', [AssetInspection::class, $asset]),
             ],
         ]);
     }

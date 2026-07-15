@@ -73,6 +73,7 @@ class CustomerComplaintController extends Controller
             'can' => [
                 'create' => Auth::user()->can('create', CustomerComplaint::class),
                 'export' => Auth::user()->can('export', CustomerComplaint::class),
+                'delete' => Auth::user()->can('delete', CustomerComplaint::class),
             ],
         ]);
     }
@@ -221,6 +222,19 @@ class CustomerComplaintController extends Controller
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
+    }
+
+    public function destroy(CustomerComplaint $complaint): RedirectResponse
+    {
+        $this->authorize('delete', $complaint);
+
+        DB::transaction(function () use ($complaint): void {
+            $number = $complaint->complaint_number;
+            $complaint->delete();
+            $this->activity->log('quality_complaint', $complaint->id, 'deleted', "Complaint {$number} deleted", Auth::user());
+        });
+
+        return redirect()->route('quality.complaints.index')->with('success', 'Complaint berhasil dihapus.');
     }
 
     private function sites()

@@ -70,11 +70,17 @@ class CampaignPolicy
         return true;
     }
 
-    public function delete(User $user, Campaign $campaign): bool
+    public function delete(User $user, ?Campaign $campaign = null): bool
     {
         // Only Super Admin and Admin can delete
         if (!$user->hasRole(['Super Admin', 'Admin'])) {
             return false;
+        }
+
+        // When checking permission without a specific instance (e.g. index "can.delete"),
+        // the role check above is sufficient.
+        if ($campaign === null) {
+            return true;
         }
 
         // Cannot delete published campaigns (data integrity)

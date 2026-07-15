@@ -52,6 +52,10 @@ class CampaignController extends Controller
         return Inertia::render('Modules/Communication/Campaign/Index', [
             'campaigns' => $campaigns,
             'filters' => $filters,
+            'can' => [
+                'create' => $request->user()->can('create', Campaign::class),
+                'delete' => $request->user()->can('delete', Campaign::class),
+            ],
         ]);
     }
 
