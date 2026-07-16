@@ -7,6 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
 import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
+import FilterPanel from '@/Components/UI/FilterPanel';
 
 interface Asset {
     id: number;
@@ -111,32 +112,34 @@ export default function Index({ auth, assets, filters, sites, categories, status
             <Head title="Assets" />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-                        <form onSubmit={handleSearch} className="grid grid-cols-1 gap-3 md:grid-cols-6">
-                            <input type="text" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
-                            <select value={siteId} onChange={(e) => setSiteId(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-                                <option value="">All Sites</option>
-                                {sites.map((site) => <option key={site.id} value={site.id}>{site.name}</option>)}
-                            </select>
-                            <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-                                <option value="">All Categories</option>
-                                {Object.entries(categories).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-                            </select>
-                            <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-                                <option value="">All Statuses</option>
-                                {Object.entries(statuses).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-                            </select>
-                            <select value={safetyCritical} onChange={(e) => setSafetyCritical(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-                                <option value="">Semua Tingkat Kritis</option>
-                                <option value="1">Safety Critical</option>
-                                <option value="0">Non-Critical</option>
-                            </select>
-                            <div className="flex gap-2">
-                                <PrimaryButton type="submit">Filter</PrimaryButton>
-                                <SecondaryButton type="button" onClick={handleReset}>Reset</SecondaryButton>
-                            </div>
-                        </form>
-                    </div>
+                    <FilterPanel activeCount={[search, siteId, category, status, safetyCritical].filter(v => v !== '').length}>
+                        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                            <form onSubmit={handleSearch} className="grid grid-cols-1 gap-3 md:grid-cols-6">
+                                <input type="text" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
+                                <select value={siteId} onChange={(e) => setSiteId(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                                    <option value="">All Sites</option>
+                                    {sites.map((site) => <option key={site.id} value={site.id}>{site.name}</option>)}
+                                </select>
+                                <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                                    <option value="">All Categories</option>
+                                    {Object.entries(categories).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                                </select>
+                                <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                                    <option value="">All Statuses</option>
+                                    {Object.entries(statuses).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                                </select>
+                                <select value={safetyCritical} onChange={(e) => setSafetyCritical(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                                    <option value="">Semua Tingkat Kritis</option>
+                                    <option value="1">Safety Critical</option>
+                                    <option value="0">Non-Critical</option>
+                                </select>
+                                <div className="flex gap-2">
+                                    <PrimaryButton type="submit">Filter</PrimaryButton>
+                                    <SecondaryButton type="button" onClick={handleReset}>Reset</SecondaryButton>
+                                </div>
+                            </form>
+                        </div>
+                    </FilterPanel>
 
                     <TableWrapper>
                         <TableHead>

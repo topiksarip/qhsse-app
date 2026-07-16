@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Paginated } from '@/types/core';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
+import FilterPanel from '@/Components/UI/FilterPanel';
 
 interface ManagedFile {
     id: number;
@@ -44,13 +45,15 @@ export default function Index({ files, filters }: { files: Paginated<ManagedFile
             <Head title="Managed Files" />
             <div className="py-12">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <div className="flex flex-col justify-between gap-4 lg:flex-row">
+                    <FilterPanel activeCount={[search, moduleName, referenceId].filter(Boolean).length}>
                         <form onSubmit={submit} className="flex flex-col gap-2 sm:flex-row">
                             <input className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search file" />
                             <input className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" value={moduleName} onChange={(event) => setModuleName(event.target.value)} placeholder="module_name" />
                             <input className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" value={referenceId} onChange={(event) => setReferenceId(event.target.value)} placeholder="reference_id" />
                             <button className="rounded-md bg-gray-900 px-4 py-2 text-white dark:bg-gray-100 dark:text-gray-900">Search</button>
                         </form>
+                    </FilterPanel>
+                    <div className="flex justify-end">
                         <Link href={route('core.files.create')} className="rounded-md bg-indigo-600 px-4 py-2 text-center text-white">Upload File</Link>
                     </div>
 

@@ -8,6 +8,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
 import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
+import FilterPanel from '@/Components/UI/FilterPanel';
 
 interface Props extends PageProps {
     patrols: { data: Patrol[]; links: Array<{ url: string | null; label: string; active: boolean }>; from: number | null; to: number | null; total: number };
@@ -46,25 +47,27 @@ export default function Index({ patrols, filters, sites, statuses, can }: Props)
             <Head title="Patroli Keamanan" />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <form onSubmit={filter} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
-                            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari nomor atau rute..." className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
-                            <select value={siteId} onChange={(e) => setSiteId(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-                                <option value="">Semua Site</option>
-                                {sites.map((site) => <option key={site.id} value={site.id}>{site.name}</option>)}
-                            </select>
-                            <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-                                <option value="">Semua Status</option>
-                                {Object.entries(statuses).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-                            </select>
-                            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
-                            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
-                        </div>
-                        <div className="mt-3 flex gap-2">
-                            <PrimaryButton type="submit">Terapkan</PrimaryButton>
-                            <SecondaryButton type="button" onClick={reset}>Reset</SecondaryButton>
-                        </div>
-                    </form>
+                    <FilterPanel activeCount={[search, siteId, status, dateFrom, dateTo].filter(v => v !== '').length}>
+                        <form onSubmit={filter} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
+                                <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari nomor atau rute..." className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
+                                <select value={siteId} onChange={(e) => setSiteId(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                                    <option value="">Semua Site</option>
+                                    {sites.map((site) => <option key={site.id} value={site.id}>{site.name}</option>)}
+                                </select>
+                                <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                                    <option value="">Semua Status</option>
+                                    {Object.entries(statuses).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                                </select>
+                                <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
+                                <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
+                            </div>
+                            <div className="mt-3 flex gap-2">
+                                <PrimaryButton type="submit">Terapkan</PrimaryButton>
+                                <SecondaryButton type="button" onClick={reset}>Reset</SecondaryButton>
+                            </div>
+                        </form>
+                    </FilterPanel>
 
                     <TableWrapper>
                         <TableHead>

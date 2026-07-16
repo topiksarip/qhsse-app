@@ -9,6 +9,7 @@ import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
+import FilterPanel from '@/Components/UI/FilterPanel';
 
 type Option = { id: number; name: string };
 type TypeOption = { value: string; label: string };
@@ -61,7 +62,8 @@ export default function Index({ items, filters, departments, documentTypes, auth
             <Head title="Dokumen Terkontrol" />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <form onSubmit={submit} className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900 md:grid-cols-5">
+                    <FilterPanel activeCount={[search, type, status, departmentId].filter(v => v !== '').length}>
+                        <form onSubmit={submit} className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900 md:grid-cols-5">
                         <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari nomor atau judul..." className="rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 md:col-span-2" />
                         <select value={type} onChange={(e) => setType(e.target.value)} className="rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
                             <option value="">Semua tipe</option>
@@ -79,7 +81,8 @@ export default function Index({ items, filters, departments, documentTypes, auth
                             <PrimaryButton type="submit">Terapkan</PrimaryButton>
                             <SecondaryButton type="button" onClick={() => router.get(route('document.control.index'))}>Reset</SecondaryButton>
                         </div>
-                    </form>
+                        </form>
+                    </FilterPanel>
 
                     <TableWrapper>
                         <TableHead>

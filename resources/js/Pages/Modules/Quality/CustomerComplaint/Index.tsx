@@ -6,6 +6,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
 import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
+import FilterPanel from '@/Components/UI/FilterPanel';
 
 interface CustomerComplaint { id: number; complaint_number: string; customer_name: string; title: string; status: 'open' | 'closed'; site: { id: number; name: string }; severity: { id: number; name: string; color: string }; created_at: string }
 
@@ -45,8 +46,9 @@ export default function Index({ complaints, filters, sites, severities, can }: P
             <Head title="Complaint Customer" />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+                    <FilterPanel activeCount={[search, siteId, status, severityId].filter(v => v !== '').length}>
+                        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
                             <div>
                                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Cari</label>
                                 <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nomor, nama, judul..." className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
@@ -78,7 +80,8 @@ export default function Index({ complaints, filters, sites, severities, can }: P
                             <PrimaryButton type="button" onClick={handleFilter}>Filter</PrimaryButton>
                             <SecondaryButton type="button" onClick={handleReset}>Reset</SecondaryButton>
                         </div>
-                    </div>
+                        </div>
+                    </FilterPanel>
 
                     <TableWrapper>
                         <TableHead>

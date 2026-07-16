@@ -5,6 +5,7 @@ import { Company, Paginated } from '@/types/core';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
+import FilterPanel from '@/Components/UI/FilterPanel';
 
 export default function Index({ companies, filters }: { companies: Paginated<Company>; filters: { search?: string } }) {
     const [search, setSearch] = useState(filters.search ?? '');
@@ -19,11 +20,13 @@ export default function Index({ companies, filters }: { companies: Paginated<Com
             <Head title="Companies" />
             <div className="py-12">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <div className="flex flex-col justify-between gap-4 sm:flex-row">
+                    <FilterPanel activeCount={search ? 1 : 0}>
                         <form onSubmit={submit} className="flex gap-2">
                             <input className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search companies" />
                             <button className="rounded-md bg-gray-900 px-4 py-2 text-white dark:bg-gray-100 dark:text-gray-900">Search</button>
                         </form>
+                    </FilterPanel>
+                    <div className="flex justify-end">
                         <Link href={route('core.companies.create')} className="rounded-md bg-indigo-600 px-4 py-2 text-center text-white">New Company</Link>
                     </div>
 

@@ -4,6 +4,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Paginated } from '@/types/core';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
+import FilterPanel from '@/Components/UI/FilterPanel';
 
 interface NumberingFormat {
     id: number;
@@ -62,10 +63,12 @@ export default function Index({ formats, recentNumbers, filters }: { formats: Pa
 
                         <div className="bg-white p-6 shadow-sm sm:rounded-lg lg:col-span-2 dark:bg-gray-800">
                             <div className="mb-4 flex flex-col justify-between gap-4 sm:flex-row">
-                                <form onSubmit={submitSearch} className="flex gap-2">
-                                    <input className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search formats" />
-                                    <button className="rounded-md bg-gray-900 px-4 py-2 text-white dark:bg-gray-100 dark:text-gray-900">Search</button>
-                                </form>
+                                <FilterPanel activeCount={search ? 1 : 0}>
+                                    <form onSubmit={submitSearch} className="flex gap-2">
+                                        <input className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search formats" />
+                                        <button className="rounded-md bg-gray-900 px-4 py-2 text-white dark:bg-gray-100 dark:text-gray-900">Search</button>
+                                    </form>
+                                </FilterPanel>
                                 <Link href={route('core.numbering.create')} className="rounded-md bg-indigo-600 px-4 py-2 text-center text-white">New Format</Link>
                             </div>
 

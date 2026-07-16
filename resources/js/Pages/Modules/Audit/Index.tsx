@@ -5,6 +5,7 @@ import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
+import FilterPanel from '@/Components/UI/FilterPanel';
 import { PageProps } from '@/types';
 import { Paginated } from '@/types/core';
 import { Head, Link, router } from '@inertiajs/react';
@@ -93,7 +94,8 @@ export default function Index({ audits, filters, departments, auth }: PageProps<
             <Head title="Manajemen Audit" />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <form onSubmit={submit} className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900 md:grid-cols-6">
+                    <FilterPanel activeCount={[search, status, type, departmentId, dateFrom, dateTo].filter(v => v !== '').length}>
+                        <form onSubmit={submit} className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900 md:grid-cols-6">
                         <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari nomor atau judul..." className="rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 md:col-span-2" />
                         <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
                             <option value="">Semua status</option>
@@ -115,7 +117,8 @@ export default function Index({ audits, filters, departments, auth }: PageProps<
                             <PrimaryButton type="submit">Terapkan</PrimaryButton>
                             <SecondaryButton onClick={() => router.get(route('audits.index'))}>Reset</SecondaryButton>
                         </div>
-                    </form>
+                        </form>
+                    </FilterPanel>
 
                     <TableWrapper>
                         <TableHead>

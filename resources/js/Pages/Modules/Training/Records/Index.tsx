@@ -11,6 +11,7 @@ import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
+import FilterPanel from '@/Components/UI/FilterPanel';
 
 interface RecordsIndexProps extends PageProps {
     records: PaginatedData<TrainingRecord>;
@@ -47,7 +48,7 @@ export default function Index({ auth, records, filters, can }: RecordsIndexProps
             <Head title="Record Pelatihan" />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                    <FilterPanel activeCount={[search, status, expiringSoon].filter(Boolean).length}>
                         <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
                             <input type="text" placeholder="🔍 Cari nomor, karyawan, program..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleFilter()} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 md:col-span-2" />
                             <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
@@ -69,7 +70,7 @@ export default function Index({ auth, records, filters, can }: RecordsIndexProps
                             <PrimaryButton type="button" onClick={handleFilter}>Filter</PrimaryButton>
                             <SecondaryButton type="button" onClick={handleReset}>Reset</SecondaryButton>
                         </div>
-                    </div>
+                    </FilterPanel>
 
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20"><p className="text-sm font-medium text-blue-600 dark:text-blue-400">Scheduled</p><p className="mt-1 text-2xl font-bold text-blue-700 dark:text-blue-300">{count('scheduled')}</p></div>

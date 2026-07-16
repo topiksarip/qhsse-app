@@ -5,6 +5,7 @@ import { Department, Paginated } from '@/types/core';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
+import FilterPanel from '@/Components/UI/FilterPanel';
 
 type Filters = {
     search?: string;
@@ -37,36 +38,38 @@ export default function Index({ items, filters }: { items: Paginated<Department>
             <Head title="Departments" />
             <div className="py-12">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-gray-800">
-                        <form onSubmit={submit} className="grid gap-3 md:grid-cols-6">
-                            <input className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 md:col-span-2" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search code or name" />
-                            <select className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" value={isActive} onChange={(event) => setIsActive(event.target.value)}>
-                                <option value="">All Status</option>
-                                <option value="1">Active</option>
-                                <option value="0">Inactive</option>
-                            </select>
-                            <select className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" value={sort} onChange={(event) => setSort(event.target.value)}>
-                                <option value="name">Sort Name</option>
-                                <option value="code">Sort Code</option>
-                                <option value="created_at">Sort Created</option>
-                            </select>
-                            <select className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" value={direction} onChange={(event) => setDirection(event.target.value)}>
-                                <option value="asc">Ascending</option>
-                                <option value="desc">Descending</option>
-                            </select>
-                            <select className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" value={perPage} onChange={(event) => setPerPage(event.target.value)}>
-                                <option value="10">10/page</option>
-                                <option value="25">25/page</option>
-                                <option value="50">50/page</option>
-                            </select>
-                            <div className="flex flex-wrap gap-2 md:col-span-6">
-                                <button className="rounded-md bg-gray-900 px-4 py-2 text-white dark:bg-gray-100 dark:text-gray-900">Apply</button>
-                                <button type="button" onClick={reset} className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 dark:border-gray-700 dark:text-gray-200">Reset</button>
-                                <a href={route('core.departments.export', query)} className="rounded-md border border-emerald-600 px-4 py-2 text-emerald-700 dark:text-emerald-300">Export CSV</a>
-                                <Link href={route('core.departments.create')} className="rounded-md bg-indigo-600 px-4 py-2 text-center text-white">New Department</Link>
-                            </div>
-                        </form>
-                    </div>
+                    <FilterPanel activeCount={[search, isActive, sort !== 'name', direction !== 'asc', perPage !== '10'].filter(Boolean).length}>
+                        <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-gray-800">
+                            <form onSubmit={submit} className="grid gap-3 md:grid-cols-6">
+                                <input className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 md:col-span-2" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search code or name" />
+                                <select className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" value={isActive} onChange={(event) => setIsActive(event.target.value)}>
+                                    <option value="">All Status</option>
+                                    <option value="1">Active</option>
+                                    <option value="0">Inactive</option>
+                                </select>
+                                <select className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" value={sort} onChange={(event) => setSort(event.target.value)}>
+                                    <option value="name">Sort Name</option>
+                                    <option value="code">Sort Code</option>
+                                    <option value="created_at">Sort Created</option>
+                                </select>
+                                <select className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" value={direction} onChange={(event) => setDirection(event.target.value)}>
+                                    <option value="asc">Ascending</option>
+                                    <option value="desc">Descending</option>
+                                </select>
+                                <select className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" value={perPage} onChange={(event) => setPerPage(event.target.value)}>
+                                    <option value="10">10/page</option>
+                                    <option value="25">25/page</option>
+                                    <option value="50">50/page</option>
+                                </select>
+                                <div className="flex flex-wrap gap-2 md:col-span-6">
+                                    <button className="rounded-md bg-gray-900 px-4 py-2 text-white dark:bg-gray-100 dark:text-gray-900">Apply</button>
+                                    <button type="button" onClick={reset} className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 dark:border-gray-700 dark:text-gray-200">Reset</button>
+                                    <a href={route('core.departments.export', query)} className="rounded-md border border-emerald-600 px-4 py-2 text-emerald-700 dark:text-emerald-300">Export CSV</a>
+                                    <Link href={route('core.departments.create')} className="rounded-md bg-indigo-600 px-4 py-2 text-center text-white">New Department</Link>
+                                </div>
+                            </form>
+                        </div>
+                    </FilterPanel>
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg dark:bg-gray-800">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead className="bg-gray-50 dark:bg-gray-900"><tr><th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Code</th><th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Name</th><th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Site</th><th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th><th className="px-6 py-3" /></tr></thead>

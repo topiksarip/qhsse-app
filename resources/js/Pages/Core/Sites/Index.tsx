@@ -5,6 +5,7 @@ import { Site, Paginated } from '@/types/core';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
+import FilterPanel from '@/Components/UI/FilterPanel';
 
 type Filters = {
     search?: string;
@@ -32,11 +33,14 @@ export default function Index({ items, filters }: { items: Paginated<Site>; filt
         router.get(route('core.sites.index'));
     }
 
+    const activeCount = [search !== '', isActive !== '', sort !== 'name', direction !== 'asc', perPage !== '10'].filter(Boolean).length;
+
     return (
         <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Sites</h2>}>
             <Head title="Sites" />
             <div className="py-12">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
+                    <FilterPanel activeCount={activeCount}>
                     <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-gray-800">
                         <form onSubmit={submit} className="grid gap-3 md:grid-cols-6">
                             <input className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 md:col-span-2" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search code, name, address" />
@@ -67,6 +71,7 @@ export default function Index({ items, filters }: { items: Paginated<Site>; filt
                             </div>
                         </form>
                     </div>
+                    </FilterPanel>
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg dark:bg-gray-800">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead className="bg-gray-50 dark:bg-gray-900"><tr><th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Code</th><th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Name</th><th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th><th className="px-6 py-3" /></tr></thead>

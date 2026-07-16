@@ -14,12 +14,13 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
-        <div className="relative min-h-screen bg-white text-slate-900 dark:bg-gray-950 dark:text-gray-100">
-            {/* Branded background */}
+        <div className="relative min-h-screen text-slate-900 dark:text-gray-100">
+            {/* Branded background: photo (50%) + subtle texture + translucent scrim */}
             <div
-                className="fixed inset-0 -z-10 bg-cover bg-center opacity-50"
+                className="fixed inset-0 -z-20 bg-cover bg-center opacity-50"
                 style={{ backgroundImage: "url('/img/websamudera-bg.jpg')" }}
             />
+            <div className="fixed inset-0 -z-10 bg-white/55 bg-[linear-gradient(rgba(0,0,0,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.06)_1px,transparent_1px)] bg-[size:26px_26px] dark:bg-gray-950/80 dark:bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)]" />
 
             <ToastContainer toasts={toasts} onDismiss={dismiss} />
 

@@ -8,6 +8,7 @@ import { PaginationLink } from '@/types/core';
 import EmptyState from '@/Components/UI/EmptyState';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
 import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
+import FilterPanel from '@/Components/UI/FilterPanel';
 
 interface Campaign {
     id: number; campaign_number: string; title: string; type: string; type_label: string;
@@ -52,37 +53,39 @@ export default function Index({ campaigns, filters, can }: { campaigns: { data: 
             <Head title="Campaign Management" />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
-                            <div className="md:col-span-2">
-                                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Cari Campaign</label>
-                                <input value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} placeholder="Cari judul, nomor..." className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
-                            </div>
-                            <div>
-                                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Tipe</label>
-                                <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-                                    <option value="">Semua Tipe</option>
-                                    <option value="safety_alert">Safety Alert</option>
-                                    <option value="policy_update">Policy Update</option>
-                                    <option value="training_announcement">Training Announcement</option>
-                                    <option value="general_announcement">General Announcement</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Status</label>
-                                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-                                    <option value="">Semua Status</option>
-                                    <option value="draft">Draft</option>
-                                    <option value="published">Published</option>
-                                    <option value="expired">Expired</option>
-                                </select>
-                            </div>
-                            <div className="flex items-end gap-2">
-                                <PrimaryButton type="button" onClick={handleSearch}>Filter</PrimaryButton>
-                                <SecondaryButton type="button" onClick={handleClearFilters}>Clear</SecondaryButton>
+                    <FilterPanel activeCount={[search, typeFilter, statusFilter].filter(v => v !== '').length}>
+                        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
+                                <div className="md:col-span-2">
+                                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Cari Campaign</label>
+                                    <input value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} placeholder="Cari judul, nomor..." className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Tipe</label>
+                                    <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                                        <option value="">Semua Tipe</option>
+                                        <option value="safety_alert">Safety Alert</option>
+                                        <option value="policy_update">Policy Update</option>
+                                        <option value="training_announcement">Training Announcement</option>
+                                        <option value="general_announcement">General Announcement</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Status</label>
+                                    <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                                        <option value="">Semua Status</option>
+                                        <option value="draft">Draft</option>
+                                        <option value="published">Published</option>
+                                        <option value="expired">Expired</option>
+                                    </select>
+                                </div>
+                                <div className="flex items-end gap-2">
+                                    <PrimaryButton type="button" onClick={handleSearch}>Filter</PrimaryButton>
+                                    <SecondaryButton type="button" onClick={handleClearFilters}>Clear</SecondaryButton>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </FilterPanel>
 
                     <TableWrapper>
                         <TableHead>

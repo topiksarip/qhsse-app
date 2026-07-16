@@ -7,6 +7,7 @@ import EmptyState from '@/Components/UI/EmptyState';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper from '@/Components/UI/TableWrapper';
+import FilterPanel from '@/Components/UI/FilterPanel';
 
 interface MatrixIndexProps extends PageProps {
     programs: TrainingProgram[];
@@ -52,7 +53,7 @@ export default function Index({ auth, programs, employees, matrix, sites, depart
             <Head title="Training Matrix" />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                    <FilterPanel activeCount={[selectedSite, selectedDepartment, selectedCategory].filter(Boolean).length}>
                         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                             <div>
                                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Site</label>
@@ -79,7 +80,7 @@ export default function Index({ auth, programs, employees, matrix, sites, depart
                         <div className="mt-4 flex justify-end">
                             <PrimaryButton type="button" onClick={applyFilters}>Terapkan Filter</PrimaryButton>
                         </div>
-                    </div>
+                    </FilterPanel>
 
                     <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
                         <h3 className="mb-3 text-sm font-medium text-slate-900 dark:text-slate-100">LEGEND (Petunjuk Status)</h3>

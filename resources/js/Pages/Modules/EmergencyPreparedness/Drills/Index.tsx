@@ -7,6 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
 import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
+import FilterPanel from '@/Components/UI/FilterPanel';
 
 interface DrillIndexProps extends PageProps {
     drills: PaginatedData<EmergencyDrill & { emergency_plan: EmergencyPlan }>;
@@ -53,8 +54,9 @@ export default function Index({ auth, drills, filters, sites, can }: DrillIndexP
             <Head title="Latihan Darurat" />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <FilterPanel activeCount={[search, status, result, siteId, fromDate, toDate].filter(v => v !== '').length}>
+                        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                             <input type="text" placeholder="🔍 Cari nomor..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleFilter()} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 md:col-span-2" />
                         </div>
                         <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-4">
@@ -82,7 +84,8 @@ export default function Index({ auth, drills, filters, sites, can }: DrillIndexP
                             <PrimaryButton type="button" onClick={handleFilter}>Filter</PrimaryButton>
                             <SecondaryButton type="button" onClick={handleReset}>Reset</SecondaryButton>
                         </div>
-                    </div>
+                        </div>
+                    </FilterPanel>
 
                     <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
                         <span>Menampilkan {drills.from} – {drills.to} dari {drills.total} latihan</span>

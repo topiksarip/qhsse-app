@@ -2,6 +2,7 @@ import ChartPlaceholder from '@/Components/Dashboard/ChartPlaceholder';
 import DashboardFilters from '@/Components/Dashboard/DashboardFilters';
 import KpiCard from '@/Components/Dashboard/KpiCard';
 import QuickActionCard from '@/Components/Dashboard/QuickActionCard';
+import FilterPanel from '@/Components/UI/FilterPanel';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
@@ -95,9 +96,11 @@ export default function Dashboard({ filters, filterOptions, kpis, widgets, quick
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
                     {/* Filters */}
-                    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900 sm:p-5">
-                        <DashboardFilters filters={filters} filterOptions={filterOptions} route="dashboard" />
-                    </section>
+                    <FilterPanel activeCount={[filters.from, filters.to, filters.site_id, filters.department_id].filter(v => v != null && v !== '').length}>
+                        <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900 sm:p-5">
+                            <DashboardFilters filters={filters} filterOptions={filterOptions} route="dashboard" />
+                        </section>
+                    </FilterPanel>
 
                     {/* Quick Actions */}
                     {visibleQuickLinks.length > 0 && (

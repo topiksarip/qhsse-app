@@ -5,6 +5,7 @@ import { Employee, Paginated } from '@/types/core';
 import { Head, Link, router } from '@inertiajs/react';
 import { FormEvent, useState } from 'react';
 import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
+import FilterPanel from '@/Components/UI/FilterPanel';
 
 export default function Index({ employees, filters }: { employees: Paginated<Employee>; filters: { search?: string } }) {
     const [search, setSearch] = useState(filters.search ?? '');
@@ -18,8 +19,10 @@ export default function Index({ employees, filters }: { employees: Paginated<Emp
         <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Employees</h2>}>
             <Head title="Employees" />
             <div className="py-12"><div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                <div className="flex flex-col justify-between gap-4 sm:flex-row">
+                <FilterPanel activeCount={search ? 1 : 0}>
                     <form onSubmit={submit} className="flex gap-2"><input className="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search employees" /><button className="rounded-md bg-gray-900 px-4 py-2 text-white dark:bg-gray-100 dark:text-gray-900">Search</button></form>
+                </FilterPanel>
+                <div className="flex justify-end">
                     <Link href={route('core.employees.create')} className="rounded-md bg-indigo-600 px-4 py-2 text-center text-white">New Employee</Link>
                 </div>
                 <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg dark:bg-gray-800"><table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">

@@ -10,6 +10,7 @@ import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper
 import TypeBadge from '@/Components/Security/TypeBadge';
 import StatusBadge from '@/Components/Security/StatusBadge';
 import SeverityBadge from '@/Components/Security/SeverityBadge';
+import FilterPanel from '@/Components/UI/FilterPanel';
 
 interface IndexProps extends PageProps {
     incidents: PaginatedData<SecurityIncident>;
@@ -94,41 +95,43 @@ export default function Index({ auth, incidents, filters, sites, types, statuses
             <Head title="Insiden Keamanan" />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-                            <div className="lg:col-span-2">
-                                <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && applyFilters()} placeholder="Cari nomor, judul..." className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
-                            </div>
-                            <div>
-                                <select value={type} onChange={(e) => setType(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-                                    <option value="">Semua Tipe</option>
-                                    {typeEntries.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-                                    <option value="">Semua Status</option>
-                                    {statusEntries.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <select value={siteId} onChange={(e) => setSiteId(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-                                    <option value="">Semua Site</option>
-                                    {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
-                            </div>
-                            <div>
-                                <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
-                            </div>
-                            <div className="flex items-end gap-2">
-                                <PrimaryButton type="button" onClick={applyFilters}>Filter</PrimaryButton>
-                                <SecondaryButton type="button" onClick={resetFilters}>Reset</SecondaryButton>
+                    <FilterPanel activeCount={[search, type, status, siteId, dateFrom, dateTo].filter(v => v !== '').length}>
+                        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+                                <div className="lg:col-span-2">
+                                    <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && applyFilters()} placeholder="Cari nomor, judul..." className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
+                                </div>
+                                <div>
+                                    <select value={type} onChange={(e) => setType(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                                        <option value="">Semua Tipe</option>
+                                        {typeEntries.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                                        <option value="">Semua Status</option>
+                                        {statusEntries.map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <select value={siteId} onChange={(e) => setSiteId(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                                        <option value="">Semua Site</option>
+                                        {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
+                                </div>
+                                <div>
+                                    <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
+                                </div>
+                                <div className="flex items-end gap-2">
+                                    <PrimaryButton type="button" onClick={applyFilters}>Filter</PrimaryButton>
+                                    <SecondaryButton type="button" onClick={resetFilters}>Reset</SecondaryButton>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </FilterPanel>
 
                     <TableWrapper>
                         <TableHead>

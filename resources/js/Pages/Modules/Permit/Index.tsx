@@ -8,6 +8,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
 import PermitTypeBadge from '@/Components/Permit/PermitTypeBadge';
+import FilterPanel from '@/Components/UI/FilterPanel';
 import StatusBadge from '@/Components/Permit/StatusBadge';
 import RiskBadge from '@/Components/Permit/RiskBadge';
 import ValidityBadge from '@/Components/Permit/ValidityBadge';
@@ -101,8 +102,9 @@ export default function Index({ auth, permits, filters, sites, departments, type
             <Head title="Izin Kerja" />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+                    <FilterPanel activeCount={[search, siteId, departmentId, type, status, riskLevel, validity].filter(v => v !== '').length}>
+                        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
                             <div className="lg:col-span-2">
                                 <input type="text" placeholder="Cari nomor, judul, lokasi kerja..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && apply()} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
                             </div>
@@ -138,9 +140,10 @@ export default function Index({ auth, permits, filters, sites, departments, type
                                 <SecondaryButton type="button" onClick={reset}>Reset</SecondaryButton>
                             </div>
                         </div>
-                    </div>
+                        </div>
+                        </FilterPanel>
 
-                    <TableWrapper>
+                        <TableWrapper>
                         <TableHead>
                             <tr>
                                 <th className="px-4 py-3">Nomor</th>

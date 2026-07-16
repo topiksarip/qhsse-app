@@ -43,12 +43,13 @@ export default function Welcome({ auth }: PageProps) {
         <>
             <Head title="QHSSE Management System" />
 
-            <div className="relative flex min-h-screen flex-col bg-white text-slate-900 dark:bg-gray-950 dark:text-gray-100">
-                {/* Branded background */}
+            <div className="relative flex min-h-screen flex-col text-slate-900 dark:text-gray-100">
+                {/* Branded background: photo (50%) + subtle texture + translucent scrim */}
                 <div
-                    className="fixed inset-0 -z-10 bg-cover bg-center opacity-50"
+                    className="fixed inset-0 -z-20 bg-cover bg-center opacity-50"
                     style={{ backgroundImage: "url('/img/websamudera-bg.jpg')" }}
                 />
+                <div className="fixed inset-0 -z-10 bg-white/55 bg-[linear-gradient(rgba(0,0,0,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.06)_1px,transparent_1px)] bg-[size:26px_26px] dark:bg-gray-950/80 dark:bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)]" />
 
                 <header className="sticky top-0 z-30 border-b border-[#fdb913]/50 bg-[#fdb913]/80 backdrop-blur dark:border-[#fdb913]/50 dark:bg-[#fdb913]/80">
                     <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">

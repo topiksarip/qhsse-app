@@ -6,6 +6,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
 import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
+import FilterPanel from '@/Components/UI/FilterPanel';
 
 interface VisitorLog {
     id: number; visitor_name: string; visitor_company: string | null; visitor_type: string; visitor_id_number: string;
@@ -51,41 +52,43 @@ export default function Index({ auth, visitors, filters, sites, can }: Props) {
             <Head title="Log Pengunjung" />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-5">
-                            <div className="lg:col-span-1">
-                                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Cari</label>
-                                <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nama, perusahaan..." className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
+                    <FilterPanel activeCount={[search, siteId, status, from, to].filter(v => v !== '').length}>
+                        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-5">
+                                <div className="lg:col-span-1">
+                                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Cari</label>
+                                    <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Nama, perusahaan..." className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Site</label>
+                                    <select value={siteId} onChange={(e) => setSiteId(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                                        <option value="">Semua Site</option>
+                                        {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Status</label>
+                                    <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                                        <option value="">Semua Status</option>
+                                        <option value="checked_in">Checked In</option>
+                                        <option value="checked_out">Checked Out</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Dari Tanggal</label>
+                                    <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Sampai Tanggal</label>
+                                    <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
+                                </div>
                             </div>
-                            <div>
-                                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Site</label>
-                                <select value={siteId} onChange={(e) => setSiteId(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-                                    <option value="">Semua Site</option>
-                                    {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Status</label>
-                                <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-                                    <option value="">Semua Status</option>
-                                    <option value="checked_in">Checked In</option>
-                                    <option value="checked_out">Checked Out</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Dari Tanggal</label>
-                                <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
-                            </div>
-                            <div>
-                                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Sampai Tanggal</label>
-                                <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
+                            <div className="mt-3 flex gap-2">
+                                <PrimaryButton type="button" onClick={handleFilter}>Filter</PrimaryButton>
+                                <SecondaryButton type="button" onClick={handleReset}>Reset</SecondaryButton>
                             </div>
                         </div>
-                        <div className="mt-3 flex gap-2">
-                            <PrimaryButton type="button" onClick={handleFilter}>Filter</PrimaryButton>
-                            <SecondaryButton type="button" onClick={handleReset}>Reset</SecondaryButton>
-                        </div>
-                    </div>
+                    </FilterPanel>
 
                     <TableWrapper>
                         <TableHead>

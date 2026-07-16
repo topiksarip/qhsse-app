@@ -5,6 +5,7 @@ import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
+import FilterPanel from '@/Components/UI/FilterPanel';
 import { Paginated } from '@/types/core';
 import { PageProps } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
@@ -47,19 +48,21 @@ export default function Index({ items, filters, auth }: PageProps<{ items: Pagin
             <Head title="Inspeksi" />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-                        <form onSubmit={submit} className="flex flex-wrap gap-3">
-                            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari nomor..." className="flex-1 rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
-                            <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
-                                <option value="">Semua Status</option>
-                                <option value="pending">Pending</option>
-                                <option value="in_progress">In Progress</option>
-                                <option value="completed">Completed</option>
-                            </select>
-                            <PrimaryButton type="submit">Filter</PrimaryButton>
-                            <SecondaryButton onClick={() => router.get(route('inspection.checklists.index'))}>Reset</SecondaryButton>
-                        </form>
-                    </div>
+                    <FilterPanel activeCount={[search, status].filter(v => v !== '').length}>
+                        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                            <form onSubmit={submit} className="flex flex-wrap gap-3">
+                                <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari nomor..." className="flex-1 rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
+                                <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
+                                    <option value="">Semua Status</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                                <PrimaryButton type="submit">Filter</PrimaryButton>
+                                <SecondaryButton onClick={() => router.get(route('inspection.checklists.index'))}>Reset</SecondaryButton>
+                            </form>
+                        </div>
+                    </FilterPanel>
 
                     <TableWrapper>
                         <TableHead>

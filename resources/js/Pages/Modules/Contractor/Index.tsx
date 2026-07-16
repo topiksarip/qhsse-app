@@ -7,6 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
 import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
+import FilterPanel from '@/Components/UI/FilterPanel';
 
 interface Contractor {
     id: number;
@@ -87,8 +88,9 @@ export default function Index({
             <Head title="Contractors" />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-                        <form onSubmit={handleFilter} className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-5">
+                    <FilterPanel activeCount={[search, contractStatus, approvalStatus, businessType, siteId].filter(v => v !== '').length}>
+                        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                            <form onSubmit={handleFilter} className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-5">
                             <div className="lg:col-span-1">
                                 <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Number, company, contact..." className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100" />
                             </div>
@@ -113,9 +115,10 @@ export default function Index({
                                 <SecondaryButton type="button" onClick={handleReset}>Reset</SecondaryButton>
                             </div>
                         </form>
-                    </div>
+                        </div>
+                        </FilterPanel>
 
-                    <TableWrapper>
+                        <TableWrapper>
                         <TableHead>
                             <tr>
                                 <th className="px-4 py-3">Contractor</th>

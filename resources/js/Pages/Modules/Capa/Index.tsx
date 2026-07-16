@@ -5,6 +5,7 @@ import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
+import FilterPanel from '@/Components/UI/FilterPanel';
 import { Paginated } from '@/types/core';
 import { PageProps } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
@@ -36,6 +37,8 @@ export default function Index({ items, filters, auth }: PageProps<{ items: Pagin
     function submit(e: FormEvent) { e.preventDefault(); router.get(route('capa.actions.index'), { search, status }, { preserveState: true, replace: true }); }
     function isOverdue(item: CapaItem) { return item.due_date && new Date(item.due_date) < new Date() && !['closed', 'rejected'].includes(item.status); }
 
+    const activeCount = [search !== '', status !== ''].filter(Boolean).length;
+
     return (
         <AuthenticatedLayout
             header={
@@ -58,6 +61,7 @@ export default function Index({ items, filters, auth }: PageProps<{ items: Pagin
             <Head title="CAPA / Action Tracking" />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+                    <FilterPanel activeCount={activeCount}>
                     <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
                         <form onSubmit={submit} className="grid gap-3 md:grid-cols-3">
                             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari..." className="rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 md:col-span-2" />
@@ -75,6 +79,7 @@ export default function Index({ items, filters, auth }: PageProps<{ items: Pagin
                             </div>
                         </form>
                     </div>
+                    </FilterPanel>
 
                     <TableWrapper>
                         <TableHead>

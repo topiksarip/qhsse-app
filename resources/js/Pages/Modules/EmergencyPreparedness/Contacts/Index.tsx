@@ -7,6 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TableWrapper, { TableHead, TableBody } from '@/Components/UI/TableWrapper';
 import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
+import FilterPanel from '@/Components/UI/FilterPanel';
 
 interface ContactIndexProps extends PageProps {
     contacts: PaginatedData<EmergencyContact>;
@@ -43,8 +44,9 @@ export default function Index({ auth, contacts, filters, sites, can }: ContactIn
             <Head title="Kontak Darurat" />
             <div className="py-6">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
-                        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+                    <FilterPanel activeCount={[search, siteId, isActive].filter(v => v !== '').length}>
+                        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
                             <input type="text" placeholder="🔍 Cari nama, telepon..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleFilter()} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 md:col-span-2" />
                             <select value={siteId} onChange={(e) => setSiteId(e.target.value)} className="w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
                                 <option value="">Semua Site</option>
@@ -60,7 +62,8 @@ export default function Index({ auth, contacts, filters, sites, can }: ContactIn
                             <PrimaryButton type="button" onClick={handleFilter}>Filter</PrimaryButton>
                             <SecondaryButton type="button" onClick={handleReset}>Reset</SecondaryButton>
                         </div>
-                    </div>
+                        </div>
+                    </FilterPanel>
 
                     <TableWrapper>
                         <TableHead>
