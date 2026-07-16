@@ -34,7 +34,7 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
                         </svg>
                     </button>
 
-                    <div className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-700 dark:text-slate-200">
+                    <div className="min-w-0 flex-1 truncate text-[15px] font-semibold text-slate-700 dark:text-slate-200">
                         QHSSE Management System
                     </div>
 

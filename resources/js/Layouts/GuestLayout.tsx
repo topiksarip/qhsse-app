@@ -9,9 +9,6 @@ export default function Guest({ children }: PropsWithChildren) {
             <header className="flex items-center justify-between px-4 py-4 sm:px-6">
                 <Link href="/" className="flex items-center gap-2">
                     <ApplicationLogoImage className="block h-8 w-auto" />
-                    <span className="text-sm font-bold uppercase tracking-[0.24em] text-slate-700 dark:text-slate-200">
-                        QHSSE
-                    </span>
                 </Link>
                 <ThemeToggle />
             </header>
