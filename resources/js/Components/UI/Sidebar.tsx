@@ -142,7 +142,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                                     type="button"
                                     onClick={() => toggleGroup(group.label)}
                                     aria-expanded={expanded}
-                                    className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-[16px] font-bold uppercase tracking-wider transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                                    className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-[15px] font-bold uppercase tracking-wider transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                                         groupActive
                                             ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
                                             : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
@@ -169,7 +169,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                                                     href={route(item.routeName)}
                                                     onClick={onClose}
                                                     aria-current={active ? 'page' : undefined}
-                                                    className={`block rounded-md py-2 pl-9 pr-3 text-[12px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                                                    className={`block rounded-md py-2 pl-9 pr-3 text-[13px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                                                         active
                                                             ? 'bg-emerald-100 font-medium text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200'
                                                             : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-gray-800 dark:hover:text-white'

@@ -17,6 +17,22 @@ export default {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
+            colors: {
+                // Remapped from emerald -> brand orange-yellow (#fdb913).
+                emerald: {
+                    '50': '#fff7e3',
+                    '100': '#feeec4',
+                    '200': '#fee095',
+                    '300': '#fed266',
+                    '400': '#fdc63d',
+                    '500': '#fdb913',
+                    '600': '#dfa311',
+                    '700': '#b1820d',
+                    '800': '#84600a',
+                    '900': '#563f06',
+                    '950': '#2e2103',
+                },
+            },
         },
     },
 
