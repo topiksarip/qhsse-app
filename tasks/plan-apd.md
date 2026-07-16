@@ -52,17 +52,21 @@
 - [x] Seeder demo issuance via lifecycle (ApdSeeder)
 - [x] Tests: ApdIssuanceWorkflowTest (7 tests) — all green
 - [x] `npm run build` + tests hijau (APD total 15/15)
-- [ ] Deploy Ubuntu-5 + smoke
+- [x] Deploy Ubuntu-5 (03aeff4) + smoke
 
 ### Phase C — Inspeksi
-- [ ] Migration `apd_inspections`
-- [ ] Model `ApdInspection` + FileService collection `inspection`
-- [ ] Permission `apd.inspect`
-- [ ] InspectionsController (store) + scheduled flag helper
-- [ ] `tidak_layak` → item status `damaged`
-- [ ] Pages: Inspections/{Index,Form}
-- [ ] Tests: InspectionsTest
-- [ ] Build + test hijau
+- [x] Migration `apd_inspections` (+ indexes, softDeletes)
+- [x] Model `ApdInspection` + FileService collection `inspection` + relasi ke item/issuance
+- [x] Permission `apd.inspect` di CorePermissions (all + $apdFull roleMap)
+- [x] `ApdInspectionController` (index/create/store/show/export) + flag scheduled vs incidental (inspection_type enum)
+- [x] `tidak_layak` → item status `damaged` + activity log (apd.item.damaged) + audit (Auditable)
+- [x] `ApdInspectionPolicy` + `ApdAccess::scopeInspection`/`canViewInspection` (scope fail-closed)
+- [x] StoreApdInspectionRequest (validasi + scope + foto photos[])
+- [x] SearchController entry `apd_inspections` + CTA "Inspeksi" dari Item Show & Issuance Show
+- [x] Pages: Inspections/{Index,Form,Show} + CTA di Items/Show & Issuances/Show
+- [x] Tests: ApdInspectionTest (6 tests: routes, layak keeps status, tidak_layak→damaged+activity, foto collection, scope block, forbidden) — all green
+- [x] `npm run build` + tests hijau (APD total 21/21)
+- [x] Deploy Ubuntu-5 (b7b7ca6) + smoke (table exists, perm id=271 granted to Admin/QHSSE Manager/QHSSE Officer/Super Admin, 5 routes live, login 200)
 
 ### Phase D — Integrasi + Dashboard + Search
 - [ ] Migration `risk_apd_requirements` + model + permission gated
