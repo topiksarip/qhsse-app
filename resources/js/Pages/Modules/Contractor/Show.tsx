@@ -100,7 +100,7 @@ export default function Show({ auth, contractor }: PageProps<{ contractor: Contr
                                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                         contractor.contract_status === 'active' ? 'bg-green-100 text-green-800' :
                                         contractor.contract_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                        contractor.contract_status === 'suspended' ? 'bg-orange-100 text-orange-800' :
+                                        contractor.contract_status === 'suspended' ? 'bg-amber-100 text-amber-800' :
                                         'bg-red-100 text-red-800'
                                     }`}>
                                         {contractor.contract_status_label}

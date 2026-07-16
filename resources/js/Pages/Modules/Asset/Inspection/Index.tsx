@@ -57,7 +57,7 @@ export default function Index({ asset, inspections, can }: PageProps<{ asset: As
                                     <td className="whitespace-nowrap px-4 py-3 text-center text-sm">
                                         <Link href={`/assets/${asset.id}/inspections/${inspection.id}`} className="text-emerald-600 hover:underline dark:text-emerald-400">View</Link>
                                         {inspection.can_update && <Link href={`/assets/${asset.id}/inspections/${inspection.id}/edit`} className="ml-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">Edit</Link>}
-                                        {inspection.can_create_capa && !inspection.capa_action && <Link href={`/assets/${asset.id}/inspections/${inspection.id}/create-capa`} className="ml-2 text-orange-600 hover:underline dark:text-orange-400">Buat CAPA</Link>}
+                                        {inspection.can_create_capa && !inspection.capa_action && <Link href={`/assets/${asset.id}/inspections/${inspection.id}/create-capa`} className="ml-2 text-emerald-600 hover:underline dark:text-emerald-400">Buat CAPA</Link>}
                                         {can.delete && (
                                             <DeleteWithConfirm
                                                 routeName="assets.inspections.destroy"

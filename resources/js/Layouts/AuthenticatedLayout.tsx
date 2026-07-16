@@ -15,12 +15,12 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
 
     return (
         <div className="relative min-h-screen text-slate-900 dark:text-gray-100">
-            {/* Branded background: photo (50%) + subtle texture + translucent scrim */}
+            {/* Branded background: photo (40%) + subtle natural surface texture + translucent scrim */}
             <div
-                className="fixed inset-0 -z-20 bg-cover bg-center opacity-50"
+                className="fixed inset-0 -z-20 bg-cover bg-center opacity-40"
                 style={{ backgroundImage: "url('/img/websamudera-bg.jpg')" }}
             />
-            <div className="fixed inset-0 -z-10 bg-white/55 bg-[linear-gradient(rgba(0,0,0,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.06)_1px,transparent_1px)] bg-[size:26px_26px] dark:bg-gray-950/80 dark:bg-[linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.06)_1px,transparent_1px)]" />
+            <div className="fixed inset-0 -z-10 bg-white/65 bg-[radial-gradient(circle_at_1px_1px,rgba(15,23,42,0.07)_1px,transparent_0)] bg-[size:22px_22px] dark:bg-gray-950/80 dark:bg-[radial-gradient(circle_at_1px_1px,rgba(226,232,240,0.06)_1px,transparent_0)]" />
 
             <ToastContainer toasts={toasts} onDismiss={dismiss} />
 

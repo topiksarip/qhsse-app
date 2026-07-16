@@ -119,7 +119,7 @@ export default function Show({ asset, comments, activities, auditLogs, can }: Pa
         const colors: Record<string, string> = {
             valid: 'bg-green-100 text-green-800',
             expiring_soon: 'bg-yellow-100 text-yellow-800',
-            expiring_critical: 'bg-orange-100 text-orange-800',
+            expiring_critical: 'bg-amber-100 text-amber-800',
             expired: 'bg-red-100 text-red-800',
         };
         return colors[status] || 'bg-gray-100 text-gray-800';

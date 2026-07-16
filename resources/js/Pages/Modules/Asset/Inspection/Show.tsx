@@ -154,7 +154,7 @@ export default function Show({ asset, inspection, can }: PageProps<{
                                     {can.linkCapa && inspection.result !== 'pass' && (
                                         <Link
                                             href={`/assets/${asset.id}/inspections/${inspection.id}/create-capa`}
-                                            className="inline-flex items-center px-4 py-2 bg-orange-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-orange-700"
+                                            className="inline-flex items-center px-4 py-2 bg-emerald-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-emerald-700"
                                         >
                                             Buat CAPA Action
                                         </Link>

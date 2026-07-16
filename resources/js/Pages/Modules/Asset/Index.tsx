@@ -86,7 +86,7 @@ export default function Index({ auth, assets, filters, sites, categories, status
     const certificateStatus = {
         valid: { label: 'Sertifikat Valid', className: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200' },
         expiring_soon: { label: 'Segera Kedaluwarsa', className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200' },
-        expiring_critical: { label: 'Kritis ≤ 7 Hari', className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200' },
+        expiring_critical: { label: 'Kritis ≤ 7 Hari', className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200' },
         expired: { label: 'Sertifikat Expired', className: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200' },
     } as const;
 

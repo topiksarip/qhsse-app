@@ -18,19 +18,20 @@ export default {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
             colors: {
-                // Remapped from emerald -> brand orange-yellow (#fdb913).
+                // Remapped from emerald -> brand blue accent (#2563eb).
+                // Orange (#fdb913) is reserved for the navbar only (literal hex in layouts).
                 emerald: {
-                    '50': '#fff7e3',
-                    '100': '#feeec4',
-                    '200': '#fee095',
-                    '300': '#fed266',
-                    '400': '#fdc63d',
-                    '500': '#fdb913',
-                    '600': '#dfa311',
-                    '700': '#b1820d',
-                    '800': '#84600a',
-                    '900': '#563f06',
-                    '950': '#2e2103',
+                    '50': '#eff6ff',
+                    '100': '#dbeafe',
+                    '200': '#bfdbfe',
+                    '300': '#93c5fd',
+                    '400': '#60a5fa',
+                    '500': '#3b82f6',
+                    '600': '#2563eb',
+                    '700': '#1d4ed8',
+                    '800': '#1e40af',
+                    '900': '#1e3a8a',
+                    '950': '#172554',
                 },
             },
         },

@@ -2,7 +2,7 @@ import { PermitType } from '@/types';
 
 const typeConfig: Record<PermitType, { label: string; icon: string; color: string }> = {
     hot_work: { label: 'Hot Work', icon: '🔥', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
-    working_at_height: { label: 'Working at Height', icon: '🧗', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' },
+    working_at_height: { label: 'Working at Height', icon: '🧗', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200' },
     confined_space: { label: 'Confined Space', icon: '🕳️', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' },
     electrical: { label: 'Electrical', icon: '⚡', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
     excavation: { label: 'Excavation', icon: '⛏️', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200' },

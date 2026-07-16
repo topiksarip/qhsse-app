@@ -59,7 +59,7 @@ const typeLabel: Record<string, string> = {
     internal: 'Internal', external: 'Eksternal', supplier: 'Pemasok', regulatory: 'Regulator',
 };
 const classificationStyle: Record<string, string> = {
-    major_nc: 'bg-red-100 text-red-700', minor_nc: 'bg-orange-100 text-orange-700', observation: 'bg-blue-100 text-blue-700', ofi: 'bg-cyan-100 text-cyan-700',
+    major_nc: 'bg-red-100 text-red-700', minor_nc: 'bg-amber-100 text-amber-700', observation: 'bg-blue-100 text-blue-700', ofi: 'bg-cyan-100 text-cyan-700',
 };
 const classificationLabel: Record<string, string> = {
     major_nc: 'Mayor', minor_nc: 'Minor', observation: 'Observasi', ofi: 'Peluang Perbaikan',

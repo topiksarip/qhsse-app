@@ -170,8 +170,8 @@ export default function CreateOrEdit({ asset, inspection, inspectors, results }:
 
                             {/* Info Box for Failed Inspections */}
                             {data.result === 'fail' && (
-                                <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-md">
-                                    <p className="text-sm text-orange-800">
+                                <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-md">
+                                    <p className="text-sm text-amber-800">
                                         <strong>Note:</strong> Failed inspections can be linked to CAPA actions after creation
                                         to track corrective measures.
                                     </p>

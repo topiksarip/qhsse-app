@@ -11,7 +11,7 @@ interface Certificate { id: number; certificate_type: string; certificate_number
 interface Asset { id: number; asset_number: string; name: string }
 
 export default function Index({ asset, certificates, can }: PageProps<{ asset: Asset; certificates: Certificate[]; can: { create: boolean; delete: boolean } }>) {
-    const statusColor = (s: string) => ({ valid: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200', expiring_soon: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200', expiring_critical: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200', expired: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }[s] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200');
+    const statusColor = (s: string) => ({ valid: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200', expiring_soon: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200', expiring_critical: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200', expired: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }[s] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200');
     const statusLabel = (s: string) => ({ valid: 'Valid', expiring_soon: 'Expiring Soon', expiring_critical: 'Expiring Critical', expired: 'Expired' }[s] || s);
 
     return (

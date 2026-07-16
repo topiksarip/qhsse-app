@@ -29,12 +29,12 @@ export default function ExpiryIndicator({ expiryDate, status }: ExpiryIndicatorP
         icon = '🔴';
     } else if (daysRemaining === 0) {
         // Expires today
-        colorClass = 'text-orange-600 dark:text-orange-400 font-semibold';
+        colorClass = 'text-amber-600 dark:text-amber-400 font-semibold';
         statusText = 'Kedaluwarsa hari ini!';
         icon = '⚠️';
     } else if (daysRemaining <= 30) {
         // Expiring soon (within 30 days)
-        colorClass = 'text-orange-600 dark:text-orange-400 font-medium';
+        colorClass = 'text-amber-600 dark:text-amber-400 font-medium';
         statusText = `${daysRemaining} hari lagi`;
         icon = '🟠';
     } else if (daysRemaining <= 90) {
