@@ -14,7 +14,14 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
-        <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-gray-950 dark:text-gray-100">
+        <div className="relative min-h-screen text-slate-900 dark:text-gray-100">
+            {/* Branded background */}
+            <div
+                className="fixed inset-0 -z-10 bg-cover bg-center"
+                style={{ backgroundImage: "url('/img/websamudera-bg.jpg')" }}
+            />
+            <div className="fixed inset-0 -z-10 bg-white/70 dark:bg-gray-950/80" />
+
             <ToastContainer toasts={toasts} onDismiss={dismiss} />
 
             <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />

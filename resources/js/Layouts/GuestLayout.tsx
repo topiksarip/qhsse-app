@@ -5,7 +5,14 @@ import { PropsWithChildren } from 'react';
 
 export default function Guest({ children }: PropsWithChildren) {
     return (
-        <div className="flex min-h-screen flex-col bg-slate-100 text-slate-900 dark:bg-gray-950 dark:text-gray-100">
+        <div className="relative flex min-h-screen flex-col text-slate-900 dark:text-gray-100">
+            {/* Branded background */}
+            <div
+                className="fixed inset-0 -z-10 bg-cover bg-center"
+                style={{ backgroundImage: "url('/img/websamudera-bg.jpg')" }}
+            />
+            <div className="fixed inset-0 -z-10 bg-white/70 dark:bg-gray-950/80" />
+
             <header className="flex items-center justify-between px-4 py-4 sm:px-6">
                 <Link href="/" className="flex items-center gap-2">
                     <ApplicationLogoImage className="block h-8 w-auto" />
