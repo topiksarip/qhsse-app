@@ -13,7 +13,9 @@ use App\Models\Core\Activity\ActivityLog;
 use App\Models\Core\Files\ManagedFile;
 use App\Models\Modules\Apd\ApdInspection;
 use App\Models\Modules\Apd\ApdItem;
+use App\Models\Modules\Capa\CapaAction;
 use App\Modules\Apd\ApdAccess;
+use App\Modules\Capa\CapaService;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,6 +32,7 @@ class ApdInspectionController extends Controller
         private readonly ManagedFileService $files,
         private readonly ActivityService $activity,
         private readonly CsvExporter $csvExporter,
+        private readonly CapaService $capaService,
     ) {}
 
     public function index(Request $request): Response
@@ -156,7 +159,7 @@ class ApdInspectionController extends Controller
     {
         $this->authorize('view', $apd_inspection);
 
-        $apd_inspection->load(['item.catalog', 'item.site', 'item.area', 'item.department', 'inspector', 'creator']);
+        $apd_inspection->load(['item.catalog', 'item.site', 'item.area', 'item.department', 'inspector', 'creator', 'capaActions.assignedTo']);
 
         return Inertia::render('Modules/Apd/Inspections/Show', [
             'inspection' => $apd_inspection,
@@ -175,8 +178,45 @@ class ApdInspectionController extends Controller
             'can' => [
                 'update' => $request->user()->can('update', $apd_inspection),
                 'delete' => $request->user()->can('delete', $apd_inspection),
+                'escalate' => $request->user()->can('create', CapaAction::class),
             ],
+            'users' => \App\Models\User::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'priorities' => \App\Models\Core\MasterData\Priority::where('is_active', true)->orderBy('sla_days', 'desc')->get(['id', 'name']),
         ]);
+    }
+
+    /**
+     * Escalate an unfit inspection to a CAPA action.
+     */
+    public function escalate(Request $request, ApdInspection $apd_inspection): RedirectResponse
+    {
+        $this->authorize('view', $apd_inspection);
+        abort_unless($request->user()->can('create', CapaAction::class), 403);
+
+        if ($apd_inspection->result !== 'tidak_layak') {
+            return back()->with('error', 'Hanya inspeksi tidak layak yang dapat dieskalasi ke CAPA.');
+        }
+
+        $item = $apd_inspection->item;
+        $request->validate([
+            'assigned_to' => ['required', 'exists:users,id'],
+            'priority_id' => ['required', 'exists:priorities,id'],
+            'due_date' => ['nullable', 'date'],
+        ]);
+
+        $action = $this->capaService->escalateFrom('apd_inspection', $apd_inspection->id, [
+            'title' => 'Tindak lanjut APD tidak layak: ' . ($item?->item_number ?? $apd_inspection->id),
+            'description' => 'Hasil inspeksi APD tidak layak (ID ' . $apd_inspection->id . '). ' . ($apd_inspection->notes ?? ''),
+            'site_id' => $item?->site_id ?? $request->user()->employee?->site_id ?? 1,
+            'department_id' => $item?->department_id,
+            'assigned_to' => (int) $request->input('assigned_to'),
+            'priority_id' => (int) $request->input('priority_id'),
+            'due_date' => $request->input('due_date'),
+            'source_type' => 'corrective',
+        ], $request->user());
+
+        return redirect()->route('capa.actions.show', $action)
+            ->with('success', 'Inspeksi tidak layak dieskalasi ke CAPA ' . $action->action_number . '.');
     }
 
     public function export(Request $request): StreamedResponse

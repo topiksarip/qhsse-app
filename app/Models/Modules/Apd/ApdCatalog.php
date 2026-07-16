@@ -55,6 +55,11 @@ class ApdCatalog extends Model implements ProvidesAuditContext
         return $this->hasMany(ApdItem::class, 'catalog_id');
     }
 
+    public function apdRequirements(): HasMany
+    {
+        return $this->hasMany(ApdRequirement::class, 'apd_catalog_id');
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

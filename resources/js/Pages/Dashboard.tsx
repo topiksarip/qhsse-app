@@ -10,7 +10,7 @@ import { useMemo } from 'react';
 
 type Option = { id: number; name: string; site_id?: number | null };
 type Kpi = { label: string; value: number | string; sub?: string; tone?: 'emerald' | 'sky' | 'amber' | 'indigo' | 'red' };
-type Widget = { title: string; description: string; points: number[]; labels?: string[] };
+type Widget = { title: string; description: string; points?: number[]; labels?: string[]; series?: { name: string; color: string; points: number[] }[] };
 type QuickLink = { label: string; route: string; permission: string };
 type Filters = { from: string; to: string; site_id?: number | null; department_id?: number | null };
 

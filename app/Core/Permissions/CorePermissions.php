@@ -208,6 +208,7 @@ final class CorePermissions
             'apd.request',
             'apd.receive',
             'apd.inspect',
+            'apd.requirements.manage',
 
             // Communication & Campaign
             'communication.campaigns.view',
@@ -472,7 +473,7 @@ final class CorePermissions
         $assetView = ['asset.management.view', 'asset.certificates.view', 'asset.inspections.view'];
         $assetCreate = ['asset.management.view', 'asset.management.create', 'asset.management.update'];
 
-        $apdFull = ['apd.view', 'apd.create', 'apd.update', 'apd.delete', 'apd.export', 'apd.issue', 'apd.approve', 'apd.request', 'apd.receive', 'apd.inspect'];
+        $apdFull = ['apd.view', 'apd.create', 'apd.update', 'apd.delete', 'apd.export', 'apd.issue', 'apd.approve', 'apd.request', 'apd.receive', 'apd.inspect', 'apd.requirements.manage'];
         $apdViewExport = ['apd.view', 'apd.export', 'apd.request', 'apd.approve'];
         $apdView = ['apd.view', 'apd.request'];
         $apdCreate = ['apd.view', 'apd.create', 'apd.update', 'apd.issue'];

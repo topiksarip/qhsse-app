@@ -5,6 +5,7 @@ namespace App\Models\Modules\Apd;
 use App\Models\Concerns\Auditable;
 use App\Models\Contracts\ProvidesAuditContext;
 use App\Models\Core\Files\ManagedFile;
+use App\Models\Modules\Capa\CapaAction;
 use App\Models\User;
 use App\Models\Modules\Apd\ApdItem;
 use Illuminate\Database\Eloquent\Builder;
@@ -64,6 +65,13 @@ class ApdInspection extends Model implements ProvidesAuditContext
         return $this->hasMany(ManagedFile::class, 'reference_id')
             ->where('module_name', 'apd')
             ->where('collection', 'inspection');
+    }
+
+    /** @return HasMany<CapaAction, ApdInspection> */
+    public function capaActions(): HasMany
+    {
+        return $this->hasMany(CapaAction::class, 'source_reference_id')
+            ->where('source_module', 'apd_inspection');
     }
 
     // Scopes

@@ -54,6 +54,10 @@ Route::middleware(['auth', 'verified', 'active'])
             ->middleware('permission:incident.reports.update');
         Route::delete('/{incidentReport}', [\App\Http\Controllers\Modules\Incident\IncidentReportController::class, 'destroy'])->name('destroy')->middleware('permission:incident.reports.delete');
 
+        Route::post('/{incidentReport}/escalate', [IncidentReportController::class, 'escalate'])
+            ->name('escalate')
+            ->middleware('permission:capa.actions.create');
+
         Route::post('/{incidentReport}/submit', [IncidentWorkflowController::class, 'submit'])
             ->name('submit')
             ->middleware('permission:incident.reports.submit');

@@ -37,7 +37,7 @@ class DashboardController extends Controller
         $to = Carbon::parse($request->query('to', now()->toDateString()));
 
         $kpis = $this->buildKpis($request, $siteId, $departmentId, $from, $to);
-        $widgets = $this->buildWidgets($siteId, $from, $to);
+        $widgets = $this->buildWidgets($request->user(), $siteId, $from, $to);
 
         if ($request->user()?->can('apd.view')) {
             $kpis = array_merge($kpis, $this->buildApdKpis($request->user(), $siteId, $departmentId));
@@ -242,7 +242,7 @@ class DashboardController extends Controller
         return $kpis;
     }
 
-    private function buildWidgets(?int $siteId, Carbon $from, Carbon $to): array
+    private function buildWidgets(?User $user, ?int $siteId, Carbon $from, Carbon $to): array
     {
         $widgets = [];
 
@@ -324,6 +324,45 @@ class DashboardController extends Controller
             'points' => array_values($byCategory),
             'labels' => array_keys($byCategory),
         ];
+
+        // Widget 5: APD Inspection Trend — layak vs tidak_layak (last 6 months)
+        if ($user?->can('apd.view')) {
+            $monthExpr = DatePeriodExpression::month(DB::getDriverName(), 'inspection_date');
+            $inspectionQuery = ApdInspection::query()
+                ->where('inspection_date', '>=', now()->subMonths(5)->startOfMonth())
+                ->whereHas('item', function ($q) use ($user, $siteId) {
+                    if ($siteId) {
+                        $q->where('site_id', $siteId);
+                    }
+                    $this->apdAccess->scope($q, $user);
+                });
+
+            $layakTrend = (clone $inspectionQuery)->where('result', 'layak')
+                ->selectRaw("{$monthExpr} as month, COUNT(*) as cnt")
+                ->groupByRaw($monthExpr)->pluck('cnt', 'month')->toArray();
+            $tidakLayakTrend = (clone $inspectionQuery)->where('result', 'tidak_layak')
+                ->selectRaw("{$monthExpr} as month, COUNT(*) as cnt")
+                ->groupByRaw($monthExpr)->pluck('cnt', 'month')->toArray();
+
+            $labels = collect(range(0, 5))->map(fn ($i) => now()->subMonths(5 - $i)->translatedFormat('M'))->toArray();
+            $layakPoints = [];
+            $tidakLayakPoints = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $month = now()->subMonths($i)->format('Y-m');
+                $layakPoints[] = $layakTrend[$month] ?? 0;
+                $tidakLayakPoints[] = $tidakLayakTrend[$month] ?? 0;
+            }
+
+            $widgets[] = [
+                'title' => 'Tren Inspeksi APD',
+                'description' => 'Layak vs Tidak Layak per bulan (6 bulan)',
+                'series' => [
+                    ['name' => 'Layak', 'points' => $layakPoints],
+                    ['name' => 'Tidak Layak', 'points' => $tidakLayakPoints],
+                ],
+                'labels' => $labels,
+            ];
+        }
 
         return $widgets;
     }

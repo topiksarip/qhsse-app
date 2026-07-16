@@ -14,6 +14,7 @@ use App\Modules\Training\TrainingAccess;
 use App\Http\Requests\Modules\Training\StoreTrainingRecordRequest;
 use App\Http\Requests\Modules\Training\UpdateTrainingRecordRequest;
 use App\Models\Core\Users\Employee;
+use App\Models\Modules\Apd\ApdItem;
 use App\Models\Modules\Training\TrainingProgram;
 use App\Models\Modules\Training\TrainingRecord;
 use Illuminate\Http\RedirectResponse;
@@ -95,6 +96,9 @@ class TrainingRecordController extends Controller
             'employees' => $employeeQuery->get(['id', 'name', 'employee_no']),
             'statuses' => TrainingRecord::getStatuses(),
             'results' => TrainingRecord::getResults(),
+            'training_types' => TrainingRecord::getTrainingTypes(),
+            'fit_test_results' => TrainingRecord::getFitTestResults(),
+            'apd_items' => ApdItem::query()->where('status', 'issued')->orderBy('item_number')->get(['id', 'item_number', 'status']),
         ]);
     }
 
@@ -148,7 +152,7 @@ class TrainingRecordController extends Controller
     {
         $this->authorize('view', $record);
 
-        $record->load(['employee', 'trainingProgram', 'certificateFile']);
+        $record->load(['employee', 'trainingProgram', 'certificateFile', 'apdItem']);
 
         $user = auth()->user();
 
@@ -182,6 +186,9 @@ class TrainingRecordController extends Controller
             'employees' => $employeeQuery->get(['id', 'name', 'employee_no']),
             'statuses' => TrainingRecord::getStatuses(),
             'results' => TrainingRecord::getResults(),
+            'training_types' => TrainingRecord::getTrainingTypes(),
+            'fit_test_results' => TrainingRecord::getFitTestResults(),
+            'apd_items' => ApdItem::query()->where('status', 'issued')->orderBy('item_number')->get(['id', 'item_number', 'status']),
         ]);
     }
 

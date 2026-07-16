@@ -17,7 +17,7 @@ class StoreCapaActionRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
-            'source_module' => ['nullable', 'string', Rule::in(['incident', 'inspection', 'asset_inspection', 'audit', 'manual'])],
+            'source_module' => ['nullable', 'string', Rule::in(['incident', 'inspection', 'asset_inspection', 'audit', 'apd', 'apd_inspection', 'manual'])],
             'source_reference_id' => ['nullable', 'integer'],
             'source_type' => ['nullable', 'string', Rule::in(['corrective', 'preventive'])],
             'site_id' => ['required', 'exists:sites,id'],

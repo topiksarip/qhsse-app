@@ -4,6 +4,7 @@ use App\Http\Controllers\Modules\Apd\ApdCatalogController;
 use App\Http\Controllers\Modules\Apd\ApdItemController;
 use App\Http\Controllers\Modules\Apd\ApdIssuanceController;
 use App\Http\Controllers\Modules\Apd\ApdInspectionController;
+use App\Http\Controllers\Modules\Apd\ApdRequirementController;
 use Illuminate\Support\Facades\Route;
 
 // APD / PPE Management Routes
@@ -66,5 +67,12 @@ Route::middleware(['auth', 'verified', 'active'])
             Route::get('/create', [ApdInspectionController::class, 'create'])->name('create')->middleware('permission:apd.inspect');
             Route::post('/', [ApdInspectionController::class, 'store'])->name('store')->middleware('permission:apd.inspect');
             Route::get('/{apd_inspection}', [ApdInspectionController::class, 'show'])->name('show')->middleware('permission:apd.view');
+            Route::post('/{apd_inspection}/escalate', [ApdInspectionController::class, 'escalate'])->name('escalate')->middleware('permission:capa.actions.create');
+        });
+
+        // APD Requirements sub-resource (linked to Risk Register)
+        Route::prefix('requirements')->name('requirements.')->group(function (): void {
+            Route::post('/', [ApdRequirementController::class, 'store'])->name('store')->middleware('permission:apd.requirements.manage');
+            Route::delete('/{requirement}', [ApdRequirementController::class, 'destroy'])->name('destroy')->middleware('permission:apd.requirements.manage');
         });
     });

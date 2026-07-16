@@ -13,6 +13,7 @@ use App\Models\Modules\DocumentControl\ControlledDocument;
 use App\Models\Modules\Incident\IncidentReport;
 use App\Models\Modules\Inspection\Inspection;
 use App\Models\Modules\Permit\Permit;
+use App\Models\Modules\Apd\ApdRequirement;
 use App\Models\Modules\RiskManagement\RiskRegister;
 use App\Models\Modules\Security\SecurityIncident;
 use App\Models\Modules\Training\TrainingProgram;
@@ -109,6 +110,17 @@ class SearchController extends Controller
                 'navRoute' => 'risk.registers.index',
                 'label' => 'Risk Register',
                 'snippet' => fn (RiskRegister $m) => 'No. ' . ($m->register_number ?? '-') . ' • ' . ($m->type ?? ''),
+            ],
+            [
+                'permission' => 'apd.view',
+                'model' => ApdRequirement::class,
+                'columns' => ['notes'],
+                'scope' => fn ($q) => $q->whereHas('catalog', fn ($c) => app(\App\Modules\Apd\ApdAccess::class)->scope($c, request()->user())),
+                'route' => 'risk.registers.show',
+                'navRoute' => 'risk.registers.index',
+                'label' => 'Kebutuhan APD (Risk Register)',
+                'snippet' => fn (ApdRequirement $m) => ($m->catalog?->name ?? 'APD') . ' • Qty ' . ($m->quantity ?? 0) . ' • ' . optional($m->riskRegister)->register_number,
+                'routeParams' => fn (ApdRequirement $m) => ['riskRegister' => $m->risk_register_id],
             ],
             [
                 'permission' => 'asset.management.view',
@@ -214,11 +226,13 @@ class SearchController extends Controller
                 }
 
                 $rows = $items->map(function ($item) use ($cfg) {
+                    $routeParams = isset($cfg['routeParams']) ? ($cfg['routeParams'])($item) : $item->getKey();
+
                     return [
                         'id' => $item->getKey(),
                         'title' => $this->primaryTitle($item, $cfg),
                         'snippet' => (string) ($cfg['snippet'])($item),
-                        'href' => route($cfg['route'], $item->getKey(), false),
+                        'href' => route($cfg['route'], $routeParams, false),
                     ];
                 })->all();
 

@@ -23,9 +23,11 @@ use App\Models\Core\Users\Employee;
 use App\Models\Core\Workflow\WorkflowHistory;
 use App\Models\Core\Workflow\WorkflowInstance;
 use App\Models\Modules\Incident\IncidentReport;
+use App\Models\Modules\Capa\CapaAction;
 use App\Models\User;
 use App\Modules\Incident\IncidentAccess;
 use App\Modules\Incident\IncidentLifecycle;
+use App\Modules\Capa\CapaService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -43,6 +45,7 @@ class IncidentReportController extends Controller
         private readonly ActivityService $activityService,
         private readonly IncidentAccess $access,
         private readonly IncidentLifecycle $lifecycle,
+        private readonly CapaService $capaService,
     ) {}
 
     public function index(Request $request, ListQuery $listQuery): Response
@@ -86,6 +89,10 @@ class IncidentReportController extends Controller
                 'priority_id' => $validated['priority_id'],
                 'description' => $validated['description'],
                 'immediate_action' => $validated['immediate_action'] ?? null,
+                'ppe_involved' => $validated['ppe_involved'] ?? false,
+                'apd_item_id' => $validated['apd_item_id'] ?? null,
+                'ppe_failure' => $validated['ppe_failure'] ?? false,
+                'ppe_notes' => $validated['ppe_notes'] ?? null,
                 'status' => 'draft',
             ]);
 
@@ -122,7 +129,7 @@ class IncidentReportController extends Controller
     public function show(Request $request, IncidentReport $incidentReport): Response
     {
         $this->access->ensureVisible($request->user(), $incidentReport);
-        $incidentReport->load(['site', 'area', 'department', 'reporter', 'severity', 'priority', 'involvedPersons']);
+        $incidentReport->load(['site', 'area', 'department', 'reporter', 'severity', 'priority', 'involvedPersons', 'apdItem', 'capaActions.assignedTo']);
 
         $evidence = ManagedFile::query()
             ->where('module_name', 'incident')
@@ -176,7 +183,51 @@ class IncidentReportController extends Controller
             'activities' => $activities,
             'workflowHistory' => $workflowHistory,
             'availableTransitions' => $availableTransitions,
+            'capaActions' => $incidentReport->capaActions->map(fn ($c) => [
+                'id' => $c->id,
+                'action_number' => $c->action_number,
+                'title' => $c->title,
+                'status' => $c->status,
+            ]),
+            'can' => [
+                'escalate' => $request->user()->can('create', CapaAction::class),
+            ],
+            'users' => \App\Models\User::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'priorities' => \App\Models\Core\MasterData\Priority::where('is_active', true)->orderBy('sla_days', 'desc')->get(['id', 'name']),
         ]);
+    }
+
+    /**
+     * Escalate an incident (with PPE failure) to a CAPA action.
+     */
+    public function escalate(Request $request, IncidentReport $incidentReport): RedirectResponse
+    {
+        $this->access->ensureVisible($request->user(), $incidentReport);
+        abort_unless($request->user()->can('create', CapaAction::class), 403);
+
+        if (!$incidentReport->ppe_failure) {
+            return back()->with('error', 'Hanya insiden dengan kegagalan APD yang dapat dieskalasi ke CAPA.');
+        }
+
+        $request->validate([
+            'assigned_to' => ['required', 'exists:users,id'],
+            'priority_id' => ['required', 'exists:priorities,id'],
+            'due_date' => ['nullable', 'date'],
+        ]);
+
+        $action = $this->capaService->escalateFrom('incident', $incidentReport->id, [
+            'title' => 'Tindak lanjut PPE: ' . ($incidentReport->incident_number ?? $incidentReport->id),
+            'description' => 'Insiden terkait kegagalan APD (ID ' . $incidentReport->id . '). ' . ($incidentReport->ppe_notes ?? ''),
+            'site_id' => $incidentReport->site_id,
+            'department_id' => $incidentReport->department_id,
+            'assigned_to' => (int) $request->input('assigned_to'),
+            'priority_id' => (int) $request->input('priority_id'),
+            'due_date' => $request->input('due_date'),
+            'source_type' => 'corrective',
+        ], $request->user());
+
+        return redirect()->route('capa.actions.show', $action)
+            ->with('success', 'Insiden dieskalasi ke CAPA ' . $action->action_number . '.');
     }
 
     public function edit(Request $request, IncidentReport $incidentReport): Response
@@ -283,6 +334,7 @@ class IncidentReportController extends Controller
             'employees' => $employees->orderBy('name')->get(['id', 'name', 'employee_no', 'site_id']),
             'severities' => Severity::where('is_active', true)->orderBy('level', 'desc')->get(['id', 'name', 'level', 'color']),
             'priorities' => Priority::where('is_active', true)->orderBy('sla_days', 'desc')->get(['id', 'name', 'sla_days', 'color']),
+            'apd_items' => $this->access->apdAccessibleItems($user),
         ];
     }
 }

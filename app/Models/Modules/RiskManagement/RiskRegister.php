@@ -9,10 +9,12 @@ use App\Models\Core\MasterData\Department;
 use App\Models\Core\MasterData\RiskMatrixLevel;
 use App\Models\Core\MasterData\Severity;
 use App\Models\Core\MasterData\Site;
+use App\Models\Modules\Apd\ApdRequirement;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RiskRegister extends Model
 {
@@ -95,6 +97,11 @@ class RiskRegister extends Model
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function apdRequirements(): HasMany
+    {
+        return $this->hasMany(ApdRequirement::class, 'risk_register_id');
     }
 
     // Shared polymorphic relations (via module_name + reference_id)

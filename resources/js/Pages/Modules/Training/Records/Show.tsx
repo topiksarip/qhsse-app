@@ -297,6 +297,43 @@ export default function Show({ auth, record, can }: ShowProps) {
                         </div>
                     </div>
 
+                    {/* PPE Fit-Test & APD Link */}
+                    {record.training_type && (record.training_type === 'ppe_fit_test' || record.apd_item || record.fit_test_result) && (
+                        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                                FIT-TEST APD
+                            </h3>
+                            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                                <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                                    <div>
+                                        <dt className="text-sm font-medium text-gray-600 dark:text-gray-400">Jenis Pelatihan</dt>
+                                        <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                                            {record.training_type === 'ppe_fit_test' ? 'Fit-Test APD' : record.training_type}
+                                        </dd>
+                                    </div>
+                                    {record.apd_item && (
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-600 dark:text-gray-400">Item APD</dt>
+                                            <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                                                <Link href={route('apd.items.show', record.apd_item.id)} className="text-indigo-600 hover:underline dark:text-indigo-400">
+                                                    {record.apd_item.item_number} {record.apd_item.catalog?.name ? `— ${record.apd_item.catalog.name}` : ''}
+                                                </Link>
+                                            </dd>
+                                        </div>
+                                    )}
+                                    {record.fit_test_result && (
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-600 dark:text-gray-400">Hasil Fit-Test</dt>
+                                            <dd className="mt-1">
+                                                <ResultBadge result={record.fit_test_result} />
+                                            </dd>
+                                        </div>
+                                    )}
+                                </dl>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Notes */}
                     {record.notes && (
                         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">

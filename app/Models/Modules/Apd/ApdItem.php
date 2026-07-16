@@ -99,6 +99,11 @@ class ApdItem extends Model implements ProvidesAuditContext
             ->where('module_name', 'apd');
     }
 
+    public function trainingRecords(): HasMany
+    {
+        return $this->hasMany(\App\Models\Modules\Training\TrainingRecord::class, 'apd_item_id');
+    }
+
     // Scopes
     public function scopeInStock(Builder $query): Builder
     {

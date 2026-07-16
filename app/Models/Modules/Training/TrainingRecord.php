@@ -4,6 +4,7 @@ namespace App\Models\Modules\Training;
 
 use App\Models\Core\Files\ManagedFile;
 use App\Models\Core\Users\Employee;
+use App\Models\Modules\Apd\ApdItem;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,6 +18,7 @@ class TrainingRecord extends Model
         'training_number',
         'employee_id',
         'training_program_id',
+        'training_type',
         'provider',
         'start_date',
         'end_date',
@@ -25,6 +27,8 @@ class TrainingRecord extends Model
         'result',
         'certificate_number',
         'certificate_file_id',
+        'apd_item_id',
+        'fit_test_result',
         'expiry_date',
         'notes',
     ];
@@ -43,6 +47,12 @@ class TrainingRecord extends Model
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    /** @return BelongsTo<ApdItem, TrainingRecord> */
+    public function apdItem(): BelongsTo
+    {
+        return $this->belongsTo(ApdItem::class, 'apd_item_id');
     }
 
     /** @return BelongsTo<TrainingProgram, TrainingRecord> */
@@ -104,6 +114,31 @@ class TrainingRecord extends Model
         return $query->where('status', 'completed')
             ->whereNotNull('expiry_date')
             ->whereBetween('expiry_date', [now(), now()->addDays($days)]);
+    }
+
+    /**
+     * Get all valid training types (including PPE fit-test)
+     */
+    public static function getTrainingTypes(): array
+    {
+        return [
+            'general' => 'Umum',
+            'induction' => 'Induksi',
+            'ppe_fit_test' => 'Fit-Test APD',
+            'competency' => 'Kompetensi',
+            'refresher' => 'Perbaruan',
+        ];
+    }
+
+    /**
+     * Get all valid fit-test results
+     */
+    public static function getFitTestResults(): array
+    {
+        return [
+            'pass' => 'Lulus',
+            'fail' => 'Tidak Lulus',
+        ];
     }
 
     /**

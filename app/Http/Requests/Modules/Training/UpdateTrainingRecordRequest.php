@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Modules\Training;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateTrainingRecordRequest extends FormRequest
 {
@@ -17,6 +18,9 @@ class UpdateTrainingRecordRequest extends FormRequest
             'employee_id' => ['sometimes', 'exists:employees,id'],
             'training_program_id' => ['sometimes', 'exists:training_programs,id'],
             'provider' => ['nullable', 'string', 'max:255'],
+            'training_type' => ['nullable', 'string', Rule::in(array_keys(\App\Models\Modules\Training\TrainingRecord::getTrainingTypes()))],
+            'apd_item_id' => ['nullable', 'exists:apd_items,id'],
+            'fit_test_result' => ['nullable', 'string', Rule::in(array_keys(\App\Models\Modules\Training\TrainingRecord::getFitTestResults()))],
             'start_date' => ['sometimes', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'status' => ['sometimes', 'string', 'in:scheduled,in_progress,completed,expired,cancelled'],

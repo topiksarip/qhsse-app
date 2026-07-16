@@ -89,7 +89,7 @@ test('dashboard widgets contain real data not placeholders', function () {
     actingAs($this->admin);
     $response = $this->get(route('dashboard'));
     $widgets = getProps($response)['widgets'];
-    expect($widgets)->toHaveCount(4);
+    expect($widgets)->toHaveCount(5);
     // Incident trend widget should have 6 data points
     $trendWidget = collect($widgets)->firstWhere('title', 'Tren Insiden (6 Bulan)');
     expect($trendWidget['points'])->toHaveCount(6);

@@ -9,11 +9,14 @@ use App\Models\Core\MasterData\Priority;
 use App\Models\Core\MasterData\Severity;
 use App\Models\Core\MasterData\Site;
 use App\Models\Core\Users\Employee;
+use App\Models\Modules\Apd\ApdItem;
+use App\Models\Modules\Capa\CapaAction;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class IncidentReport extends Model
 {
@@ -87,5 +90,18 @@ class IncidentReport extends Model
         return $this->belongsToMany(Employee::class, 'incident_involved_persons', 'incident_id', 'employee_id')
             ->withPivot('note')
             ->withTimestamps();
+    }
+
+    /** @return BelongsTo<ApdItem, IncidentReport> */
+    public function apdItem(): BelongsTo
+    {
+        return $this->belongsTo(ApdItem::class, 'apd_item_id');
+    }
+
+    /** @return HasMany<CapaAction, IncidentReport> */
+    public function capaActions(): HasMany
+    {
+        return $this->hasMany(CapaAction::class, 'source_reference_id')
+            ->where('source_module', 'incident');
     }
 }

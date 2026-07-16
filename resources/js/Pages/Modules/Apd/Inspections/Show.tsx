@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
+import { useState } from 'react';
 import { PageProps } from '@/types';
-import PrimaryButton from '@/Components/PrimaryButton';
 
 interface ManagedFile {
     id: number;
@@ -37,16 +37,28 @@ interface Inspection {
     inspector?: { name: string } | null;
 }
 
+interface CapaAction {
+    id: number;
+    action_number: string;
+    title: string;
+    status: string;
+    source_type?: string | null;
+}
+
 type Props = {
     inspection: Inspection;
     files: ManagedFile[];
     activities: Activity[];
+    capaActions?: CapaAction[];
+    can?: { escalate?: boolean };
+    users?: { id: number; name: string }[];
+    priorities?: { id: number; name: string }[];
 };
 
 const formatDate = (value: string | null) => (value ? new Date(value).toLocaleDateString('id-ID') : '-');
 const formatDateTime = (value: string) => new Date(value).toLocaleString('id-ID');
 
-export default function Show({ inspection, files, activities }: PageProps<Props>) {
+export default function Show({ inspection, files, activities, capaActions = [], can, users = [], priorities = [] }: PageProps<Props>) {
     const resultBadge =
         inspection.result === 'tidak_layak'
             ? 'inline-flex rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:bg-red-900/40 dark:text-red-300'
@@ -129,6 +141,14 @@ export default function Show({ inspection, files, activities }: PageProps<Props>
                             </ul>
                         )}
                     </div>
+
+                    <CapaEscalationSection
+                        inspection={inspection}
+                        capaActions={capaActions}
+                        users={users ?? []}
+                        priorities={priorities ?? []}
+                        canEscalate={Boolean(can?.escalate)}
+                    />
                 </div>
             </div>
         </AuthenticatedLayout>
@@ -140,6 +160,84 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
         <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
             <div className="mt-1 text-sm text-slate-800 dark:text-slate-100">{value}</div>
+        </div>
+    );
+}
+
+function CapaEscalationSection({
+    inspection,
+    capaActions,
+    users,
+    priorities,
+    canEscalate,
+}: {
+    inspection: Inspection;
+    capaActions: CapaAction[];
+    users: { id: number; name: string }[];
+    priorities: { id: number; name: string }[];
+    canEscalate: boolean;
+}) {
+    const [assignedTo, setAssignedTo] = useState<string>('');
+    const [priorityId, setPriorityId] = useState<string>('');
+    const [error, setError] = useState<string | null>(null);
+    const isUnfit = inspection.result === 'tidak_layak';
+
+    function escalate(e: React.FormEvent) {
+        e.preventDefault();
+        setError(null);
+        if (!assignedTo || !priorityId) {
+            setError('Pilih penanggung jawab dan prioritas.');
+            return;
+        }
+        router.post(
+            route('apd.inspections.escalate', inspection.id),
+            { assigned_to: Number(assignedTo), priority_id: Number(priorityId) },
+            { preserveScroll: true, onError: (err: Record<string, string>) => setError(Object.values(err).join(' ')) },
+        );
+    }
+
+    return (
+        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+            <h3 className="mb-3 text-lg font-bold text-slate-900 dark:text-white">CAPA Terkait</h3>
+
+            {capaActions.length === 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400">Belum ada CAPA yang di-eskalasi dari inspeksi ini.</p>
+            ) : (
+                <ul className="mb-4 space-y-2">
+                    {capaActions.map((c) => (
+                        <li key={c.id} className="flex items-center justify-between rounded-md border border-slate-200 px-3 py-2 text-sm dark:border-gray-700">
+                            <Link href={route('capa.actions.show', c.id)} className="font-medium text-blue-600 hover:underline dark:text-blue-400">
+                                {c.action_number} — {c.title}
+                            </Link>
+                            <span className="text-xs text-gray-400">{c.status}</span>
+                        </li>
+                    ))}
+                </ul>
+            )}
+
+            {canEscalate && isUnfit && (
+                <form onSubmit={escalate} className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    <select value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)} className="rounded-md border-slate-300 text-sm dark:border-gray-600 dark:bg-gray-800">
+                        <option value="">Penanggung Jawab…</option>
+                        {users.map((u) => (
+                            <option key={u.id} value={u.id}>{u.name}</option>
+                        ))}
+                    </select>
+                    <select value={priorityId} onChange={(e) => setPriorityId(e.target.value)} className="rounded-md border-slate-300 text-sm dark:border-gray-600 dark:bg-gray-800">
+                        <option value="">Prioritas…</option>
+                        {priorities.map((p) => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                    </select>
+                    <button type="submit" className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700">
+                        Eskalasi ke CAPA
+                    </button>
+                    {error && <p className="sm:col-span-3 text-xs text-red-600">{error}</p>}
+                </form>
+            )}
+            {canEscalate && !isUnfit && (
+                <p className="text-xs text-gray-400">Hanya inspeksi <span className="font-medium">tidak layak</span> yang dapat dieskalasi ke CAPA.</p>
+            )}
         </div>
     );
 }

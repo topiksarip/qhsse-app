@@ -13,6 +13,10 @@ type Incident = {
     status: string;
     description: string;
     immediate_action: string | null;
+    ppe_involved?: boolean;
+    ppe_failure?: boolean;
+    ppe_notes?: string | null;
+    apd_item?: { id: number; item_number: string; catalog?: { name: string } } | null;
     site?: { name: string } | null;
     area?: { name: string } | null;
     department?: { name: string } | null;
@@ -21,6 +25,8 @@ type Incident = {
     priority?: { name: string; color: string; level: number } | null;
     involved_persons?: { id: number; name: string; pivot: { note: string | null } }[];
 };
+
+type CapaAction = { id: number; action_number: string; title: string; status: string };
 
 type ManagedFile = { id: number; original_name: string; size: number; mime_type: string };
 type Comment = { id: number; body: string; created_at: string; author?: { name: string } | null };
@@ -42,13 +48,17 @@ const statusColors: Record<string, string> = {
 };
 const statusLabels: Record<string, string> = { draft: 'Draft', submitted: 'Submitted', under_review: 'Under Review', closed: 'Closed', rejected: 'Rejected' };
 
-export default function Show({ incident, evidence, comments, activities, workflowHistory, availableTransitions, auth }: PageProps<{
+export default function Show({ incident, evidence, comments, activities, workflowHistory, availableTransitions, auth, capaActions = [], can, users = [], priorities = [] }: PageProps<{
     incident: Incident;
     evidence: ManagedFile[];
     comments: Comment[];
     activities: Activity[];
     workflowHistory: WorkflowHistory[];
     availableTransitions: Transition[];
+    capaActions?: CapaAction[];
+    can?: { escalate?: boolean };
+    users?: { id: number; name: string }[];
+    priorities?: { id: number; name: string }[];
 }>) {
     const permissions = new Set(auth.permissions ?? []);
     const [reasonAction, setReasonAction] = useState<ReasonAction | null>(null);
@@ -151,6 +161,85 @@ export default function Show({ incident, evidence, comments, activities, workflo
                             </div>
                         )}
                     </div>
+
+                    {/* PPE & CAPA */}
+                    {(incident.ppe_involved || (can?.escalate ?? false) || capaActions.length > 0) && (
+                        <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
+                            <h3 className="mb-3 text-lg font-semibold text-gray-900 dark:text-gray-100">APD / PPE & CAPA</h3>
+                            {incident.ppe_involved && (
+                                <dl className="grid grid-cols-1 gap-3 border-b border-gray-100 pb-4 text-sm sm:grid-cols-2 dark:border-gray-700">
+                                    <div>
+                                        <dt className="text-gray-500 dark:text-gray-400">PPE Terlibat</dt>
+                                        <dd className="font-medium text-gray-900 dark:text-gray-100">Ya</dd>
+                                    </div>
+                                    {incident.apd_item && (
+                                        <div>
+                                            <dt className="text-gray-500 dark:text-gray-400">Item APD</dt>
+                                            <dd className="font-medium text-gray-900 dark:text-gray-100">
+                                                <Link href={route('apd.items.show', incident.apd_item.id)} className="text-indigo-600 hover:underline dark:text-indigo-400">
+                                                    {incident.apd_item.item_number} {incident.apd_item.catalog?.name ? `— ${incident.apd_item.catalog.name}` : ''}
+                                                </Link>
+                                            </dd>
+                                        </div>
+                                    )}
+                                    <div>
+                                        <dt className="text-gray-500 dark:text-gray-400">Kegagalan PPE</dt>
+                                        <dd className="font-medium text-gray-900 dark:text-gray-100">{incident.ppe_failure ? 'Ya' : 'Tidak'}</dd>
+                                    </div>
+                                    {incident.ppe_notes && (
+                                        <div className="sm:col-span-2">
+                                            <dt className="text-gray-500 dark:text-gray-400">Catatan PPE</dt>
+                                            <dd className="whitespace-pre-wrap text-gray-900 dark:text-gray-100">{incident.ppe_notes}</dd>
+                                        </div>
+                                    )}
+                                </dl>
+                            )}
+
+                            {capaActions.length > 0 && (
+                                <ul className="mt-4 space-y-2">
+                                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">CAPA Terkait</p>
+                                    {capaActions.map((c) => (
+                                        <li key={c.id} className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm dark:border-gray-700">
+                                            <Link href={route('capa.actions.show', c.id)} className="font-medium text-indigo-600 hover:underline dark:text-indigo-400">
+                                                {c.action_number} — {c.title}
+                                            </Link>
+                                            <span className="text-xs text-gray-400">{c.status}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+
+                            {can?.escalate && incident.ppe_involved && incident.ppe_failure && (
+                                <form
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        const form = e.currentTarget;
+                                        router.post(route('incident.reports.escalate', incident.id), new FormData(form), { preserveScroll: true });
+                                    }}
+                                    className="mt-4 grid grid-cols-1 gap-2 border-t border-gray-100 pt-4 sm:grid-cols-3 dark:border-gray-700"
+                                >
+                                    <select name="assigned_to" required defaultValue="" className="rounded-md border-gray-300 text-sm dark:border-gray-600 dark:bg-gray-700">
+                                        <option value="">Penanggung Jawab…</option>
+                                        {users.map((u) => (
+                                            <option key={u.id} value={u.id}>{u.name}</option>
+                                        ))}
+                                    </select>
+                                    <select name="priority_id" required defaultValue="" className="rounded-md border-gray-300 text-sm dark:border-gray-600 dark:bg-gray-700">
+                                        <option value="">Prioritas…</option>
+                                        {priorities.map((p) => (
+                                            <option key={p.id} value={p.id}>{p.name}</option>
+                                        ))}
+                                    </select>
+                                    <button type="submit" className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700">
+                                        Eskalasi ke CAPA
+                                    </button>
+                                </form>
+                            )}
+                            {can?.escalate && !(incident.ppe_involved && incident.ppe_failure) && (
+                                <p className="mt-4 text-xs text-gray-400">Insiden dengan PPE terlibat & kegagalan PPE dapat dieskalasi ke CAPA.</p>
+                            )}
+                        </div>
+                    )}
 
                     {/* Involved Persons */}
                     {incident.involved_persons && incident.involved_persons.length > 0 && (

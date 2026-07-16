@@ -18,8 +18,10 @@ use App\Models\Core\MasterData\Department;
 use App\Models\Core\MasterData\RiskMatrixLevel;
 use App\Models\Core\MasterData\Severity;
 use App\Models\Core\MasterData\Site;
+use App\Models\Modules\Apd\ApdCatalog;
 use App\Models\Modules\RiskManagement\RiskRegister;
 use App\Models\User;
+use App\Modules\Apd\ApdAccess;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -34,6 +36,7 @@ class RiskRegisterController extends Controller
         private readonly AuditService $auditService,
         private readonly ActivityService $activityService,
         private readonly CsvExporter $csvExporter,
+        private readonly ApdAccess $apdAccess,
     ) {
     }
 
@@ -203,10 +206,18 @@ class RiskRegisterController extends Controller
             'residualRiskLevel',
             'comments.author',
             'activities.actor',
+            'apdRequirements.catalog',
         ]);
+
+        $apdCatalogs = ApdCatalog::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'catalog_code', 'site_id', 'department_id']);
 
         return Inertia::render('Modules/RiskManagement/Show', [
             'riskRegister' => $riskRegister,
+            'apdCatalogs' => $apdCatalogs,
+            'canManageApdRequirements' => $riskRegister->site_id ? $this->apdAccess->canUseLocation($riskRegister->site_id, $riskRegister->department_id) : false,
         ]);
     }
 

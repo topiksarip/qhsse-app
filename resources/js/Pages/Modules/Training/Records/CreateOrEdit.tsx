@@ -10,9 +10,12 @@ interface CreateOrEditProps extends PageProps {
     record?: TrainingRecord;
     programs: TrainingProgram[];
     employees: Employee[];
+    apd_items?: { id: number; item_number: string; catalog?: { name: string } }[];
+    training_types?: Record<string, string>;
+    fit_test_results?: Record<string, string>;
 }
 
-export default function CreateOrEdit({ auth, record, programs, employees }: CreateOrEditProps) {
+export default function CreateOrEdit({ auth, record, programs, employees, apd_items = [], training_types = {}, fit_test_results = {} }: CreateOrEditProps) {
     const isEdit = !!record;
 
     const { data, setData, post, put, processing, errors } = useForm({
@@ -28,6 +31,9 @@ export default function CreateOrEdit({ auth, record, programs, employees }: Crea
         certificate_file: null as File | null,
         expiry_date: record?.expiry_date || '',
         notes: record?.notes || '',
+        training_type: record?.training_type || '',
+        apd_item_id: record?.apd_item_id || '',
+        fit_test_result: record?.fit_test_result || '',
     });
 
     const [selectedProgram, setSelectedProgram] = useState<TrainingProgram | null>(
@@ -311,6 +317,79 @@ export default function CreateOrEdit({ auth, record, programs, employees }: Crea
                                 )}
                             </div>
                         </div>
+
+                        {/* Section: PPE Fit-Test */}
+                        {(Object.keys(training_types).length > 0 || Object.keys(fit_test_results).length > 0) && (
+                            <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                                    FIT-TEST APD & JENIS PELATIHAN
+                                </h3>
+                                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            Jenis Pelatihan
+                                        </label>
+                                        <select
+                                            value={data.training_type}
+                                            onChange={(e) => setData('training_type', e.target.value)}
+                                            className="w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        >
+                                            <option value="">— Pilih Jenis —</option>
+                                            {Object.entries(training_types).map(([key, label]) => (
+                                                <option key={key} value={key}>{label}</option>
+                                            ))}
+                                        </select>
+                                        {errors.training_type && (
+                                            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.training_type}</p>
+                                        )}
+                                    </div>
+
+                                    {data.training_type === 'ppe_fit_test' && (
+                                        <>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                    Item APD (terkait fit-test)
+                                                </label>
+                                                <select
+                                                    value={data.apd_item_id}
+                                                    onChange={(e) => setData('apd_item_id', e.target.value)}
+                                                    className="w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                >
+                                                    <option value="">— Pilih Item APD —</option>
+                                                    {apd_items.map((item) => (
+                                                        <option key={item.id} value={item.id}>
+                                                            {item.item_number}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                {errors.apd_item_id && (
+                                                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.apd_item_id}</p>
+                                                )}
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                    Hasil Fit-Test
+                                                </label>
+                                                <select
+                                                    value={data.fit_test_result}
+                                                    onChange={(e) => setData('fit_test_result', e.target.value as any)}
+                                                    className="w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                                >
+                                                    <option value="">— Pilih Hasil —</option>
+                                                    {Object.entries(fit_test_results).map(([key, label]) => (
+                                                        <option key={key} value={key}>{label}</option>
+                                                    ))}
+                                                </select>
+                                                {errors.fit_test_result && (
+                                                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.fit_test_result}</p>
+                                                )}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Section: Catatan */}
                         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">

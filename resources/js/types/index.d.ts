@@ -176,6 +176,10 @@ export interface TrainingRecord {
     certificate_file_id?: number;
     expiry_date?: string;
     notes?: string;
+    training_type?: 'general' | 'induction' | 'safety' | 'ppe_fit_test';
+    apd_item_id?: number | null;
+    apd_item?: { id: number; item_number: string; catalog?: { name: string } } | null;
+    fit_test_result?: 'pass' | 'fail' | null;
     created_at: string;
     updated_at: string;
     employee?: Employee;
