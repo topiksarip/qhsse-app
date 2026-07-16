@@ -44,6 +44,7 @@ class NumberingFormatSeeder extends Seeder
             ['module_name' => 'contractor', 'prefix' => 'CTR', 'padding' => 4, 'separator' => '-', 'reset_frequency' => 'yearly', 'include_year' => true, 'include_site_code' => false, 'is_active' => true],
             ['module_name' => 'asset', 'prefix' => 'AST', 'padding' => 4, 'separator' => '-', 'reset_frequency' => 'yearly', 'include_year' => true, 'include_site_code' => false, 'is_active' => true],
             ['module_name' => 'communication', 'prefix' => 'COM', 'padding' => 4, 'separator' => '-', 'reset_frequency' => 'yearly', 'include_year' => true, 'include_site_code' => false, 'is_active' => true],
+            ['module_name' => 'apd', 'prefix' => 'PPE', 'padding' => 4, 'separator' => '-', 'reset_frequency' => 'yearly', 'include_year' => true, 'include_site_code' => false, 'is_active' => true],
         ];
     }
 }

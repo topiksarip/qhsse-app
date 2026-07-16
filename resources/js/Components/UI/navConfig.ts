@@ -61,6 +61,7 @@ export const menuGroups: MenuGroup[] = [
             { label: 'Kontak Darurat', routeName: 'emergency.contacts.index', active: 'emergency.contacts.*', permission: 'emergency.contacts.view' },
             { label: 'Contractor Management', routeName: 'contractors.index', active: 'contractors.*', permission: 'contractor.management.view' },
             { label: 'Asset & Equipment Safety', routeName: 'assets.index', active: 'assets.*', permission: 'asset.management.view' },
+            { label: 'APD / PPE', routeName: 'apd.catalogs.index', active: 'apd.*', permission: 'apd.view' },
             { label: 'Communication & Campaign', routeName: 'campaigns.index', active: 'campaigns.*', permission: 'communication.campaigns.view' },
             { label: 'Report Templates', routeName: 'report-templates.index', active: 'report-templates.*', permission: 'reporting.templates.view' },
             { label: 'Saved Reports', routeName: 'saved-reports.index', active: 'saved-reports.*', permission: 'reporting.reports.view' },

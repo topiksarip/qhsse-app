@@ -47,6 +47,7 @@ class DatabaseSeeder extends Seeder
             AuditSeeder::class,
             CampaignSeeder::class,
             ReportTemplateSeeder::class,
+            ApdSeeder::class,
         ]);
     }
 }

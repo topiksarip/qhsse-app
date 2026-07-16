@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Modules\Apd\ApdCatalog;
+use App\Models\Modules\Apd\ApdItem;
 use App\Models\Modules\Asset\Asset;
 use App\Models\Modules\Audit\Audit;
 use App\Models\Modules\Capa\CapaAction;
@@ -132,6 +134,24 @@ class SearchController extends Controller
                 'navRoute' => 'training.records.index',
                 'label' => 'Record Pelatihan',
                 'snippet' => fn (TrainingRecord $m) => 'No. ' . ($m->training_number ?? '-') . ' • ' . ($m->status ?? ''),
+            ],
+            [
+                'permission' => 'apd.view',
+                'model' => ApdCatalog::class,
+                'columns' => ['catalog_code', 'name', 'sku', 'manufacturer', 'model', 'standard'],
+                'route' => 'apd.catalogs.show',
+                'navRoute' => 'apd.catalogs.index',
+                'label' => 'APD / PPE - Katalog',
+                'snippet' => fn (ApdCatalog $m) => 'Kode ' . ($m->catalog_code ?? '-') . ' • ' . ($m->category ?? ''),
+            ],
+            [
+                'permission' => 'apd.view',
+                'model' => ApdItem::class,
+                'columns' => ['item_number', 'serial_number'],
+                'route' => 'apd.items.show',
+                'navRoute' => 'apd.items.index',
+                'label' => 'APD / PPE - Inventori',
+                'snippet' => fn (ApdItem $m) => 'No. ' . ($m->item_number ?? '-') . ' • ' . ($m->status ?? ''),
             ],
         ];
     }

@@ -241,6 +241,9 @@ require __DIR__ . '/modules/contractor.php';
 // Phase 17: Asset & Equipment Safety
 require __DIR__ . '/modules/asset.php';
 
+// Phase 21: APD / PPE Management
+require __DIR__ . '/modules/apd.php';
+
 // Phase 18: Communication & Campaign
 require __DIR__ . '/modules/communication.php';
 

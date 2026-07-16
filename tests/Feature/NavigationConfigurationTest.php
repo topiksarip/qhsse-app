@@ -5,10 +5,10 @@ use Illuminate\Support\Facades\Route;
 
 function navigationItems(): array
 {
-    $layout = file_get_contents(resource_path('js/Layouts/AuthenticatedLayout.tsx'));
+    $layout = file_get_contents(resource_path('js/Components/UI/navConfig.ts'));
 
     preg_match_all(
-        "/\{ label: '([^']+)', routeName: '([^']+)', active: '([^']+)'(?:, permission: '([^']+)')? \}/",
+        "/\\{ label: '([^']+)', routeName: '([^']+)', active: '([^']+)'(?:, permission: '([^']+)')? \\}/",
         $layout,
         $matches,
         PREG_SET_ORDER
@@ -47,6 +47,7 @@ it('exposes operational modules through their backend view permissions', functio
         'Kontak Darurat' => ['route' => 'emergency.contacts.index', 'active' => 'emergency.contacts.*', 'permission' => 'emergency.contacts.view'],
         'Contractor Management' => ['route' => 'contractors.index', 'active' => 'contractors.*', 'permission' => 'contractor.management.view'],
         'Asset & Equipment Safety' => ['route' => 'assets.index', 'active' => 'assets.*', 'permission' => 'asset.management.view'],
+        'APD / PPE' => ['route' => 'apd.catalogs.index', 'active' => 'apd.*', 'permission' => 'apd.view'],
         'Communication & Campaign' => ['route' => 'campaigns.index', 'active' => 'campaigns.*', 'permission' => 'communication.campaigns.view'],
         'Report Templates' => ['route' => 'report-templates.index', 'active' => 'report-templates.*', 'permission' => 'reporting.templates.view'],
         'Saved Reports' => ['route' => 'saved-reports.index', 'active' => 'saved-reports.*', 'permission' => 'reporting.reports.view'],
