@@ -34,7 +34,7 @@ export default function Show({ item, comments, activities, auditLogs, can }: Pag
     comments: Array<{ id: number; body: string; author: { name: string }; created_at: string }>;
     activities: Array<{ description: string; created_at: string }>;
     auditLogs: Array<{ event: string; created_at: string }>;
-    can: { update: boolean; issue: boolean };
+    can: { update: boolean; issue: boolean; inspect: boolean };
 }>) {
     const statuses: Record<string, string> = {
         in_stock: 'Di Gudang',
@@ -76,6 +76,7 @@ export default function Show({ item, comments, activities, auditLogs, can }: Pag
                     <div className="flex flex-wrap gap-2">
                         {can.update && <SecondaryButton size="sm" href={`/apd/items/${item.id}/edit`}>Edit</SecondaryButton>}
                         {can.issue && item.status === 'in_stock' && <PrimaryButton size="sm" href={`/apd/issuances/create?apd_item_id=${item.id}`}>Issue</PrimaryButton>}
+                        {can.inspect && !['disposed', 'lost'].includes(item.status) && <PrimaryButton size="sm" href={`/apd/inspections/create?apd_item_id=${item.id}`}>Inspeksi</PrimaryButton>}
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

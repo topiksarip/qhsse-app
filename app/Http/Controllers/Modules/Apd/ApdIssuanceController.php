@@ -134,6 +134,7 @@ class ApdIssuanceController extends Controller
                 'approve' => $request->user()->can('approve', $apd_issuance),
                 'issue' => $request->user()->can('issue', $apd_issuance),
                 'receive' => $request->user()->can('receive', $apd_issuance),
+                'inspect' => $request->user()->can('apd.inspect'),
             ],
         ]);
     }

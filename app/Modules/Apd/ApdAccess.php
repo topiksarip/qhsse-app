@@ -142,13 +142,44 @@ class ApdAccess
             return $query;
         }
 
-        // Use the same visibility rules as items via whereExists.
         return $query->whereExists(function ($exists) use ($user) {
             $exists->select(DB::raw(1))
                 ->from('apd_items')
                 ->whereColumn('apd_items.id', 'apd_issuances.apd_item_id')
                 ->where($this->itemScopeClauses($user));
         });
+    }
+
+    /**
+     * Scope inspection list by the related item's organization scope.
+     */
+    public function scopeInspection(Builder $query, User $user): Builder
+    {
+        if ($user->can('core.scope.all')) {
+            return $query;
+        }
+
+        return $query->whereExists(function ($exists) use ($user) {
+            $exists->select(DB::raw(1))
+                ->from('apd_items')
+                ->whereColumn('apd_items.id', 'apd_inspections.apd_item_id')
+                ->where($this->itemScopeClauses($user));
+        });
+    }
+
+    public function canViewInspection(User $user, \App\Models\Modules\Apd\ApdInspection $inspection): bool
+    {
+        if (! $user->hasPermissionTo('apd.view')) {
+            return false;
+        }
+
+        $item = $inspection->item;
+
+        if (! $item) {
+            return $user->can('core.scope.all');
+        }
+
+        return $this->canView($user, $item);
     }
 
     private function itemScopeClauses(User $user): \Closure

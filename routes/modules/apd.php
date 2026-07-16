@@ -3,6 +3,7 @@
 use App\Http\Controllers\Modules\Apd\ApdCatalogController;
 use App\Http\Controllers\Modules\Apd\ApdItemController;
 use App\Http\Controllers\Modules\Apd\ApdIssuanceController;
+use App\Http\Controllers\Modules\Apd\ApdInspectionController;
 use Illuminate\Support\Facades\Route;
 
 // APD / PPE Management Routes
@@ -53,5 +54,17 @@ Route::middleware(['auth', 'verified', 'active'])
             Route::post('/{apd_issuance}/approve', [ApdIssuanceController::class, 'approve'])->name('approve')->middleware('permission:apd.approve');
             Route::post('/{apd_issuance}/issue', [ApdIssuanceController::class, 'issue'])->name('issue')->middleware('permission:apd.issue');
             Route::post('/{apd_issuance}/process', [ApdIssuanceController::class, 'process'])->name('process')->middleware('permission:apd.issue');
+        });
+
+        // Inspection sub-resource (scheduled/incidental/manual)
+        Route::prefix('inspections')->name('inspections.')->group(function (): void {
+            Route::get('/export', [ApdInspectionController::class, 'export'])
+                ->name('export')
+                ->middleware('permission:apd.export');
+
+            Route::get('/', [ApdInspectionController::class, 'index'])->name('index')->middleware('permission:apd.view');
+            Route::get('/create', [ApdInspectionController::class, 'create'])->name('create')->middleware('permission:apd.inspect');
+            Route::post('/', [ApdInspectionController::class, 'store'])->name('store')->middleware('permission:apd.inspect');
+            Route::get('/{apd_inspection}', [ApdInspectionController::class, 'show'])->name('show')->middleware('permission:apd.view');
         });
     });

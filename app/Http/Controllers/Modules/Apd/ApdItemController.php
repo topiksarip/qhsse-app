@@ -162,6 +162,7 @@ class ApdItemController extends Controller
             'can' => [
                 'update' => $request->user()->can('update', $apd_item),
                 'issue' => $request->user()->can('apd.issue'),
+                'inspect' => $request->user()->can('apd.inspect'),
             ],
         ]);
     }

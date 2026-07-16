@@ -42,7 +42,7 @@ type Props = {
     };
     workflow: { current_status: string; history: WfHistory[]; available_transitions: WfTransition[] };
     activities: Activity[];
-    can: { request: boolean; approve: boolean; issue: boolean; receive: boolean };
+    can: { request: boolean; approve: boolean; issue: boolean; receive: boolean; inspect: boolean };
 };
 
 const formatDate = (value: string | null) => (value ? new Date(value).toLocaleDateString('id-ID') : '-');
@@ -100,6 +100,9 @@ export default function Show({ issuance, workflow, activities, can }: PageProps<
                         ))}
                         {can.issue && issuance.status === 'draft' && (
                             <PrimaryButton size="sm" onClick={() => submitTransition('issue')}>Issue Langsung</PrimaryButton>
+                        )}
+                        {can.inspect && issuance.status === 'issued' && issuance.item && (
+                            <PrimaryButton size="sm" href={`/apd/inspections/create?apd_item_id=${issuance.item.id}`}>Inspeksi</PrimaryButton>
                         )}
                         <SecondaryButton size="sm" href="/apd/issuances">Tutup</SecondaryButton>
                     </div>

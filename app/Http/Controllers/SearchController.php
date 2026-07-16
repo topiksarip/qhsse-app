@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Modules\Apd\ApdCatalog;
+use App\Models\Modules\Apd\ApdInspection;
 use App\Models\Modules\Apd\ApdItem;
 use App\Models\Modules\Apd\ApdIssuance;
 use App\Models\Modules\Asset\Asset;
@@ -165,12 +166,13 @@ class SearchController extends Controller
             ],
             [
                 'permission' => 'apd.view',
-                'model' => ApdIssuance::class,
-                'columns' => ['issue_number', 'notes'],
-                'route' => 'apd.issuances.show',
-                'navRoute' => 'apd.issuances.index',
-                'label' => 'APD / PPE - Penugasan',
-                'snippet' => fn (ApdIssuance $m) => 'No. ' . ($m->issue_number ?? '-') . ' • ' . ($m->status ?? ''),
+                'model' => ApdInspection::class,
+                'columns' => ['result', 'notes', 'inspection_type'],
+                'scope' => fn ($q) => app(\App\Modules\Apd\ApdAccess::class)->scopeInspection($q, request()->user()),
+                'route' => 'apd.inspections.show',
+                'navRoute' => 'apd.inspections.index',
+                'label' => 'APD / PPE - Inspeksi',
+                'snippet' => fn (ApdInspection $m) => 'Hasil ' . ($m->result ?? '-') . ' • ' . ($m->inspection_type ?? ''),
             ],
         ];
     }
