@@ -6,12 +6,12 @@ import { PropsWithChildren } from 'react';
 export default function Guest({ children }: PropsWithChildren) {
     return (
         <div className="relative flex min-h-screen flex-col text-slate-900 dark:text-gray-100">
-            {/* Branded background: photo (40%) + subtle natural surface texture + translucent scrim */}
+            {/* Branded background: photo (40%) + translucent scrim */}
             <div
                 className="fixed inset-0 -z-20 bg-cover bg-center opacity-40"
                 style={{ backgroundImage: "url('/img/websamudera-bg.jpg')" }}
             />
-            <div className="fixed inset-0 -z-10 bg-white/65 bg-[radial-gradient(circle_at_1px_1px,rgba(15,23,42,0.07)_1px,transparent_0)] bg-[size:22px_22px] dark:bg-gray-950/80 dark:bg-[radial-gradient(circle_at_1px_1px,rgba(226,232,240,0.06)_1px,transparent_0)]" />
+            <div className="fixed inset-0 -z-10 bg-white/40 dark:bg-gray-950/70" />
 
             <header className="flex items-center justify-between border-b border-[#fdb913]/50 bg-[#fdb913]/80 px-4 py-4 backdrop-blur sm:px-6">
                 <Link href="/" className="flex items-center gap-2">
