@@ -121,6 +121,22 @@ class WorkflowSeeder extends Seeder
                     $this->transition('rejected', 'draft', 'revise', 'Revise', false, 'core.workflow.transition'),
                 ],
             ],
+            [
+                'module_name' => 'apd',
+                'code' => 'APD_ISSUANCE_WORKFLOW',
+                'name' => 'APD / PPE Issuance Workflow',
+                'initial_status' => 'draft',
+                'is_active' => true,
+                'transitions' => [
+                    $this->transition('draft', 'requested', 'request', 'Ajukan', false, 'apd.request'),
+                    $this->transition('requested', 'approved', 'approve', 'Setujui', false, 'apd.approve'),
+                    $this->transition('approved', 'issued', 'issue', 'Issue', false, 'apd.issue'),
+                    $this->transition('draft', 'issued', 'issue', 'Issue Langsung', false, 'apd.issue'),
+                    $this->transition('issued', 'returned', 'return', 'Kembalikan', false, 'apd.issue'),
+                    $this->transition('issued', 'disposed', 'dispose', 'Musnahkan', true, 'apd.issue'),
+                    $this->transition('requested', 'rejected', 'reject', 'Tolak', true, 'apd.approve'),
+                ],
+            ],
         ];
     }
 

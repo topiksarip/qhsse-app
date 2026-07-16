@@ -120,7 +120,7 @@ class ApdSeeder extends Seeder
 
             // Batch receive for the glove catalog.
             $batchCatalog = $created[2];
-            ApdItem::create([
+            $batchItem = ApdItem::create([
                 'item_number' => $numberingService->generate(moduleName: 'apd', actor: $user, siteCode: $site->code ?? null, referenceType: 'item')->number,
                 'catalog_id' => $batchCatalog->id,
                 'track_type' => 'batch',
@@ -133,6 +133,39 @@ class ApdSeeder extends Seeder
                 'created_by' => $user->id,
                 'updated_by' => $user->id,
             ]);
+
+            // Demo issuance: issue one serial helmet to the first employee (if any).
+            $employee = \App\Models\Core\Users\Employee::first();
+            if ($employee) {
+                $firstSerial = ApdItem::where('catalog_id', $serialCatalog->id)
+                    ->where('status', 'in_stock')
+                    ->first();
+
+                if ($firstSerial) {
+                    $issuance = app(\App\Modules\Apd\ApdLifecycle::class)->create([
+                        'apd_item_id' => $firstSerial->id,
+                        'holder_type' => 'employee',
+                        'holder_id' => $employee->id,
+                        'quantity' => 1,
+                        'condition_out' => 'new',
+                        'issue_date' => now()->toDateString(),
+                    ], $user);
+
+                    $this->command->info('✓ Demo issuance (serial): ' . $issuance->issue_number);
+                }
+
+                // Demo issuance: issue a batch lot of gloves to a location (area).
+                $lotIssuance = app(\App\Modules\Apd\ApdLifecycle::class)->create([
+                    'apd_item_id' => $batchItem->id,
+                    'holder_type' => 'location',
+                    'holder_id' => $area->id,
+                    'quantity' => 10,
+                    'condition_out' => 'new',
+                    'issue_date' => now()->toDateString(),
+                ], $user);
+
+                $this->command->info('✓ Demo issuance (lot): ' . $lotIssuance->issue_number);
+            }
 
             DB::commit();
 

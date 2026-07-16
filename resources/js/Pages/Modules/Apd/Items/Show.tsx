@@ -75,7 +75,7 @@ export default function Show({ item, comments, activities, auditLogs, can }: Pag
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
                     <div className="flex flex-wrap gap-2">
                         {can.update && <SecondaryButton size="sm" href={`/apd/items/${item.id}/edit`}>Edit</SecondaryButton>}
-                        {can.issue && <PrimaryButton size="sm" href={`/apd/items/${item.id}/issue`}>Issue</PrimaryButton>}
+                        {can.issue && item.status === 'in_stock' && <PrimaryButton size="sm" href={`/apd/issuances/create?apd_item_id=${item.id}`}>Issue</PrimaryButton>}
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

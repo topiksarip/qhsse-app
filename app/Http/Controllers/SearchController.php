@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Modules\Apd\ApdCatalog;
 use App\Models\Modules\Apd\ApdItem;
+use App\Models\Modules\Apd\ApdIssuance;
 use App\Models\Modules\Asset\Asset;
 use App\Models\Modules\Audit\Audit;
 use App\Models\Modules\Capa\CapaAction;
@@ -152,6 +153,24 @@ class SearchController extends Controller
                 'navRoute' => 'apd.items.index',
                 'label' => 'APD / PPE - Inventori',
                 'snippet' => fn (ApdItem $m) => 'No. ' . ($m->item_number ?? '-') . ' • ' . ($m->status ?? ''),
+            ],
+            [
+                'permission' => 'apd.view',
+                'model' => ApdIssuance::class,
+                'columns' => ['issue_number', 'notes'],
+                'route' => 'apd.issuances.show',
+                'navRoute' => 'apd.issuances.index',
+                'label' => 'APD / PPE - Penugasan',
+                'snippet' => fn (ApdIssuance $m) => 'No. ' . ($m->issue_number ?? '-') . ' • ' . ($m->status ?? ''),
+            ],
+            [
+                'permission' => 'apd.view',
+                'model' => ApdIssuance::class,
+                'columns' => ['issue_number', 'notes'],
+                'route' => 'apd.issuances.show',
+                'navRoute' => 'apd.issuances.index',
+                'label' => 'APD / PPE - Penugasan',
+                'snippet' => fn (ApdIssuance $m) => 'No. ' . ($m->issue_number ?? '-') . ' • ' . ($m->status ?? ''),
             ],
         ];
     }

@@ -5,11 +5,14 @@ namespace App\Modules\Apd;
 use App\Models\Core\MasterData\Area;
 use App\Models\Core\MasterData\Department;
 use App\Models\Core\MasterData\Site;
+use App\Models\Core\Users\Employee;
 use App\Models\Modules\Apd\ApdCatalog;
 use App\Models\Modules\Apd\ApdItem;
+use App\Models\Modules\Apd\ApdIssuance;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class ApdAccess
 {
@@ -42,6 +45,21 @@ class ApdAccess
     {
         // Catalog is global reference data; any apd.view user may see it.
         return $user->hasPermissionTo('apd.view');
+    }
+
+    public function canViewIssuance(User $user, ApdIssuance $issuance): bool
+    {
+        if (! $user->hasPermissionTo('apd.view')) {
+            return false;
+        }
+
+        $item = $issuance->item;
+
+        if (! $item) {
+            return $user->can('core.scope.all');
+        }
+
+        return $this->canView($user, $item);
     }
 
     public function canUseLocation(User $user, int $siteId, ?int $departmentId = null): bool
@@ -113,5 +131,75 @@ class ApdAccess
         }
 
         return $query->get(['id', 'site_id', 'name']);
+    }
+
+    /**
+     * Scope issuance list by the related item's organization scope.
+     */
+    public function scopeIssuance(Builder $query, User $user): Builder
+    {
+        if ($user->can('core.scope.all')) {
+            return $query;
+        }
+
+        // Use the same visibility rules as items via whereExists.
+        return $query->whereExists(function ($exists) use ($user) {
+            $exists->select(DB::raw(1))
+                ->from('apd_items')
+                ->whereColumn('apd_items.id', 'apd_issuances.apd_item_id')
+                ->where($this->itemScopeClauses($user));
+        });
+    }
+
+    private function itemScopeClauses(User $user): \Closure
+    {
+        $employee = $user->employee;
+
+        return function ($q) use ($user, $employee) {
+            if ($user->can('core.scope.site') && $employee?->site_id) {
+                $q->where('site_id', $employee->site_id);
+                if ($employee?->department_id) {
+                    $q->where('department_id', $employee->department_id);
+                }
+                return;
+            }
+
+            if (($user->can('core.scope.department') || $user->can('core.scope.own')) && $employee?->department_id) {
+                $q->where('department_id', $employee->department_id);
+                return;
+            }
+
+            $q->whereRaw('1 = 0');
+        };
+    }
+
+    /** @return Collection<int, \App\Models\Modules\Employee\Employee> */
+    public function employees(User $user): Collection
+    {
+        $query = Employee::query()->orderBy('name');
+
+        if (! $user->can('core.scope.all')) {
+            $siteId = $user->employee?->site_id;
+            if ($siteId) {
+                $query->where('site_id', $siteId);
+            }
+        }
+
+        return $query->get(['id', 'name', 'employee_number']);
+    }
+
+    /** @return Collection<int, \App\Models\Modules\Contractor\Contractor> */
+    public function contractors(User $user): Collection
+    {
+        $query = \App\Models\Modules\Contractor\Contractor::query()->orderBy('name');
+
+        if (! $user->can('core.scope.all')) {
+            $siteId = $user->employee?->site_id;
+            if ($siteId) {
+                $query->where('site_id', $siteId);
+            }
+        }
+
+        return $query->get(['id', 'name', 'contractor_number']);
     }
 }

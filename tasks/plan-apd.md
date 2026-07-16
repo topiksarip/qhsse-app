@@ -39,17 +39,20 @@
 - [x] Deploy Ubuntu-5 (091bad6) + smoke (route/200/feature tests)
 
 ### Phase B — Issuance + Workflow
-- [ ] Migration `apd_issuances`
-- [ ] Model `ApdIssuance` + relation ke item/holder polimorfik
-- [ ] Permission `apd.issue/approve/request`
-- [ ] Numbering `apd_issue` (PPE-ISSUE-YYYY-NNNN)
-- [ ] IssuanceController: create/request/approve/issue/return/dispose
-- [ ] Workflow Core transition (histori + activity)
-- [ ] Update stok saat issue/return/dispose (serial status, batch qty)
-- [ ] Policy `ApdIssuancePolicy` (gated per transisi)
-- [ ] Pages: Issuances/{Index,Form,Show}
-- [ ] Tests: IssuanceTest (workflow + stock effect + permission)
-- [ ] Build + test hijau
+- [x] Migration `apd_issuances` (+ indexes, softDeletes, FK)
+- [x] Model `ApdIssuance` + relation ke item/holder polimorfik + helper
+- [x] Permission `apd.issue/approve/request/receive` di CorePermissions + roleMap
+- [x] Numbering `apd_issue` (PPE-ISSUE-YYYY-NNNN)
+- [x] Workflow def APD_ISSUANCE + transitions di WorkflowSeeder
+- [x] ApdLifecycle service (stock effects: serial status, holder assign, return/dispose)
+- [x] IssuanceController: index/create/store/show/request/approve/issue/process(return,dispose,reject)/export
+- [x] ApdIssuancePolicy (gated per transisi) + ApdAccess scopeIssuance/employees/contractors
+- [x] SearchController entry `apd_issuances` + Item Show issuance CTA
+- [x] Pages: Issuances/{Index,Form,Show}
+- [x] Seeder demo issuance via lifecycle (ApdSeeder)
+- [x] Tests: ApdIssuanceWorkflowTest (7 tests) — all green
+- [x] `npm run build` + tests hijau (APD total 15/15)
+- [ ] Deploy Ubuntu-5 + smoke
 
 ### Phase C — Inspeksi
 - [ ] Migration `apd_inspections`
