@@ -14,38 +14,37 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
-        <div className="relative min-h-screen text-slate-900 dark:text-gray-100">
+        <div className="relative min-h-screen bg-white text-slate-900 dark:bg-gray-950 dark:text-gray-100">
             {/* Branded background */}
             <div
-                className="fixed inset-0 -z-10 bg-cover bg-center"
+                className="fixed inset-0 -z-10 bg-cover bg-center opacity-50"
                 style={{ backgroundImage: "url('/img/websamudera-bg.jpg')" }}
             />
-            <div className="fixed inset-0 -z-10 bg-white/70 dark:bg-gray-950/80" />
 
             <ToastContainer toasts={toasts} onDismiss={dismiss} />
 
             <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
             {/* Top bar */}
-            <div className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-gray-800 dark:bg-gray-900/90">
+            <div className="sticky top-0 z-30 border-b border-[#fdb913]/50 bg-[#fdb913]/80 backdrop-blur dark:border-[#fdb913]/50 dark:bg-[#fdb913]/80">
                 <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
                     <button
                         type="button"
                         onClick={() => setSidebarOpen(true)}
                         aria-label="Buka navigasi"
                         aria-expanded={sidebarOpen}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-300 dark:hover:bg-gray-800 dark:hover:text-white"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-900 transition hover:bg-slate-900/10 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-900 dark:hover:bg-slate-900/10 dark:hover:text-slate-900"
                     >
                         <svg className="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
                     </button>
 
-                    <div className="min-w-0 flex-1 truncate text-[16px] font-semibold text-slate-700 dark:text-slate-200">
+                    <div className="min-w-0 flex-1 truncate text-[16px] font-semibold text-slate-900 dark:text-slate-900">
                         QHSSE Management System
                     </div>
 
-                    <ThemeToggle />
+                    <ThemeToggle className="!border-slate-900/30 !text-slate-900 !hover:bg-slate-900/10" />
 
                     <div className="relative">
                         <Dropdown>

@@ -43,22 +43,21 @@ export default function Welcome({ auth }: PageProps) {
         <>
             <Head title="QHSSE Management System" />
 
-            <div className="relative flex min-h-screen flex-col text-slate-900 dark:text-gray-100">
+            <div className="relative flex min-h-screen flex-col bg-white text-slate-900 dark:bg-gray-950 dark:text-gray-100">
                 {/* Branded background */}
                 <div
-                    className="fixed inset-0 -z-10 bg-cover bg-center"
+                    className="fixed inset-0 -z-10 bg-cover bg-center opacity-50"
                     style={{ backgroundImage: "url('/img/websamudera-bg.jpg')" }}
                 />
-                <div className="fixed inset-0 -z-10 bg-white/70 dark:bg-gray-950/80" />
 
-                <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-gray-800 dark:bg-gray-900/90">
+                <header className="sticky top-0 z-30 border-b border-[#fdb913]/50 bg-[#fdb913]/80 backdrop-blur dark:border-[#fdb913]/50 dark:bg-[#fdb913]/80">
                     <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
                         <Link href="/" className="flex items-center gap-2">
                             <ApplicationLogoImage className="block h-8 w-auto" />
                         </Link>
 
                         <nav className="flex items-center gap-2 sm:gap-3">
-                            <ThemeToggle />
+                            <ThemeToggle className="!border-slate-900/30 !text-slate-900 !hover:bg-slate-900/10" />
                             {isAuthed ? (
                                 <Link href={route('dashboard')}>
                                     <PrimaryButton size="sm">Dashboard</PrimaryButton>
