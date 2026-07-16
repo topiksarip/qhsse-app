@@ -155,6 +155,76 @@ test('dashboard notification summary shows unread count', function () {
     expect($notif['unread'])->toBeInt();
 });
 
+test('user without apd.view does not see APD KPIs', function () {
+    $emp = User::factory()->create(); // no role -> no apd.view
+    actingAs($emp);
+    $kpis = collect(getProps($this->get(route('dashboard')))['kpis'])->keyBy('label');
+    expect($kpis->keys())->not->toContain('APD Stok Rendah');
+});
+
+test('dashboard exposes APD KPIs for apd.view users', function () {
+    $this->admin->givePermissionTo('apd.view');
+
+    $site = Site::factory()->create();
+    $dept = \App\Models\Core\MasterData\Department::factory()->for($site)->create();
+
+    $catalog = \App\Models\Modules\Apd\ApdCatalog::create([
+        'catalog_code' => 'PPE-DASH-0001',
+        'name' => 'Helm',
+        'category' => 'head_protection',
+        'track_type' => 'serial',
+        'site_id' => $site->id,
+        'department_id' => $dept->id,
+        'min_stock' => 5,
+        'reorder_point' => 3,
+        'is_active' => true,
+        'created_by' => $this->admin->id,
+        'updated_by' => $this->admin->id,
+    ]);
+
+    // In-stock item below min_stock so the catalog counts as low stock.
+    \App\Models\Modules\Apd\ApdItem::create([
+        'item_number' => 'PPE-IT-DASH-0001',
+        'catalog_id' => $catalog->id,
+        'site_id' => $site->id,
+        'department_id' => $dept->id,
+        'track_type' => 'serial',
+        'status' => 'in_stock',
+        'quantity' => 1,
+        'created_by' => $this->admin->id,
+        'updated_by' => $this->admin->id,
+    ]);
+
+    $damaged = \App\Models\Modules\Apd\ApdItem::create([
+        'item_number' => 'PPE-IT-DASH-0002',
+        'catalog_id' => $catalog->id,
+        'site_id' => $site->id,
+        'department_id' => $dept->id,
+        'track_type' => 'serial',
+        'status' => 'damaged',
+        'quantity' => 1,
+        'created_by' => $this->admin->id,
+        'updated_by' => $this->admin->id,
+    ]);
+
+    \App\Models\Modules\Apd\ApdInspection::create([
+        'apd_item_id' => $damaged->id,
+        'inspection_type' => 'incidental',
+        'inspected_by' => $this->admin->id,
+        'inspection_date' => now()->toDateString(),
+        'result' => 'tidak_layak',
+        'created_by' => $this->admin->id,
+        'updated_by' => $this->admin->id,
+    ]);
+
+    actingAs($this->admin);
+    $kpis = collect(getProps($this->get(route('dashboard')))['kpis'])->keyBy('label');
+
+    expect($kpis['APD Stok Rendah']['value'])->toBeGreaterThanOrEqual(1)
+        ->and($kpis['APD Rusak']['value'])->toBeGreaterThanOrEqual(1)
+        ->and($kpis['Hasil Inspeksi']['sub'])->toContain('tidak layak');
+});
+
 test('dashboard exposes scoped asset compliance KPIs', function () {
     $site = Site::factory()->create();
     $asset = Asset::create([

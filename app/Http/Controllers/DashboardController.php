@@ -9,6 +9,10 @@ use App\Models\Core\Notifications\CoreNotification;
 use App\Models\Core\Users\Employee;
 use App\Models\Modules\Asset\Asset;
 use App\Models\Modules\Asset\AssetCertificate;
+use App\Models\Modules\Apd\ApdItem;
+use App\Models\Modules\Apd\ApdInspection;
+use App\Models\Modules\Apd\ApdCatalog;
+use App\Modules\Apd\ApdAccess;
 use App\Models\Modules\Capa\CapaAction;
 use App\Models\Modules\Incident\IncidentReport;
 use App\Models\Modules\Inspection\Inspection;
@@ -23,7 +27,7 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __construct(private readonly AssetAccess $assetAccess) {}
+    public function __construct(private readonly AssetAccess $assetAccess, private readonly ApdAccess $apdAccess) {}
 
     public function __invoke(Request $request): Response
     {
@@ -35,6 +39,9 @@ class DashboardController extends Controller
         $kpis = $this->buildKpis($request, $siteId, $departmentId, $from, $to);
         $widgets = $this->buildWidgets($siteId, $from, $to);
 
+        if ($request->user()?->can('apd.view')) {
+            $kpis = array_merge($kpis, $this->buildApdKpis($request->user(), $siteId, $departmentId));
+        }
         return Inertia::render('Dashboard', [
             'filters' => [
                 'from' => $from->toDateString(),
@@ -172,6 +179,65 @@ class DashboardController extends Controller
         $kpis[] = ['label' => 'Inspeksi Overdue', 'value' => $overdueInspections, 'sub' => 'Lewat jatuh tempo', 'tone' => 'amber'];
         $kpis[] = ['label' => 'Aset Aktif', 'value' => $activeAssets, 'sub' => 'Operasional', 'tone' => 'emerald'];
         $kpis[] = ['label' => 'Aset Decommissioned', 'value' => $decommissionedAssets, 'sub' => 'Riwayat permanen', 'tone' => 'indigo'];
+
+        return $kpis;
+    }
+
+    private function buildApdKpis(User $user, ?int $siteId, ?int $departmentId): array
+    {
+        $itemQuery = $this->apdAccess->scope(ApdItem::query(), $user);
+        if ($siteId) {
+            $itemQuery->where('site_id', $siteId);
+        }
+        if ($departmentId) {
+            $itemQuery->where('department_id', $departmentId);
+        }
+
+        // Low stock: catalogs whose active quantity (in_stock + issued) is below min_stock.
+        $lowStockCatalogs = ApdCatalog::query()
+            ->where('is_active', true)
+            ->lowStock()
+            ->when($siteId, fn ($q) => $q->where('site_id', $siteId))
+            ->when($departmentId, fn ($q) => $q->where('department_id', $departmentId))
+            ->count();
+
+        $damaged = (clone $itemQuery)->where('status', 'damaged')->count();
+        $disposed = (clone $itemQuery)->where('status', 'disposed')->count();
+        $lost = (clone $itemQuery)->where('status', 'lost')->count();
+
+        $inspectionQuery = ApdInspection::query()
+            ->whereHas('item', fn ($q) => $this->apdAccess->scope($q, $user)
+                ->when($siteId, fn ($iq) => $iq->where('site_id', $siteId))
+                ->when($departmentId, fn ($iq) => $iq->where('department_id', $departmentId)));
+
+        $layak = (clone $inspectionQuery)->where('result', 'layak')->count();
+        $tidakLayak = (clone $inspectionQuery)->where('result', 'tidak_layak')->count();
+
+        $kpis = [];
+        $kpis[] = [
+            'label' => 'APD Stok Rendah',
+            'value' => $lowStockCatalogs,
+            'sub' => 'Di bawah batas minimum',
+            'tone' => $lowStockCatalogs > 0 ? 'amber' : 'emerald',
+        ];
+        $kpis[] = [
+            'label' => 'APD Rusak',
+            'value' => $damaged,
+            'sub' => $disposed > 0 ? "{$disposed} dimusnahkan" : 'Perlu diganti',
+            'tone' => $damaged > 0 ? 'red' : 'emerald',
+        ];
+        $kpis[] = [
+            'label' => 'APD Hilang',
+            'value' => $lost,
+            'sub' => 'Tidak di lokasi',
+            'tone' => $lost > 0 ? 'amber' : 'emerald',
+        ];
+        $kpis[] = [
+            'label' => 'Hasil Inspeksi',
+            'value' => $layak,
+            'sub' => "{$tidakLayak} tidak layak",
+            'tone' => $tidakLayak > 0 ? 'amber' : 'emerald',
+        ];
 
         return $kpis;
     }
