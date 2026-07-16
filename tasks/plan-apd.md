@@ -25,17 +25,18 @@
 ## Phases
 
 ### Phase A — Master + Stok (foundation APD)
-- [ ] Migration `apd_catalogs`, `apd_items` (+ indexes, checks)
-- [ ] Models + relations + `Auditable` + SoftDeletes (katalog is_active)
-- [ ] Permission `apd.view/create/update/delete/export` di `CorePermissions`
-- [ ] Policy `ApdCatalogPolicy`, `ApdItemPolicy`
-- [ ] Numbering format `apd` (PPE-YYYY-NNNN)
-- [ ] CatalogController (CRUD) + ItemController (receive stok, list, show)
-- [ ] Requests Store/Update/Receive
-- [ ] Pages: Catalog/{Index,Form,Show}, Items/{Index,Show}
-- [ ] Seeder `ApdSeeder` (sample katalog + items)
-- [ ] Tests: CatalogTest, ItemTest (CRUD + permission gate + numbering)
-- [ ] `npm run build` + `make test` hijau
+- [x] Migration `apd_catalogs`, `apd_items` (+ indexes, checks)
+- [x] Models + relations + `Auditable` + SoftDeletes (katalog is_active)
+- [x] Permission `apd.view/create/update/delete/export` di `CorePermissions`
+- [x] Policy `ApdCatalogPolicy`, `ApdItemPolicy`
+- [x] Numbering format `apd` (PPE-YYYY-NNNN)
+- [x] CatalogController (CRUD) + ItemController (receive stok, list, show)
+- [x] Requests Store/Update/Receive
+- [x] Pages: Catalog/{Index,Form,Show}, Items/{Index,CreateOrReceive,Show}
+- [x] Seeder `ApdSeeder` (sample katalog + items)
+- [x] Tests: ApdPhaseATest (8 tests) + NavigationConfigurationTest
+- [x] `npm run build` + tests hijau
+- [x] Deploy Ubuntu-5 (091bad6) + smoke (route/200/feature tests)
 
 ### Phase B — Issuance + Workflow
 - [ ] Migration `apd_issuances`
