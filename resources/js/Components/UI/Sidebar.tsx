@@ -11,6 +11,7 @@ const menuGroups: MenuGroup[] = [
         label: 'Core & Master',
         items: [
             { label: 'Dashboard', routeName: 'dashboard', active: 'dashboard' },
+            { label: 'Pencarian', routeName: 'search.index', active: 'search.*' },
             { label: 'Sites', routeName: 'core.sites.index', active: 'core.sites.*', permission: 'core.sites.view' },
             { label: 'Departments', routeName: 'core.departments.index', active: 'core.departments.*', permission: 'core.departments.view' },
             { label: 'Areas', routeName: 'core.areas.index', active: 'core.areas.*', permission: 'core.areas.view' },

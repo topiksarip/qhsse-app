@@ -4,14 +4,36 @@ import ThemeToggle from '@/Components/UI/ThemeToggle';
 import ToastContainer from '@/Components/UI/ToastContainer';
 import { useToast } from '@/Hooks/useToast';
 import { PageProps } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
-import { PropsWithChildren, ReactNode, useState } from 'react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { PropsWithChildren, ReactNode, useEffect, useRef, useState } from 'react';
 
 export default function Authenticated({ header, children }: PropsWithChildren<{ header?: ReactNode }>) {
     const { auth } = usePage<PageProps>().props;
     const user = auth.user;
     const { toasts, dismiss } = useToast();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [searchValue, setSearchValue] = useState('');
+    const searchRef = useRef<HTMLDivElement>(null);
+
+    // Auto-hide: close search popover on outside click / Escape.
+    useEffect(() => {
+        if (!searchOpen) return;
+        const onClick = (e: MouseEvent) => {
+            if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+                setSearchOpen(false);
+            }
+        };
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setSearchOpen(false);
+        };
+        document.addEventListener('mousedown', onClick);
+        window.addEventListener('keydown', onKey);
+        return () => {
+            document.removeEventListener('mousedown', onClick);
+            window.removeEventListener('keydown', onKey);
+        };
+    }, [searchOpen]);
 
     return (
         <div className="relative min-h-screen text-slate-900 dark:text-gray-100">
@@ -46,6 +68,57 @@ export default function Authenticated({ header, children }: PropsWithChildren<{ 
                     </div>
 
                     <ThemeToggle className="!border-slate-900/30 !text-slate-900 !hover:bg-slate-900/10" />
+
+                    <div className="relative" ref={searchRef}>
+                        <button
+                            type="button"
+                            onClick={() => setSearchOpen((o) => !o)}
+                            aria-label="Buka pencarian"
+                            aria-expanded={searchOpen}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-900 transition hover:bg-slate-900/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:hover:bg-slate-900/10"
+                        >
+                            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                                <circle cx="11" cy="11" r="7" />
+                                <path strokeLinecap="round" d="m21 21-4.3-4.3" />
+                            </svg>
+                        </button>
+
+                        {searchOpen && (
+                            <div className="absolute right-0 z-50 mt-2 w-80 max-w-[85vw] rounded-lg border border-slate-200 bg-white p-3 shadow-xl dark:border-gray-700 dark:bg-gray-900">
+                                <form
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        if (searchValue.trim() === '') return;
+                                        setSearchOpen(false);
+                                        router.get(route('search.index'), { q: searchValue.trim(), module: 'all' }, { preserveState: true, replace: true });
+                                    }}
+                                >
+                                    <div className="relative">
+                                        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                                                <circle cx="11" cy="11" r="7" />
+                                                <path strokeLinecap="round" d="m21 21-4.3-4.3" />
+                                            </svg>
+                                        </span>
+                                        <input
+                                            autoFocus
+                                            type="text"
+                                            value={searchValue}
+                                            onChange={(e) => setSearchValue(e.target.value)}
+                                            placeholder="Cari di semua modul..."
+                                            className="w-full rounded-md border-slate-300 pl-9 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        className="mt-2 w-full rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                                    >
+                                        Cari
+                                    </button>
+                                </form>
+                            </div>
+                        )}
+                    </div>
 
                     <div className="relative">
                         <Dropdown>
