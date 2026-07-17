@@ -11,7 +11,7 @@ class InspectionResult extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['inspection_id', 'inspection_item_id', 'answer', 'remark', 'is_unsafe', 'photo'];
+    protected $fillable = ['inspection_id', 'inspection_item_id', 'inspection_unit_id', 'answer', 'remark', 'is_unsafe', 'photo'];
 
     protected function casts(): array
     {
@@ -23,6 +23,9 @@ class InspectionResult extends Model
 
     /** @return BelongsTo<InspectionItem, InspectionResult> */
     public function item(): BelongsTo { return $this->belongsTo(InspectionItem::class, 'inspection_item_id'); }
+
+    /** @return BelongsTo<InspectionUnit, InspectionResult> */
+    public function unit(): BelongsTo { return $this->belongsTo(InspectionUnit::class, 'inspection_unit_id'); }
 
     /** @return BelongsTo<ManagedFile, InspectionResult> */
     public function photoFile(): BelongsTo

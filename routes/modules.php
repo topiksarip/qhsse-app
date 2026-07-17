@@ -163,11 +163,14 @@ Route::middleware(['auth', 'verified'])
         Route::get('/create', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'create'])->name('create')->middleware('permission:inspection.checklists.create');
         Route::post('/', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'store'])->name('store')->middleware('permission:inspection.checklists.create');
         Route::get('/export', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'export'])->name('export')->middleware('permission:inspection.checklists.export');
+        Route::get('/{inspection}/export-units', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'exportUnits'])->name('units.export')->middleware('permission:inspection.checklists.export');
         Route::get('/{inspection}', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'show'])->name('show')->middleware('permission:inspection.checklists.view');
         Route::put('/{inspection}', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'update'])->name('update')->middleware('permission:inspection.checklists.execute');
         Route::delete('/{inspection}', [\App\Http\Controllers\Modules\Inspection\InspectionController::class, 'destroy'])->name('destroy')->middleware('permission:inspection.checklists.delete');
         Route::post('/{inspection}/start', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'start'])->name('start')->middleware('permission:inspection.checklists.execute');
         Route::post('/{inspection}/complete', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'complete'])->name('complete')->middleware('permission:inspection.checklists.execute');
+        Route::put('/{inspection}/units/{unit}', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'saveUnitResult'])->name('units.update')->middleware('permission:inspection.checklists.execute');
+        Route::post('/{inspection}/units/{unit}/cancel', [App\Http\Controllers\Modules\Inspection\InspectionController::class, 'cancelUnit'])->name('units.cancel')->middleware('permission:inspection.checklists.execute');
     });
 
 // Document Control Module

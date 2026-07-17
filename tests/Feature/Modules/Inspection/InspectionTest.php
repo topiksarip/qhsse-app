@@ -67,11 +67,13 @@ test('authorized user can create inspection', function () {
 
     $this->post(route('inspection.checklists.store'), [
         'inspection_template_id' => $tpl->id, 'site_id' => $site->id, 'inspector_id' => $inspector->id, 'scheduled_at' => now()->addDays(7)->format('Y-m-d'),
+        'units' => ['Unit-1'],
     ]);
     $insp = Inspection::first();
     expect($insp)->not->toBeNull();
     expect($insp->status)->toBe('pending');
     expect($insp->inspection_number)->toMatch('/^INS-\d{4}-\d{4}$/');
+    expect($insp->units()->count())->toBe(1);
 });
 
 test('pending inspection can be started', function () {
@@ -91,6 +93,7 @@ test('in_progress inspection can be completed with pass result', function () {
     app(WorkflowService::class)->start('inspection', $insp->id, $this->admin);
     WorkflowInstance::where('module_name', 'inspection')->where('reference_id', $insp->id)->update(['current_status' => 'in_progress']);
     $insp->results()->create(['inspection_item_id' => $item->id, 'answer' => 'yes', 'is_unsafe' => false]);
+    \App\Models\Modules\Inspection\InspectionUnit::create(['inspection_id' => $insp->id, 'identifier' => $insp->inspection_number, 'status' => 'done']);
 
     $this->post(route('inspection.checklists.complete', $insp))->assertRedirect();
     expect($insp->fresh()->status)->toBe('completed');
@@ -105,6 +108,7 @@ test('in_progress inspection with unsafe item completes with fail result', funct
     app(WorkflowService::class)->start('inspection', $insp->id, $this->admin);
     WorkflowInstance::where('module_name', 'inspection')->where('reference_id', $insp->id)->update(['current_status' => 'in_progress']);
     $insp->results()->create(['inspection_item_id' => $item->id, 'answer' => 'unsafe', 'is_unsafe' => true]);
+    \App\Models\Modules\Inspection\InspectionUnit::create(['inspection_id' => $insp->id, 'identifier' => $insp->inspection_number, 'status' => 'done']);
 
     $this->post(route('inspection.checklists.complete', $insp))->assertRedirect();
     expect($insp->fresh()->overall_result)->toBe('fail');
@@ -219,4 +223,116 @@ test('inspection result can store a photo upload', function () {
     expect($result)->not->toBeNull();
     expect($result->photo)->not->toBeNull();
     expect(\App\Models\Core\Files\ManagedFile::where('collection', 'inspection_result')->count())->toBe(1);
+});
+
+// === MULTI-UNIT ===
+
+test('creating inspection with multiple units creates inspection units', function () {
+    actingAs($this->admin);
+    $tpl = InspectionTemplate::factory()->create();
+    $site = \App\Models\Core\MasterData\Site::factory()->create();
+    $inspector = User::factory()->create();
+
+    $this->post(route('inspection.checklists.store'), [
+        'inspection_template_id' => $tpl->id, 'site_id' => $site->id, 'inspector_id' => $inspector->id,
+        'scheduled_at' => now()->addDays(7)->format('Y-m-d'),
+        'units' => ['Sling-01', 'Sling-02', 'Sling-03'],
+    ]);
+    $insp = Inspection::first();
+    expect($insp->units()->count())->toBe(3);
+    expect($insp->canBeCompleted())->toBeFalse();
+});
+
+test('inspection with empty units is rejected', function () {
+    actingAs($this->admin);
+    $tpl = InspectionTemplate::factory()->create();
+    $site = \App\Models\Core\MasterData\Site::factory()->create();
+    $inspector = User::factory()->create();
+
+    $this->post(route('inspection.checklists.store'), [
+        'inspection_template_id' => $tpl->id, 'site_id' => $site->id, 'inspector_id' => $inspector->id,
+        'scheduled_at' => now()->addDays(7)->format('Y-m-d'),
+        'units' => [],
+    ])->assertSessionHasErrors(['units']);
+});
+
+test('saving unit result marks unit done and stores per-unit result', function () {
+    actingAs($this->admin);
+    $tpl = InspectionTemplate::factory()->create();
+    $item = InspectionItem::create(['inspection_template_id' => $tpl->id, 'question' => 'OK?', 'type' => 'yes_no', 'is_required' => true, 'order' => 0]);
+    $insp = Inspection::factory()->create(['status' => 'in_progress', 'inspection_template_id' => $tpl->id]);
+    app(WorkflowService::class)->start('inspection', $insp->id, $this->admin);
+    WorkflowInstance::where('module_name', 'inspection')->where('reference_id', $insp->id)->update(['current_status' => 'in_progress']);
+    $unit = \App\Models\Modules\Inspection\InspectionUnit::create(['inspection_id' => $insp->id, 'identifier' => 'Sling-01', 'status' => 'pending']);
+
+    $this->put(route('inspection.checklists.units.update', ['inspection' => $insp->id, 'unit' => $unit->id]), [
+        'results' => [['inspection_item_id' => $item->id, 'answer' => 'yes', 'is_unsafe' => false]],
+    ])->assertRedirect();
+
+    expect($unit->fresh()->status)->toBe('done');
+    expect($insp->results()->where('inspection_unit_id', $unit->id)->count())->toBe(1);
+});
+
+test('cancelling a unit marks it cancelled', function () {
+    actingAs($this->admin);
+    $insp = Inspection::factory()->create(['status' => 'in_progress']);
+    $unit = \App\Models\Modules\Inspection\InspectionUnit::create(['inspection_id' => $insp->id, 'identifier' => 'Sling-02', 'status' => 'pending']);
+
+    $this->post(route('inspection.checklists.units.cancel', ['inspection' => $insp->id, 'unit' => $unit->id]), [
+        'cancelled_reason' => 'Rusak, tidak diinspeksi',
+    ])->assertRedirect();
+
+    expect($unit->fresh()->status)->toBe('cancelled');
+    expect($unit->fresh()->cancelled_reason)->toBe('Rusak, tidak diinspeksi');
+});
+
+test('complete is blocked while a unit is pending', function () {
+    actingAs($this->admin);
+    $insp = Inspection::factory()->create(['status' => 'in_progress']);
+    \App\Models\Modules\Inspection\InspectionUnit::create(['inspection_id' => $insp->id, 'identifier' => 'Sling-01', 'status' => 'pending']);
+
+    $this->post(route('inspection.checklists.complete', $insp))->assertSessionHasErrors(['workflow']);
+    expect($insp->fresh()->status)->toBe('in_progress');
+});
+
+test('complete succeeds when all units done or cancelled', function () {
+    actingAs($this->admin);
+    $insp = Inspection::factory()->create(['status' => 'in_progress']);
+    app(WorkflowService::class)->start('inspection', $insp->id, $this->admin);
+    WorkflowInstance::where('module_name', 'inspection')->where('reference_id', $insp->id)->update(['current_status' => 'in_progress']);
+    \App\Models\Modules\Inspection\InspectionUnit::create(['inspection_id' => $insp->id, 'identifier' => 'Sling-01', 'status' => 'done']);
+    \App\Models\Modules\Inspection\InspectionUnit::create(['inspection_id' => $insp->id, 'identifier' => 'Sling-02', 'status' => 'cancelled', 'cancelled_reason' => 'x']);
+
+    $this->post(route('inspection.checklists.complete', $insp))->assertRedirect();
+    expect($insp->fresh()->status)->toBe('completed');
+});
+
+// === ROLES ===
+
+test('foreman can create and execute inspection but not delete', function () {
+    $foreman = User::factory()->create();
+    $foreman->assignRole('Foreman');
+    actingAs($foreman);
+
+    $tpl = InspectionTemplate::factory()->create();
+    $site = \App\Models\Core\MasterData\Site::factory()->create();
+    $inspector = User::factory()->create();
+
+    $resp = $this->post(route('inspection.checklists.store'), [
+        'inspection_template_id' => $tpl->id, 'site_id' => $site->id, 'inspector_id' => $inspector->id,
+        'scheduled_at' => now()->addDays(7)->format('Y-m-d'),
+        'units' => ['Sling-01'],
+    ]);
+    $resp->assertRedirect();
+    expect(Inspection::count())->toBe(1);
+
+    $insp = Inspection::first();
+    $this->delete(route('inspection.checklists.destroy', $insp))->assertForbidden();
+});
+
+test('operator role exists with inspection create execute permission', function () {
+    $operator = User::factory()->create();
+    $operator->assignRole('Operator');
+    actingAs($operator);
+    $this->get(route('inspection.checklists.create'))->assertStatus(200);
 });

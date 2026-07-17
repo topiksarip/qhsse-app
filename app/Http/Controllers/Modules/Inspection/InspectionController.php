@@ -11,6 +11,8 @@ use App\Core\Numbering\NumberingService;
 use App\Core\Query\ListQuery;
 use App\Core\Workflow\WorkflowService;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Modules\Inspection\CancelInspectionUnitRequest;
+use App\Http\Requests\Modules\Inspection\SaveInspectionUnitResultRequest;
 use App\Http\Requests\Modules\Inspection\StoreInspectionTemplateRequest;
 use App\Http\Requests\Modules\Inspection\StoreInspectionRequest;
 use App\Http\Requests\Modules\Inspection\UpdateInspectionRequest;
@@ -188,6 +190,15 @@ class InspectionController extends Controller
             $generated = $this->numberingService->generate(moduleName: 'inspection', actor: $actor, referenceType: Inspection::class, referenceId: $inspection->id);
             $inspection->update(['inspection_number' => $generated->number]);
 
+            // Create inspection units from submitted identifiers.
+            foreach ($validated['units'] as $identifier) {
+                \App\Models\Modules\Inspection\InspectionUnit::create([
+                    'inspection_id' => $inspection->id,
+                    'identifier' => $identifier,
+                    'status' => 'pending',
+                ]);
+            }
+
             $this->workflowService->start('inspection', $inspection->id, $actor);
             $this->auditService->created($inspection, $actor, 'inspection', $inspection->id);
             $this->activityService->log('inspection', $inspection->id, 'inspection.created', 'Inspeksi dibuat', $actor);
@@ -200,7 +211,13 @@ class InspectionController extends Controller
 
     public function show(Inspection $inspection): Response
     {
-        $inspection->load(['template.items', 'site', 'area', 'inspector', 'results.photoFile']);
+        $inspection->load([
+            'template.items',
+            'site',
+            'area',
+            'inspector',
+            'units.results.photoFile',
+        ]);
 
         $files = \App\Models\Core\Files\ManagedFile::query()
             ->where('module_name', 'inspection')
@@ -210,6 +227,7 @@ class InspectionController extends Controller
 
         return Inertia::render('Modules/Inspection/Show', [
             'inspection' => $inspection,
+            'units' => $inspection->units()->with('results.photoFile')->get(),
             'files' => $files,
         ]);
     }
@@ -264,6 +282,77 @@ class InspectionController extends Controller
         return redirect()->route('inspection.checklists.show', $inspection)->with('success', 'Hasil inspeksi disimpan.');
     }
 
+    public function saveUnitResult(SaveInspectionUnitResultRequest $request, Inspection $inspection, \App\Models\Modules\Inspection\InspectionUnit $unit): RedirectResponse
+    {
+        $actor = $request->user();
+        $validated = $request->validated();
+
+        abort_unless($unit->inspection_id === $inspection->id, 404);
+
+        DB::transaction(function () use ($request, $inspection, $unit, $validated, $actor) {
+            foreach ($validated['results'] as $index => $result) {
+                $existing = \App\Models\Modules\Inspection\InspectionResult::where('inspection_id', $inspection->id)
+                    ->where('inspection_unit_id', $unit->id)
+                    ->where('inspection_item_id', $result['inspection_item_id'])
+                    ->first();
+
+                $photoPath = $existing?->photo;
+
+                if ($request->hasFile("results.{$index}.photo")) {
+                    $file = $request->file("results.{$index}.photo");
+                    $stored = $this->files->store($file, new FileReference('inspection', $inspection->id, 'inspection_result'), $actor);
+                    $photoPath = $stored->path;
+
+                    if ($existing?->photo && $existing->photo !== $photoPath) {
+                        $old = \App\Models\Core\Files\ManagedFile::where('path', $existing->photo)->first();
+                        if ($old) {
+                            $this->files->markDeleted($old, $actor);
+                        }
+                    }
+                }
+
+                \App\Models\Modules\Inspection\InspectionResult::updateOrCreate(
+                    [
+                        'inspection_id' => $inspection->id,
+                        'inspection_unit_id' => $unit->id,
+                        'inspection_item_id' => $result['inspection_item_id'],
+                    ],
+                    [
+                        'answer' => $result['answer'] ?? null,
+                        'remark' => $result['remark'] ?? null,
+                        'is_unsafe' => $result['is_unsafe'] ?? false,
+                        'photo' => $photoPath,
+                    ],
+                );
+            }
+
+            if (isset($validated['notes'])) {
+                $unit->update(['notes' => $validated['notes']]);
+            }
+
+            $unit->update(['status' => 'done']);
+            $this->activityService->log('inspection', $inspection->id, 'inspection.unit.saved', "Hasil unit {$unit->identifier} disimpan", $actor);
+        });
+
+        return redirect()->route('inspection.checklists.show', $inspection)->with('success', "Hasil unit {$unit->identifier} disimpan.");
+    }
+
+    public function cancelUnit(CancelInspectionUnitRequest $request, Inspection $inspection, \App\Models\Modules\Inspection\InspectionUnit $unit): RedirectResponse
+    {
+        $actor = $request->user();
+        abort_unless($unit->inspection_id === $inspection->id, 404);
+
+        DB::transaction(function () use ($inspection, $unit, $request, $actor) {
+            $unit->update([
+                'status' => 'cancelled',
+                'cancelled_reason' => $request->validated()['cancelled_reason'],
+            ]);
+            $this->activityService->log('inspection', $inspection->id, 'inspection.unit.cancelled', "Unit {$unit->identifier} dibatalkan", $actor);
+        });
+
+        return redirect()->route('inspection.checklists.show', $inspection)->with('success', "Unit {$unit->identifier} dibatalkan.");
+    }
+
     public function destroy(Request $request, Inspection $inspection): RedirectResponse
     {
         $actor = $request->user();
@@ -297,6 +386,11 @@ class InspectionController extends Controller
     public function complete(Inspection $inspection, Request $request): RedirectResponse
     {
         $actor = $request->user();
+
+        if (!$inspection->canBeCompleted()) {
+            return back()->withErrors(['workflow' => 'Inspeksi tidak dapat diselesaikan: masih ada unit yang belum diinspeksi (pending). Batalkan unit yang tidak diinspeksi jika perlu.']);
+        }
+
         try {
             DB::transaction(function () use ($inspection, $actor) {
                 $this->workflowService->transition('inspection', $inspection->id, 'complete', $actor);
@@ -329,5 +423,31 @@ class InspectionController extends Controller
             'Result' => 'overall_result',
             'Scheduled' => fn ($i) => $i->scheduled_at?->format('Y-m-d') ?? '',
         ], 'inspections-export.csv');
+    }
+
+    public function exportUnits(Inspection $inspection, CsvExporter $exporter): StreamedResponse
+    {
+        $inspection->load(['template.items', 'units.results']);
+        $items = $inspection->template?->items ?? collect();
+
+        $columns = [
+            'Nomor Inspeksi' => fn () => $inspection->inspection_number,
+            'Unit' => fn ($u) => $u->identifier,
+            'Status Unit' => fn ($u) => $u->status,
+        ];
+
+        foreach ($items as $item) {
+            $columns[$item->question] = function ($u) use ($item) {
+                $result = $u->results->firstWhere('inspection_item_id', $item->id);
+                return $result?->answer ?? '';
+            };
+        }
+
+        $columns['Catatan Unit'] = fn ($u) => $u->notes ?? '';
+        $columns['Alasan Batal'] = fn ($u) => $u->cancelled_reason ?? '';
+
+        $query = $inspection->units()->with('results');
+
+        return $exporter->stream($query, $columns, "inspection-{$inspection->inspection_number}-units-export.csv");
     }
 }

@@ -48,4 +48,21 @@ class Inspection extends Model
     {
         return $this->hasMany(InspectionResult::class);
     }
+
+    /** @return HasMany<InspectionUnit> */
+    public function units(): HasMany
+    {
+        return $this->hasMany(InspectionUnit::class);
+    }
+
+    /**
+     * True if every unit is done or cancelled (safe to complete).
+     */
+    public function canBeCompleted(): bool
+    {
+        if ($this->units()->count() === 0) {
+            return false;
+        }
+        return !$this->units()->where('status', 'pending')->exists();
+    }
 }

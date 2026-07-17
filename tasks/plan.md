@@ -1,98 +1,77 @@
-# Plan: QHSSE App — UI Overhaul (Frontend Only)
+# Implementation Plan: Inspeksi Multi-Unit (Mode Sesi)
 
-> Intent: `docs/intent/ui-overhaul.md` (CONFIRMED 2026-07-15)
-> Constraint HARD: hanya kode frontend (`resources/js`, `resources/css`, komponen UI).
-> Backend Laravel TIDAK diubah.
+Berdasarkan: docs-qhsse/specs/inspection-multi-unit.md (DRAFT, open questions RESOLVED)
+Intent: docs-qhsse/intent/inspection-multi-unit.md (CONFIRMED)
 
-## Tujuan
-Romawk seluruh tampilan frontend agar rapih, compact, konsisten (button/form),
-responsif (mobile/tablet/desktop), dengan sidebar auto-hide (semua ukuran),
-tabel horizontal-scroll, dan light/dark mode (default ikut OS + toggle persist).
+## Overview
+Menambahkan konsep "Inspection Unit" ke modul Inspection agar 1 sesi inspeksi bisa
+berisi banyak unit fisik (misal 94 wire rope sling) dengan hasil checklist per-unit.
+Eksekusi berjalan unit-per-page; inspeksi hanya bisa diselesaikan jika semua unit
+berstatus done/cancelled. Menambah role Foreman & Operator (create+execute) dan export
+hasil per-unit.
 
-## Keputusan Spec (konfirmasi / refine)
-- [x] Sidebar: tombol buka + **auto-hide di semua ukuran** (tutup saat klik luar / pilih menu).
-- [x] Tabel: **horizontal scroller** (`overflow-x-auto`), tidak melebar viewport.
-- [x] Dark mode: **default = sistem OS** (`prefers-color-scheme`), toggle manual **tersimpan** (localStorage).
-- [x] Konsistensi: **konvensi kelas Tailwind** (tanpa design-token system baru).
-- [ ] 🔲 Palet warna pasti (light & dark): asumsi = putih/abu netral + 1 aksen biru/indigo; perlu Anda setujui atau kasih hex.
-- [ ] 🔲 Urutan prioritas rombak 12 modul: asumsi = ikut urutan modul现有 (Incident → Audit → ... → NCR).
-- [ ] 🔲 Apakah Landing page konten ikut dirapih atau hanya layout? asumsi = layout + sedikit penyederhanaan visual, tidak ubah copy/teks.
+## Architecture Decisions
+- `inspection_units` sebagai entity baru; `inspection_results` di-relasikan ke unit
+  via `inspection_unit_id` (NOT NULL setelah backfill legacy).
+- Backfill: migrasi membuat 1 unit default per inspection lama, lalu set results.unit_id.
+- Mode single-unit tetap jalan: store tanpa `units` → buat 1 default unit otomatis.
+- `units` wajib >=1 di form (validasi tolak kalau kosong).
+- Isi/cancel/selesaikan pakai permission `inspection.checklists.execute` (sudah ada).
+- Foreman/Operator: role baru di CorePermissions, dapat view+create+execute inspection.
+- Export per-unit: 1 baris per unit, kolom = identifier + tiap item checklist + status.
 
-## Phases (urutan eksekusi)
+## Task List
 
-### Phase 0 — Foundation (shell + theming)
-- [ ] Buat `ThemeProvider`/hook dark mode: baca `prefers-color-scheme` → fallback, simpan ke localStorage, toggle manual, apply class `dark` di `<html>`.
-- [ ] Overhaul `AuthenticatedLayout`:
-  - Sidebar: tombol toggle, overlay/drawer di semua ukuran, auto-hide (klik luar / link).
-  - Nav grup collapsible agar "baris banyak di mobile" teratasi.
-  - Header konsisten (logo, user menu, theme toggle).
-  - Pastikan tidak melebar di mobile/tablet/desktop.
-- [ ] Setup `dark:` variants di Tailwind (pastikan `darkMode: 'class'` di tailwind.config).
+### Phase 1: Data Foundation
+- [ ] Task 1: Migration inspection_units + alter inspection_results (+ backfill legacy)
+- [ ] Task 2: Model InspectionUnit + relasi Inspection/InspectionResult
 
-### Phase 1 — Shared UI Primitives (konsistensi)
-- [ ] `Button` / `DangerButton` ukuran seragam (sm/md/lg), padding & radius konsisten.
-- [ ] `Card` / panel compact.
-- [ ] `TableWrapper` horizontal-scroll + header sticky (gunakan di semua tabel).
-- [ ] Input/Select/Textarea/Label seragam (sudah ada di `Components/UI`? validasi & samakan).
-- [ ] `Badge`/`StatusBadge` konsisten di light & dark.
-- [ ] Pastikan semua primitif punya `dark:` style.
+### Checkpoint 1: Schema & model
+- [ ] Migrasi jalan di local (sqlite) & prod (pg); model ter-load
 
-### Phase 2 — Public Pages
-- [ ] Landing page (responsif + light/dark).
-- [ ] Login page (responsif, compact, theme toggle).
-- [ ] Register page (jika aktif).
+### Phase 2: Backend — Store & Unit lifecycle
+- [ ] Task 3: StoreInspectionRequest validasi units[] (min 1)
+- [ ] Task 4: InspectionController.store buat InspectionUnit (multi / default)
+- [ ] Task 5: Endpoint simpan hasil 1 unit (PUT units/{unit}) + request + status done
+- [ ] Task 6: Endpoint cancel unit (POST units/{unit}/cancel) + request + status cancelled
+- [ ] Task 7: complete guard (409 jika ada pending) + route baru
 
-### Phase 3 — Dashboard
-- [ ] Layout KPI cards responsif (grid yang tidak melebar), tema terang/gelap.
+### Checkpoint 2: Backend unit lifecycle
+- [ ] Test PHP: buat multi-unit, simpan 1 unit, cancel, complete guard
 
-### Phase 4 — 12 Module Pages (Index / Show / Form)
-Terapkan primitif Phase 1 + TableWrapper + sidebar baru. Urutan:
-1. Incident (Index/Show/Form)
-2. Audit
-3. Security Incidents
-4. Permit to Work
-5. Environmental
-6. Risk Management
-7. Document Control
-8. Investigation
-9. Training Records
-10. Inspection
-11. CAPA
-12. Quality / NCR
-- Setiap modul: cek tombol Delete (sudah ada) tetap jalan & konsisten.
+### Phase 3: Backend — Show & Export
+- [ ] Task 8: InspectionController.show muat units + per-unit results
+- [ ] Task 9: Export per-unit (CsvExporter) di controller export
 
-## HARD Rules selama eksekusi
-- Tidak ubah Controller/Model/Policy/Route/Seeder/Migration/Service.
-- Tidak ubah respons data server / prop Inertia (hanya cara menampilkan).
-- Jika ternyata butuh data baru dari backend → STOP & laporkan (bukan ubah sendiri).
+### Phase 4: Frontend — Reusable + Form
+- [ ] Task 10: SearchableMultiSelect.tsx (reusable)
+- [ ] Task 11: Form.tsx section Daftar Unit (build list + multi-select, units wajib)
 
-## Verifikasi
-- `npm run build` bersih (tsc + vite) setelah setiap phase.
-- Cek manual responsif (mobile/tablet/desktop) lewat browser preview.
-- Dark mode: default ikut OS, toggle persist (reload tetap pilihannya).
-- Sidebar auto-hide di semua ukuran.
-- Tabel tidak melebar (horizontal scroll muncul di layar kecil).
-- Tombol Delete & alur CRUD tetap berfungsi (regresi visual only).
-- (Opsional) deploy ke Ubuntu-5 setelah semua phase + build hijau.
+### Phase 5: Frontend — Show eksekusi
+- [ ] Task 12: Show.tsx ubah jadi unit-per-page (dropdown tanda, simpan, cancel, complete terkunci)
 
-## Out of Scope
-- Backend, API, DB, permission, role, logic bisnis.
-- Fitur baru.
+### Checkpoint 3: End-to-end UI
+- [ ] Flow buat 94 unit + eksekusi per-unit + selesaikan terkunci
 
-## Status
-- Intent: CONFIRMED.
-- Spec: draft di plan ini.
-- Plan: ACTIVE — eksekusi berjalan (Phase 0, 1, 2 SELESAI + deployed).
-- Execution: Phase 0 (sidebar/dark/table wrapper) + Phase 1 (primitives) + Phase 2 (public pages:
-  landing/login/register/guest shell) done & deployed ke Ubuntu-5.
-- Execution lanjut: Phase 3 (Dashboard overhaul) done & deployed.
+### Phase 6: Permission & Roles
+- [ ] Task 13: CorePermissions tambah role Foreman & Operator (view+create+execute)
 
-## ⚠️ Deploy Gotcha (learned 2026-07-15)
-`php artisan optimize:clear` menghapus `bootstrap/cache/`. Di Ubuntu-5 direktori tidak otomatis dibuat ulang
-dengan kepemilikan benar → semua perintah artisan + web app 500 ("bootstrap/cache directory must be present
-and writable"). FIX sebelum/sesudah `optimize:clear`:
-  sudo mkdir -p bootstrap/cache
-  sudo chown -R ubuntu:www-data bootstrap/cache
-  sudo chmod -R 775 bootstrap/cache
-Lalu `php artisan config:cache; php artisan route:cache`. (Jangan jalankan `optimize:clear` sebagai root
-kecuali kepemilikan dikembalikan untuk user deploy `ubuntu`.)
+### Phase 7: Tests & Build
+- [ ] Task 14: InspectionTest perluas (multi-unit, cancel, complete guard, permission, export)
+- [ ] Task 15: npm run build + php artisan test hijau
+
+### Checkpoint 4: Complete
+- [ ] Semua acceptance criteria spec terpenuhi; review user; deploy ubuntu-5
+
+## Risks and Mitigations
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Backfill legacy results gagal (unit_id null) | High | Migrasi buat default unit per inspection, set NOT NULL setelah backfill; jalankan di transaction |
+| Show.tsx rewrite besar merusak UI existing | Med | Ubah bertahap; jaga mode single-unit via default unit; test build |
+| SearchableMultiSelect aksesibel/tidak stabil | Low | Komponen reusable sederhana; test manual di browser |
+| Permission Foreman/Operator salah map | Med | Ikuti pola $inspectionFull subset; seed ulang & verify di prod |
+
+## Parallelization
+- Task 10 (SearchableMultiSelect) bisa paralel dengan Phase 2 backend (kontrak sudah jelas).
+- Task 13 (role) paralel dengan Phase 4 frontend.
+- Sisanya sequential (dependency chain).

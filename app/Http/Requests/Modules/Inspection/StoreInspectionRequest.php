@@ -16,6 +16,8 @@ class StoreInspectionRequest extends FormRequest
             'area_id' => ['nullable', 'exists:areas,id'],
             'inspector_id' => ['required', 'exists:users,id'],
             'scheduled_at' => ['required', 'date'],
+            'units' => ['required', 'array', 'min:1'],
+            'units.*' => ['required', 'string', 'max:255'],
         ];
     }
 }
