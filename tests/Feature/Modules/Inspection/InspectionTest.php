@@ -165,6 +165,23 @@ test('inspection with missing template fails validation', function () {
     $this->post(route('inspection.checklists.store'), ['site_id' => 1, 'inspector_id' => 1, 'scheduled_at' => '2026-07-11'])->assertSessionHasErrors(['inspection_template_id']);
 });
 
+test('template can store photo item type', function () {
+    actingAs($this->admin);
+    $code = 'T-PHOTO-' . uniqid();
+    $this->post(route('inspection.templates.store'), [
+        'code' => $code,
+        'name' => 'Template Photo',
+        'category' => 'safety',
+        'items' => [
+            ['question' => 'Foto area?', 'type' => 'photo', 'is_required' => true, 'order' => 0],
+        ],
+    ])->assertRedirect();
+
+    $tpl = InspectionTemplate::where('code', $code)->first();
+    expect($tpl)->not->toBeNull();
+    expect($tpl->items()->where('type', 'photo')->count())->toBe(1);
+});
+
 test('template can store yes_no_na item type', function () {
     actingAs($this->admin);
     $code = 'T-YNNA-' . uniqid();
