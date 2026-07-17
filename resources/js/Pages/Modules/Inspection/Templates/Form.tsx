@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEvent, useState } from 'react';
+import { FormEvent } from 'react';
 
 type Item = { id?: number; question: string; type: string; category: string | null; is_required: boolean; order: number };
 type Template = { id: number; code: string; name: string; description: string | null; category: string; items: Item[] } | null;
@@ -10,15 +10,15 @@ const itemTypes = [{ value: 'yes_no', label: 'Yes/No' }, { value: 'yes_no_na', l
 
 export default function TemplateForm({ item }: PageProps<{ item: Template }>) {
     const isEdit = item !== null;
-    const [items, setItems] = useState<Item[]>(item?.items ?? []);
     const { data, setData, post, put, processing, errors } = useForm({
         code: item?.code ?? '', name: item?.name ?? '', description: item?.description ?? '', category: item?.category ?? 'safety',
+        items: (item?.items ?? []) as Item[],
     });
 
-    function submit(e: FormEvent) { e.preventDefault(); const payload = { ...data, items }; if (isEdit) { put(route('inspection.templates.update', item!.id)); } else { post(route('inspection.templates.store')); } }
-    function addItem() { setItems([...items, { question: '', type: 'yes_no', category: null, is_required: true, order: items.length }]); }
-    function updateItem(index: number, field: keyof Item, value: string | boolean | number) { setItems(items.map((it, i) => i === index ? { ...it, [field]: value } : it)); }
-    function removeItem(index: number) { setItems(items.filter((_, i) => i !== index)); }
+    function submit(e: FormEvent) { e.preventDefault(); if (isEdit) { put(route('inspection.templates.update', item!.id)); } else { post(route('inspection.templates.store')); } }
+    function addItem() { setData('items', [...data.items, { question: '', type: 'yes_no', category: null, is_required: true, order: data.items.length }]); }
+    function updateItem(index: number, field: keyof Item, value: string | boolean | number) { setData('items', data.items.map((it, i) => i === index ? { ...it, [field]: value } : it)); }
+    function removeItem(index: number) { setData('items', data.items.filter((_, i) => i !== index)); }
 
     return (
         <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">{isEdit ? 'Edit Template' : 'Buat Template'}</h2>}>
@@ -37,7 +37,7 @@ export default function TemplateForm({ item }: PageProps<{ item: Template }>) {
                         <div>
                             <div className="flex items-center justify-between"><h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400">Items</h4><button type="button" onClick={addItem} className="text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400">+ Tambah Item</button></div>
                             <div className="mt-2 space-y-3">
-                                {items.map((it, i) => (
+                                {data.items.map((it, i) => (
                                     <div key={i} className="rounded-md border border-gray-200 p-3 dark:border-gray-700">
                                         <div className="grid gap-2 md:grid-cols-3">
                                             <input type="text" value={it.question} onChange={(e) => updateItem(i, 'question', e.target.value)} placeholder="Question..." className="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 md:col-span-2" />
