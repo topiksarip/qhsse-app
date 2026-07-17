@@ -93,7 +93,7 @@ class ApdCatalog extends Model implements ProvidesAuditContext
 
     public function scopeLowStock(Builder $query): Builder
     {
-        return $query->whereColumn('min_stock', '>', 0)
+        return $query->where('min_stock', '>', 0)
             ->whereRaw('(SELECT COALESCE(SUM(quantity),0) FROM apd_items WHERE apd_items.catalog_id = apd_catalogs.id AND apd_items.status IN (\'in_stock\',\'issued\')) < apd_catalogs.min_stock');
     }
 
