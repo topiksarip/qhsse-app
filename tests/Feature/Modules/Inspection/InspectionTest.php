@@ -64,10 +64,11 @@ test('authorized user can create inspection', function () {
     $tpl = InspectionTemplate::factory()->create();
     $site = \App\Models\Core\MasterData\Site::factory()->create();
     $inspector = User::factory()->create();
+    $asset = \App\Models\Modules\Asset\Asset::factory()->create();
 
     $this->post(route('inspection.checklists.store'), [
         'inspection_template_id' => $tpl->id, 'site_id' => $site->id, 'inspector_id' => $inspector->id, 'scheduled_at' => now()->addDays(7)->format('Y-m-d'),
-        'units' => ['Unit-1'],
+        'asset_ids' => [$asset->id],
     ]);
     $insp = Inspection::first();
     expect($insp)->not->toBeNull();
@@ -232,11 +233,12 @@ test('creating inspection with multiple units creates inspection units', functio
     $tpl = InspectionTemplate::factory()->create();
     $site = \App\Models\Core\MasterData\Site::factory()->create();
     $inspector = User::factory()->create();
+    $assets = \App\Models\Modules\Asset\Asset::factory()->count(3)->create();
 
     $this->post(route('inspection.checklists.store'), [
         'inspection_template_id' => $tpl->id, 'site_id' => $site->id, 'inspector_id' => $inspector->id,
         'scheduled_at' => now()->addDays(7)->format('Y-m-d'),
-        'units' => ['Sling-01', 'Sling-02', 'Sling-03'],
+        'asset_ids' => $assets->pluck('id')->all(),
     ]);
     $insp = Inspection::first();
     expect($insp->units()->count())->toBe(3);
@@ -252,8 +254,8 @@ test('inspection with empty units is rejected', function () {
     $this->post(route('inspection.checklists.store'), [
         'inspection_template_id' => $tpl->id, 'site_id' => $site->id, 'inspector_id' => $inspector->id,
         'scheduled_at' => now()->addDays(7)->format('Y-m-d'),
-        'units' => [],
-    ])->assertSessionHasErrors(['units']);
+        'asset_ids' => [],
+    ])->assertSessionHasErrors(['asset_ids']);
 });
 
 test('saving unit result marks unit done and stores per-unit result', function () {
@@ -317,11 +319,12 @@ test('foreman can create and execute inspection but not delete', function () {
     $tpl = InspectionTemplate::factory()->create();
     $site = \App\Models\Core\MasterData\Site::factory()->create();
     $inspector = User::factory()->create();
+    $asset = \App\Models\Modules\Asset\Asset::factory()->create();
 
     $resp = $this->post(route('inspection.checklists.store'), [
         'inspection_template_id' => $tpl->id, 'site_id' => $site->id, 'inspector_id' => $inspector->id,
         'scheduled_at' => now()->addDays(7)->format('Y-m-d'),
-        'units' => ['Sling-01'],
+        'asset_ids' => [$asset->id],
     ]);
     $resp->assertRedirect();
     expect(Inspection::count())->toBe(1);

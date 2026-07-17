@@ -10,9 +10,9 @@ sling) dalam 1 sesi, bukan 94 form terpisah. Tiap unit punya **hasil checklist
 sendiri** (ketertelusuran per-unit).
 
 Kebutuhan dari wawancara:
-- Dua mode tetap didukung: inspeksi **1 unit** (sesi berisi 1 unit) DAN sesi **>1 unit**.
-- Daftar unit dibuat **per sesi** (bukan master Asset global, bukan per-template).
-- User input list unit (bisa 94) lalu pilih ke inspeksi via **dropdown SEARCHABLE + MULTI-SELECT**.
+- Dua mode tetap didukung: inspeksi **1 unit** (pilih 1 asset) DAN sesi **>1 unit** (pilih banyak asset).
+- Daftar unit diambil dari **master Asset/Alat** (`assets` status active) — bukan free-text per sesi.
+- Pemilihan via **dropdown SEARCHABLE + MULTI-SELECT** terhadap daftar asset.
 - Eksekusi **satu unit per halaman**: pilih unit → isi checklist → "Simpan Hasil".
   Unit tersimpan dapat **tanda ✓** di dropdown.
 - Tombol "Selesaikan Inspeksi" **AKTIF hanya jika semua unit berstatus `done` ATAU `cancelled`**.
@@ -84,8 +84,9 @@ Contoh relasi model (Laravel):
 ```php
 // InspectionUnit.php
 class InspectionUnit extends Model {
-    protected $fillable = ['inspection_id','identifier','status','notes','cancelled_reason'];
+    protected $fillable = ['inspection_id','asset_id','identifier','status','notes','cancelled_reason'];
     public function inspection(): BelongsTo { return $this->belongsTo(Inspection::class); }
+    public function asset(): BelongsTo { return $this->belongsTo(Asset::class); }
     public function results(): HasMany { return $this->hasMany(InspectionResult::class); }
 }
 ```
@@ -110,7 +111,8 @@ class InspectionUnit extends Model {
 ```
 id              bigint PK
 inspection_id   FK -> inspections (cascade)
-identifier      string  (misal "Sling-01", bebas diketik)
+asset_id        FK -> assets (nullOnDelete)  -- master Asset/Alat terpilih
+identifier      string  (diambil dari assets.asset_number, fallback name)
 status          string  default 'pending'  -- pending | done | cancelled
 notes           text nullable
 cancelled_reason text nullable
@@ -128,10 +130,9 @@ Unique jadi: (inspection_id, inspection_unit_id, inspection_item_id)
 Relasi `InspectionResult`: `unit()` BelongsTo InspectionUnit.
 
 ### Behavior `store` (InspectionController)
-- Terima `units` = array identifier (bisa kosong).
-- Jika `units` berisi: buat 1 `InspectionUnit` per identifier (status `pending`).
-- Jika kosong: buat 1 `InspectionUnit` default (identifier = inspection_number,
-  misal "UNIT-001" / "Tunggal") → menjaga mode single-unit tetap jalan.
+- Terima `asset_ids` = array id asset (wajib ≥1, validasi `exists:assets,id`).
+- Untuk tiap asset terpilih: buat 1 `InspectionUnit` (status `pending`),
+  `asset_id` = id asset, `identifier` = asset_number (fallback name).
 - `inspection_results` TIDAK dibuat di store (dibuat saat simpan per-unit, seperti sekarang).
 
 ### Endpoint BARU / UBAH
@@ -220,6 +221,17 @@ Relasi `InspectionResult`: `unit()` BelongsTo InspectionUnit.
    hasil per-unit (1 baris per unit, kolom = identifier + tiap item checklist + status).
 
 ### Resolved assumptions (override §12 bila berbeda)
-- `units` wajib ≥1 (tidak boleh kosong di form).
+- `asset_ids` wajib ≥1 (tidak boleh kosong di form).
 - Foreman/Operator: `view + create + execute` inspection saja.
+
+## 14. Revisi Sumber Daftar Unit (2026-07-17)
+
+User mengubah sumber **Daftar Unit** dari free-text per sesi menjadi **master Asset/Alat**:
+- Dropdown searchable multi-select menampilkan daftar `assets` berstatus `active`
+  (`asset_number — name`), bukan teks bebas.
+- `store` menerima `asset_ids[]` (validasi `exists:assets,id`), membuat 1 `InspectionUnit`
+  per asset dengan `asset_id` ter-link dan `identifier` = `asset_number` (fallback `name`).
+- Migrasi `2026_07_17_140000_add_asset_id_to_inspection_units.php` menambah kolom `asset_id`.
+- Form.tsx tidak lagi memakai textarea/paste; murni `SearchableMultiSelect` terhadap `assets`.
+- Legacy (backfill awal) tetap `asset_id = null`, `identifier` bebas — tetap bisa dieksekusi.
 - Export per-unit masuk scope implementasi.

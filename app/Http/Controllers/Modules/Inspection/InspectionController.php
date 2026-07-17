@@ -167,6 +167,7 @@ class InspectionController extends Controller
             'sites' => Site::where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'areas' => Area::where('is_active', true)->orderBy('name')->get(['id', 'name', 'site_id']),
             'users' => User::where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            'assets' => \App\Models\Modules\Asset\Asset::where('status', 'active')->orderBy('asset_number')->get(['id', 'asset_number', 'name', 'serial_number']),
         ]);
     }
 
@@ -190,11 +191,13 @@ class InspectionController extends Controller
             $generated = $this->numberingService->generate(moduleName: 'inspection', actor: $actor, referenceType: Inspection::class, referenceId: $inspection->id);
             $inspection->update(['inspection_number' => $generated->number]);
 
-            // Create inspection units from submitted identifiers.
-            foreach ($validated['units'] as $identifier) {
+            // Create inspection units from selected assets.
+            $assets = \App\Models\Modules\Asset\Asset::whereIn('id', $validated['asset_ids'])->get();
+            foreach ($assets as $asset) {
                 \App\Models\Modules\Inspection\InspectionUnit::create([
                     'inspection_id' => $inspection->id,
-                    'identifier' => $identifier,
+                    'asset_id' => $asset->id,
+                    'identifier' => $asset->asset_number ?: $asset->name,
                     'status' => 'pending',
                 ]);
             }

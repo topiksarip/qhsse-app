@@ -4,6 +4,7 @@ namespace App\Models\Modules\Inspection;
 
 use App\Models\Modules\Inspection\Inspection;
 use App\Models\Modules\Inspection\InspectionResult;
+use App\Models\Modules\Asset\Asset;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +14,7 @@ class InspectionUnit extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['inspection_id', 'identifier', 'status', 'notes', 'cancelled_reason'];
+    protected $fillable = ['inspection_id', 'asset_id', 'identifier', 'status', 'notes', 'cancelled_reason'];
 
     protected function casts(): array
     {
@@ -24,6 +25,12 @@ class InspectionUnit extends Model
     public function inspection(): BelongsTo
     {
         return $this->belongsTo(Inspection::class);
+    }
+
+    /** @return BelongsTo<Asset, InspectionUnit> */
+    public function asset(): BelongsTo
+    {
+        return $this->belongsTo(Asset::class);
     }
 
     /** @return HasMany<InspectionResult, InspectionUnit> */
