@@ -17,7 +17,7 @@ class StoreInspectionTemplateRequest extends FormRequest
             'category' => ['required', 'string', 'in:safety,environment,equipment,fire,housekeeping,security,quality,compliance'],
             'items' => ['nullable', 'array'],
             'items.*.question' => ['required_with:items', 'string'],
-            'items.*.type' => ['required_with:items', 'string', 'in:yes_no,safe_unsafe,na,scale,text'],
+            'items.*.type' => ['required_with:items', 'string', 'in:yes_no,safe_unsafe,na,scale,text,yes_no_na'],
             'items.*.category' => ['nullable', 'string'],
             'items.*.is_required' => ['nullable', 'boolean'],
             'items.*.order' => ['nullable', 'integer'],

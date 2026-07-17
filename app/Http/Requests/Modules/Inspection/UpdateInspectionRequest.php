@@ -14,9 +14,10 @@ class UpdateInspectionRequest extends FormRequest
             'notes' => ['nullable', 'string'],
             'results' => ['nullable', 'array'],
             'results.*.inspection_item_id' => ['required_with:results', 'exists:inspection_items,id'],
-            'results.*.answer' => ['nullable', 'string'],
+            'results.*.answer' => ['nullable', 'string', 'max:50'],
             'results.*.remark' => ['nullable', 'string'],
             'results.*.is_unsafe' => ['nullable', 'boolean'],
+            'results.*.photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
         ];
     }
 }

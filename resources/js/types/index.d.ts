@@ -102,6 +102,8 @@ export interface ManagedFile {
     file_size: number;
     mime_type: string;
     uploaded_by: number;
+    url?: string;
+    original_name?: string;
     created_at: string;
     updated_at: string;
 }

@@ -6,7 +6,7 @@ import { FormEvent, useState } from 'react';
 type Item = { id?: number; question: string; type: string; category: string | null; is_required: boolean; order: number };
 type Template = { id: number; code: string; name: string; description: string | null; category: string; items: Item[] } | null;
 
-const itemTypes = [{ value: 'yes_no', label: 'Yes/No' }, { value: 'safe_unsafe', label: 'Safe/Unsafe' }, { value: 'na', label: 'N/A or OK' }, { value: 'scale', label: 'Scale 1-5' }, { value: 'text', label: 'Text' }];
+const itemTypes = [{ value: 'yes_no', label: 'Yes/No' }, { value: 'yes_no_na', label: 'Yes/No/N/A' }, { value: 'safe_unsafe', label: 'Safe/Unsafe' }, { value: 'na', label: 'N/A or OK' }, { value: 'scale', label: 'Scale 1-5' }, { value: 'text', label: 'Text' }, { value: 'photo', label: 'Upload Foto' }];
 
 export default function TemplateForm({ item }: PageProps<{ item: Template }>) {
     const isEdit = item !== null;

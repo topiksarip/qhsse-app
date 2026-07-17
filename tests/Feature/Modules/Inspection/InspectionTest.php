@@ -6,6 +6,7 @@ use App\Models\Modules\Inspection\Inspection;
 use App\Models\Modules\Inspection\InspectionItem;
 use App\Models\Modules\Inspection\InspectionTemplate;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 
 use function Pest\Laravel\actingAs;
 
@@ -162,4 +163,43 @@ test('cannot start non-pending inspection', function () {
 test('inspection with missing template fails validation', function () {
     actingAs($this->admin);
     $this->post(route('inspection.checklists.store'), ['site_id' => 1, 'inspector_id' => 1, 'scheduled_at' => '2026-07-11'])->assertSessionHasErrors(['inspection_template_id']);
+});
+
+test('template can store yes_no_na item type', function () {
+    actingAs($this->admin);
+    $code = 'T-YNNA-' . uniqid();
+    $this->post(route('inspection.templates.store'), [
+        'code' => $code,
+        'name' => 'Template YNNA',
+        'category' => 'safety',
+        'items' => [
+            ['question' => 'Guard on?', 'type' => 'yes_no_na', 'is_required' => true, 'order' => 0],
+        ],
+    ])->assertRedirect();
+
+    $tpl = InspectionTemplate::where('code', $code)->first();
+    expect($tpl)->not->toBeNull();
+    expect($tpl->items()->where('type', 'yes_no_na')->count())->toBe(1);
+});
+
+test('inspection result can store a photo upload', function () {
+    Storage::fake('local');
+    actingAs($this->admin);
+    $tpl = InspectionTemplate::factory()->create();
+    $item = InspectionItem::create(['inspection_template_id' => $tpl->id, 'question' => 'Snap?', 'type' => 'photo', 'is_required' => true, 'order' => 0]);
+    $insp = Inspection::factory()->create(['status' => 'in_progress', 'inspection_template_id' => $tpl->id]);
+    app(WorkflowService::class)->start('inspection', $insp->id, $this->admin);
+    WorkflowInstance::where('module_name', 'inspection')->where('reference_id', $insp->id)->update(['current_status' => 'in_progress']);
+
+    $file = \Illuminate\Http\UploadedFile::fake()->image('evidence.jpg', 100, 100);
+
+    $this->put(route('inspection.checklists.update', $insp), [
+        'results' => [['inspection_item_id' => $item->id, 'answer' => null, 'is_unsafe' => false, 'photo' => $file]],
+        'notes' => 'with photo',
+    ])->assertRedirect();
+
+    $result = $insp->fresh()->results()->where('inspection_item_id', $item->id)->first();
+    expect($result)->not->toBeNull();
+    expect($result->photo)->not->toBeNull();
+    expect(\App\Models\Core\Files\ManagedFile::where('collection', 'inspection_result')->count())->toBe(1);
 });

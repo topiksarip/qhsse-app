@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Modules\Inspection;
 use App\Core\Activity\ActivityService;
 use App\Core\Audit\AuditService;
 use App\Core\Export\CsvExporter;
+use App\Core\Files\FileReference;
+use App\Core\Files\ManagedFileService;
 use App\Core\Numbering\NumberingService;
 use App\Core\Query\ListQuery;
 use App\Core\Workflow\WorkflowService;
@@ -32,6 +34,7 @@ class InspectionController extends Controller
         private readonly WorkflowService $workflowService,
         private readonly AuditService $auditService,
         private readonly ActivityService $activityService,
+        private readonly ManagedFileService $files,
     ) {}
 
     // === TEMPLATE CRUD ===
@@ -197,10 +200,17 @@ class InspectionController extends Controller
 
     public function show(Inspection $inspection): Response
     {
-        $inspection->load(['template.items', 'site', 'area', 'inspector', 'results']);
+        $inspection->load(['template.items', 'site', 'area', 'inspector', 'results.photoFile']);
+
+        $files = \App\Models\Core\Files\ManagedFile::query()
+            ->where('module_name', 'inspection')
+            ->where('reference_id', $inspection->id)
+            ->where('collection', 'inspection_result')
+            ->get();
 
         return Inertia::render('Modules/Inspection/Show', [
             'inspection' => $inspection,
+            'files' => $files,
         ]);
     }
 
@@ -209,16 +219,36 @@ class InspectionController extends Controller
         $actor = $request->user();
         $validated = $request->validated();
 
-        DB::transaction(function () use ($inspection, $validated, $actor) {
+        DB::transaction(function () use ($request, $inspection, $validated, $actor) {
             // Save results
             if (isset($validated['results'])) {
-                foreach ($validated['results'] as $result) {
+                foreach ($validated['results'] as $index => $result) {
+                    $existing = \App\Models\Modules\Inspection\InspectionResult::where('inspection_id', $inspection->id)
+                        ->where('inspection_item_id', $result['inspection_item_id'])
+                        ->first();
+
+                    $photoPath = $existing?->photo;
+
+                    if ($request->hasFile("results.{$index}.photo")) {
+                        $file = $request->file("results.{$index}.photo");
+                        $stored = $this->files->store($file, new FileReference('inspection', $inspection->id, 'inspection_result'), $actor);
+                        $photoPath = $stored->path;
+
+                        if ($existing?->photo && $existing->photo !== $photoPath) {
+                            $old = \App\Models\Core\Files\ManagedFile::where('path', $existing->photo)->first();
+                            if ($old) {
+                                $this->files->markDeleted($old, $actor);
+                            }
+                        }
+                    }
+
                     \App\Models\Modules\Inspection\InspectionResult::updateOrCreate(
                         ['inspection_id' => $inspection->id, 'inspection_item_id' => $result['inspection_item_id']],
                         [
                             'answer' => $result['answer'] ?? null,
                             'remark' => $result['remark'] ?? null,
                             'is_unsafe' => $result['is_unsafe'] ?? false,
+                            'photo' => $photoPath,
                         ],
                     );
                 }

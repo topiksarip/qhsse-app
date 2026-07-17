@@ -2,6 +2,7 @@
 
 namespace App\Models\Modules\Inspection;
 
+use App\Models\Core\Files\ManagedFile;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,7 +11,7 @@ class InspectionResult extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['inspection_id', 'inspection_item_id', 'answer', 'remark', 'is_unsafe'];
+    protected $fillable = ['inspection_id', 'inspection_item_id', 'answer', 'remark', 'is_unsafe', 'photo'];
 
     protected function casts(): array
     {
@@ -22,4 +23,11 @@ class InspectionResult extends Model
 
     /** @return BelongsTo<InspectionItem, InspectionResult> */
     public function item(): BelongsTo { return $this->belongsTo(InspectionItem::class, 'inspection_item_id'); }
+
+    /** @return BelongsTo<ManagedFile, InspectionResult> */
+    public function photoFile(): BelongsTo
+    {
+        return $this->belongsTo(ManagedFile::class, 'photo', 'path')
+            ->where('collection', 'inspection_result');
+    }
 }
