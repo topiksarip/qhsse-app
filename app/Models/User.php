@@ -10,12 +10,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, Notifiable;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -65,5 +66,19 @@ class User extends Authenticatable
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    /**
+     * Resolve all Spatie permission/role checks under the `web` guard.
+     *
+     * Permissions are seeded under the default `web` guard even when a user
+     * authenticates via the `sanctum` (API) guard. Without this, token users
+     * would be checked against a `sanctum` guard that has no permission rows,
+     * causing false 403s across the entire API surface. Web (session) users
+     * are unaffected since they already use the `web` guard.
+     */
+    protected function getDefaultGuardName(): string
+    {
+        return 'web';
     }
 }

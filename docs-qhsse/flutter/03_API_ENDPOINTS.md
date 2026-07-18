@@ -3,6 +3,10 @@
 > Kontrak ini **diturunkan dari `php artisan route:list`** (route Inertia) dan skema DB aktual.
 > Backend harus membuka padanan JSON-nya di `/api/v1/...`.
 
+> **Status (2026-07-18):** Lapisan JSON API sedang dibangun bertahap. Modul **Incident**
+> sudah diimplementasikan (CRUD + submit/review/close) di `/api/v1/incidents`.
+> Endpoint bertanda ✅ sudah ada; ⬜ belum dibuat.
+
 ## Konvensi Resource
 - `GET /{resource}` → list (paginate+filter+sort).
 - `POST /{resource}` → create (auto-number via NumberingService).
@@ -14,18 +18,18 @@
 
 ## Incident
 
-| Endpoint | Method/Path |
-|----------|------------|
-| GET | `/incidents` |
-| POST | `/incidents` |
-| GET | `/incidents/{id}` |
-| PUT | `/incidents/{id}` |
-| DELETE | `/incidents/{id}` |
-| POST | `/incidents/{id}/submit` |
-| POST | `/incidents/{id}/review` |
-| POST | `/incidents/{id}/close` |
-| POST | `/incidents/{id}/evidence (file)` |
-| GET | `/incidents/export` |
+| Status | Endpoint | Method/Path |
+|--------|----------|------------|
+| ✅ | List | GET `/incidents` |
+| ✅ | Create | POST `/incidents` |
+| ✅ | Detail | GET `/incidents/{id}` |
+| ✅ | Update | PUT `/incidents/{id}` |
+| ✅ | Delete | DELETE `/incidents/{id}` |
+| ✅ | Submit | POST `/incidents/{id}/submit` |
+| ✅ | Review | POST `/incidents/{id}/review` |
+| ✅ | Close | POST `/incidents/{id}/close` (butuh `reason`) |
+| ⬜ | Evidence (file) | POST `/incidents/{id}/evidence` |
+| ⬜ | Export | GET `/incidents/export` |
 
 ## Investigation
 

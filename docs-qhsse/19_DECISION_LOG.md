@@ -12,3 +12,6 @@
 | D8 | scopeLowStock pakai `where` bukan `whereColumn(0)` | Bug Postgres `column "0"`. |
 | D9 | `incident` didaftarkan di ParentAuthorizationRegistry | Komentar/file incident konsisten test. |
 | D10 | Queue via systemd (bukan supervisor) | Sesuai server ubuntu-5. |
+| D11 | JSON API via Sanctum + middleware `api.permission:*` (guard `web`) | Flutter butuh JSON; permission di-seed di guard `web`. |
+| D12 | `User::getDefaultGuardName()` → `web` untuk semua user | Token (sanctum) user dicek ke guard `web` agar tidak false-403 di seluruh API. |
+| D13 | `core.workflow.transition` ditambahkan ke `incidentBasic` & `incidentSupervisor` | Reporter/supervisor bisa submit & transition (bug laten di web). |

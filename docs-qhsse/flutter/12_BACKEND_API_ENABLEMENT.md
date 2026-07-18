@@ -52,10 +52,32 @@
 - `core` (web) → `/api/v1/core` (JSON, butuh controller API)
 
 ## Checklist Sebelum Flutter Dapat Dites
-- [ ] Sanctum aktif + `HasApiTokens` di User
-- [ ] `routes/api.php` dengan prefix `v1` + `auth:sanctum`
-- [ ] Login mengembalikan token + permissions
-- [ ] Minimal 1 resource (incident) full CRUD + aksi state di JSON
-- [ ] File upload/download terotorisasi di JSON
-- [ ] Test API hijau (`make test`)
-- [ ] Dokumentasi `03_API_ENDPOINTS.md` cocok dengan implementasi
+- [x] Sanctum aktif + `HasApiTokens` di User
+- [x] `routes/api.php` dengan prefix `v1` + `auth:sanctum`
+- [x] Login mengembalikan token + permissions (`/api/v1/auth/login|logout|me`)
+- [x] Minimal 1 resource (incident) full CRUD + aksi state di JSON
+- [ ] File upload/download terotorisasi di JSON (endpoint `/api/v1/files/{id}/download` belum dibuat)
+- [x] Test API hijau (`tests/Feature/Api/V1/IncidentReportApiTest` — 11 test pass)
+- [x] Dokumentasi `03_API_ENDPOINTS.md` cocok dengan implementasi
+
+## Status Implementasi (2026-07-18)
+
+Lapisan JSON API **sudah mulai dibangun** sebagai vertical slice:
+
+- **Sanctum**: aktif. `routes/api.php` → `routes/api/v1.php`, guard `sanctum` di `config/auth.php`,
+  trait `HasApiTokens` (`Laravel\Sanctum`) di `User`, migration `personal_access_tokens` sudah ada.
+- **Foundation**: `ApiResponse` (envelope `data`/`message`/`meta`), `ApiController` base,
+  `IncidentReportResource`, middleware `api.permission:*`.
+- **Incident module (proof-of-concept)**: `IncidentReportController` (V1) dengan
+  `index/show/store/update/destroy` + `submit/review/close`. Menggunakan ulang
+  `IncidentAccess`, `IncidentLifecycle`, `NumberingService`, `WorkflowService`.
+- **Otorisasi**: middleware `api.permission:{perm}` memaksa guard `web` (lihat `ApiPermissionMiddleware`)
+  karena permission di-seed di guard `web` sedangkan user API login via guard `sanctum`.
+- **Perbaikan lintas-modul** (penting untuk semua modul API berikutnya):
+  - `User::getDefaultGuardName()` di-override → selalu resolve permission di guard `web`
+    (menghindari false-403 untuk seluruh user API).
+  - `IncidentAccess` + `WorkflowService` memaksa guard `web` saat cek scope/workflow permission.
+  - `CorePermissions::all()` sudah menyertakan `core.workflow.transition`; ditambahkan ke set
+    `incidentBasic` & `incidentSupervisor` agar reporter/supervisor bisa submit/transition.
+
+Pattern di atas menjadi template untuk modul lainnya (investigation, capa, inspection, dll).

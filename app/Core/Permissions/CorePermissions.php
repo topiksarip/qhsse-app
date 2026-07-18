@@ -371,6 +371,7 @@ final class CorePermissions
             'incident.reports.create',
             'incident.reports.submit',
             'incident.reports.evidence',
+            'core.workflow.transition',
         ];
 
         $incidentSupervisor = [
@@ -379,6 +380,7 @@ final class CorePermissions
             'incident.reports.update',
             'incident.reports.submit',
             'incident.reports.evidence',
+            'core.workflow.transition',
         ];
 
         $investigationFull = [

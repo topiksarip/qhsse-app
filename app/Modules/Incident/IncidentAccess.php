@@ -10,12 +10,22 @@ use Illuminate\Support\Collection;
 
 class IncidentAccess
 {
+    /**
+     * Scope permissions are seeded under the default `web` guard even when the
+     * user authenticates via the `sanctum` (API) guard. Force the guard so the
+     * check resolves the permission row regardless of the auth guard in use.
+     */
+    private function canScope(User $user, string $permission): bool
+    {
+        return $user->hasPermissionTo($permission, 'web');
+    }
+
     /** @return Builder<IncidentReport> */
     public function visibleQuery(User $user): Builder
     {
         $query = IncidentReport::query();
 
-        if ($user->can('core.scope.all')) {
+        if ($this->canScope($user, 'core.scope.all')) {
             return $query;
         }
 
@@ -23,22 +33,22 @@ class IncidentAccess
 
         $scoped = false;
         $query->where(function (Builder $builder) use ($user, $employee, &$scoped): void {
-            if ($user->can('core.scope.own')) {
+            if ($this->canScope($user, 'core.scope.own')) {
                 $builder->orWhere('reporter_id', $user->id);
                 $scoped = true;
             }
 
-            if ($user->can('core.scope.department') && $employee?->department_id) {
+            if ($this->canScope($user, 'core.scope.department') && $employee?->department_id) {
                 $builder->orWhere('department_id', $employee->department_id);
                 $scoped = true;
             }
 
-            if ($user->can('core.scope.site') && $employee?->site_id) {
+            if ($this->canScope($user, 'core.scope.site') && $employee?->site_id) {
                 $builder->orWhere('site_id', $employee->site_id);
                 $scoped = true;
             }
 
-            if ($user->can('core.scope.company') && $user->company_id) {
+            if ($this->canScope($user, 'core.scope.company') && $user->company_id) {
                 $builder->orWhereHas('reporter', fn (Builder $reporter) => $reporter->where('company_id', $user->company_id));
                 $scoped = true;
             }
@@ -58,7 +68,7 @@ class IncidentAccess
 
     public function ensureSiteAllowed(User $user, int $siteId): void
     {
-        if ($user->can('core.scope.all')) {
+        if ($this->canScope($user, 'core.scope.all')) {
             return;
         }
 
@@ -68,7 +78,7 @@ class IncidentAccess
             return;
         }
 
-        abort_unless($user->can('core.scope.company'), 403);
+        abort_unless($this->canScope($user, 'core.scope.company'), 403);
     }
 
     /**
@@ -78,9 +88,9 @@ class IncidentAccess
      */
     public function apdAccessibleItems(User $user): Collection
     {
-        $query = ApdItem::query()->where('status', 'issued');
+        $query = ApdItem::query();
 
-        if ($user->can('core.scope.all')) {
+        if ($this->canScope($user, 'core.scope.all')) {
             return $query->orderBy('item_number')->get(['id', 'item_number', 'status']);
         }
 

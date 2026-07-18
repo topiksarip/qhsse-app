@@ -78,7 +78,7 @@ class WorkflowService
                 throw new RuntimeException("Reason is required for workflow action [{$actionKey}].");
             }
 
-            if ($transition->required_permission && ! $actor?->can($transition->required_permission)) {
+            if ($transition->required_permission && ! $actor?->hasPermissionTo($transition->required_permission, 'web')) {
                 throw new UnauthorizedException("Missing permission [{$transition->required_permission}].");
             }
 
