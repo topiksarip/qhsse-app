@@ -4,6 +4,7 @@ use App\Core\Activity\ActivityService;
 use App\Core\Workflow\WorkflowService;
 use App\Models\Core\Activity\ActivityLog;
 use App\Models\Core\Comments\Comment;
+use App\Models\Modules\Incident\IncidentReport;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Database\Seeders\WorkflowSeeder;
@@ -23,24 +24,25 @@ function commentsAdmin(): User
 
 it('adds comments to module references and extracts mentions', function () {
     $admin = commentsAdmin();
+    $incident = IncidentReport::factory()->create();
 
     $this->actingAs($admin)->post(route('core.comments.store'), [
         'module_name' => 'incident',
-        'reference_id' => 3001,
+        'reference_id' => $incident->id,
         'body' => 'Please check this @supervisor and @hse-officer',
         'is_internal' => true,
-    ])->assertRedirect(route('core.comments-activity.index', ['module_name' => 'incident', 'reference_id' => 3001]));
+    ])->assertRedirect(route('core.comments-activity.index', ['module_name' => 'incident', 'reference_id' => $incident->id]));
 
     $comment = Comment::firstOrFail();
 
     expect($comment->module_name)->toBe('incident')
-        ->and($comment->reference_id)->toBe(3001)
+        ->and($comment->reference_id)->toBe($incident->id)
         ->and($comment->mentions)->toBe(['supervisor', 'hse-officer'])
         ->and($comment->is_internal)->toBeTrue();
 
     $this->assertDatabaseHas('activity_logs', [
         'module_name' => 'incident',
-        'reference_id' => 3001,
+        'reference_id' => $incident->id,
         'event' => 'comment.created',
         'actor_id' => $admin->id,
     ]);
@@ -48,29 +50,31 @@ it('adds comments to module references and extracts mentions', function () {
 
 it('shows comments and activity for a module reference', function () {
     $admin = commentsAdmin();
+    $incident = IncidentReport::factory()->create();
 
-    app(ActivityService::class)->log('incident', 3002, 'test.activity', 'Test activity', $admin);
+    app(ActivityService::class)->log('incident', $incident->id, 'test.activity', 'Test activity', $admin);
     Comment::create([
         'module_name' => 'incident',
-        'reference_id' => 3002,
+        'reference_id' => $incident->id,
         'author_id' => $admin->id,
         'body' => 'Visible comment',
     ]);
 
-    $this->actingAs($admin)->get(route('core.comments-activity.index', ['module_name' => 'incident', 'reference_id' => 3002]))->assertOk();
+    $this->actingAs($admin)->get(route('core.comments-activity.index', ['module_name' => 'incident', 'reference_id' => $incident->id]))->assertOk();
 });
 
 it('records workflow status events in the activity timeline', function () {
     $this->seed(WorkflowSeeder::class);
     $admin = commentsAdmin();
     $service = app(WorkflowService::class);
+    $incident = IncidentReport::factory()->create();
 
-    $service->start('incident', 3003, $admin);
-    $service->transition('incident', 3003, 'submit', $admin);
+    $service->start('incident', $incident->id, $admin);
+    $service->transition('incident', $incident->id, 'submit', $admin);
 
     $this->assertDatabaseHas('activity_logs', [
         'module_name' => 'incident',
-        'reference_id' => 3003,
+        'reference_id' => $incident->id,
         'event' => 'workflow.transitioned',
         'actor_id' => $admin->id,
     ]);
@@ -78,17 +82,18 @@ it('records workflow status events in the activity timeline', function () {
 
 it('marks comments deleted and records delete activity', function () {
     $admin = commentsAdmin();
+    $incident = IncidentReport::factory()->create();
 
     $this->actingAs($admin)->post(route('core.comments.store'), [
         'module_name' => 'incident',
-        'reference_id' => 3004,
+        'reference_id' => $incident->id,
         'body' => 'Delete me',
     ]);
 
     $comment = Comment::firstOrFail();
 
     $this->actingAs($admin)->delete(route('core.comments.destroy', $comment))
-        ->assertRedirect(route('core.comments-activity.index', ['module_name' => 'incident', 'reference_id' => 3004]));
+        ->assertRedirect(route('core.comments-activity.index', ['module_name' => 'incident', 'reference_id' => $incident->id]));
 
     $comment->refresh();
 
@@ -97,7 +102,7 @@ it('marks comments deleted and records delete activity', function () {
 
     $this->assertDatabaseHas('activity_logs', [
         'module_name' => 'incident',
-        'reference_id' => 3004,
+        'reference_id' => $incident->id,
         'event' => 'comment.deleted',
     ]);
 });

@@ -13,6 +13,10 @@ class ParentAuthorizationRegistry
      * Sensitive modules like asset/document have dedicated protected endpoints.
      */
     private const REGISTRY = [
+        'incident' => [
+            'model' => \App\Models\Modules\Incident\IncidentReport::class,
+            'policy' => 'view',
+        ],
         'capa' => [
             'model' => \App\Models\Modules\Capa\CapaAction::class,
             'policy' => 'view',

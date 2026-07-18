@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Core\Files\ManagedFile;
+use App\Models\Modules\Capa\CapaAction;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Http\UploadedFile;
@@ -21,18 +22,19 @@ function fileServiceAdmin(): User
 
 it('uploads files with module reference metadata to private storage', function () {
     $admin = fileServiceAdmin();
+    $parent = CapaAction::factory()->create();
 
     $this->actingAs($admin)->post(route('core.files.store'), [
-        'module_name' => 'core.test',
-        'reference_id' => 123,
+        'module_name' => 'capa',
+        'reference_id' => $parent->id,
         'collection' => 'evidence',
         'file' => UploadedFile::fake()->create('evidence.pdf', 64, 'application/pdf'),
     ])->assertRedirect(route('core.files.index'));
 
     $file = ManagedFile::firstOrFail();
 
-    expect($file->module_name)->toBe('core.test')
-        ->and($file->reference_id)->toBe(123)
+    expect($file->module_name)->toBe('capa')
+        ->and($file->reference_id)->toBe($parent->id)
         ->and($file->collection)->toBe('evidence')
         ->and($file->original_name)->toBe('evidence.pdf')
         ->and($file->uploaded_by)->toBe($admin->id);
@@ -42,10 +44,11 @@ it('uploads files with module reference metadata to private storage', function (
 
 it('downloads files through authorized endpoint only', function () {
     $admin = fileServiceAdmin();
+    $parent = CapaAction::factory()->create();
 
     $this->actingAs($admin)->post(route('core.files.store'), [
-        'module_name' => 'core.test',
-        'reference_id' => 456,
+        'module_name' => 'capa',
+        'reference_id' => $parent->id,
         'file' => UploadedFile::fake()->createWithContent('note.txt', 'secure note'),
     ]);
 
@@ -65,26 +68,28 @@ it('downloads files through authorized endpoint only', function () {
 
 it('rejects invalid extensions and oversized files', function () {
     $admin = fileServiceAdmin();
+    $parent = CapaAction::factory()->create();
 
     $this->actingAs($admin)->post(route('core.files.store'), [
-        'module_name' => 'core.test',
-        'reference_id' => 789,
+        'module_name' => 'capa',
+        'reference_id' => $parent->id,
         'file' => UploadedFile::fake()->create('script.exe', 1, 'application/octet-stream'),
     ])->assertSessionHasErrors('file');
 
     $this->actingAs($admin)->post(route('core.files.store'), [
-        'module_name' => 'core.test',
-        'reference_id' => 789,
+        'module_name' => 'capa',
+        'reference_id' => $parent->id,
         'file' => UploadedFile::fake()->create('large.pdf', 10241, 'application/pdf'),
     ])->assertSessionHasErrors('file');
 });
 
 it('marks files deleted without exposing deleted downloads', function () {
     $admin = fileServiceAdmin();
+    $parent = CapaAction::factory()->create();
 
     $this->actingAs($admin)->post(route('core.files.store'), [
-        'module_name' => 'core.test',
-        'reference_id' => 321,
+        'module_name' => 'capa',
+        'reference_id' => $parent->id,
         'file' => UploadedFile::fake()->create('photo.jpg', 10, 'image/jpeg'),
     ]);
 
