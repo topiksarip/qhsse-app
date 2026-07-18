@@ -63,3 +63,20 @@ Setiap modul memiliki file mandiri berisi ringkasan, fields (skema DB aktual), w
 - `environmental-monitoring.md` — Environmental Monitoring
 - `security-management.md` — Security Management
 - `quality-ncr-complaints.md` — Quality NCR & Complaints
+
+## Dokumentasi Frontend Flutter (`docs-qhsse/flutter/`)
+
+Kontrak JSON API & panduan Flutter (backend saat ini Inertia — lihat `12_BACKEND_API_ENABLEMENT.md`):
+
+- `01_API_ARCHITECTURE.md` — arsitektur API (REST JSON + Sanctum, envelope)
+- `02_API_AUTH.md` — login token, secure storage, 401 handling
+- `03_API_ENDPOINTS.md` — kontrak endpoint per modul (diturunkan dari `route:list`)
+- `04_API_ERRORS.md` — HTTP status & envelope error validasi
+- `05_API_PAGINATION_FILTER.md` — page/sort/filter (ListQuery)
+- `06_API_FILES.md` — upload/download privat (ManagedFileService)
+- `07_API_NOTIFICATIONS.md` — notifikasi + FCM
+- `08_FLUTTER_SETUP.md` — struktur project Flutter & env
+- `09_FLUTTER_OFFLINE_SYNC.md` — offline-first & sync lapangan
+- `10_FLUTTER_LOCALIZATION.md` — lokalisasi id/en
+- `11_FLUTTER_SECURITY.md` — token storage, cert pinning, data lokal
+- `12_BACKEND_API_ENABLEMENT.md` — prasyarat backend (Sanctum, route /api, resources)
