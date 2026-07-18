@@ -39,3 +39,27 @@ Dibangkitkan dari kode aktual repo (routes, `app/Core/Permissions/CorePermission
 - `31_PROJECT_COMPLETION_REPORT.md` — laporan penyelesaian
 - `32_SPEC_VS_IMPLEMENTATION_AUDIT.md` — audit spec vs implementasi
 - `33_PHASE_COMPLETION_STATUS.md` — status penyelesaian fase
+
+## Dokumentasi Per-Modul (`docs-qhsse/modules/`)
+
+Setiap modul memiliki file mandiri berisi ringkasan, fields (skema DB aktual), workflow state, permission, endpoint, UI, dan catatan implementasi:
+
+- `incident-reporting.md` — Incident Reporting
+- `investigation-rca.md` — Investigation & RCA
+- `capa-action-tracking.md` — CAPA / Action Tracking
+- `inspection-checklist.md` — Inspection Checklist
+- `document-control.md` — Document Control
+- `audit-management.md` — Audit Management
+- `training-competency.md` — Training & Competency
+- `risk-management.md` — Risk Management (HIRADC/JSA)
+- `legal-compliance.md` — Legal & Compliance Register
+- `contractor-management.md` — Contractor Management
+- `asset-equipment-safety.md` — Asset & Equipment Safety
+- `apd-ppe.md` — APD / PPE Management
+- `communication-campaign.md` — Communication & Campaign
+- `reporting-export.md` — Reporting & Export
+- `emergency-preparedness.md` — Emergency Preparedness
+- `permit-to-work.md` — Permit to Work
+- `environmental-monitoring.md` — Environmental Monitoring
+- `security-management.md` — Security Management
+- `quality-ncr-complaints.md` — Quality NCR & Complaints
