@@ -101,6 +101,18 @@ class Permit extends Model
         return $this->hasMany(PermitChecklist::class);
     }
 
+    /** @return HasMany<PermitAsset> */
+    public function permitAssets(): HasMany
+    {
+        return $this->hasMany(PermitAsset::class);
+    }
+
+    /** @return HasMany<PermitWorker> */
+    public function permitWorkers(): HasMany
+    {
+        return $this->hasMany(PermitWorker::class);
+    }
+
     /**
      * Check if permit is currently valid (active and within time window)
      */

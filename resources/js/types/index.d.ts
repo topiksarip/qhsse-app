@@ -221,6 +221,35 @@ export interface PermitChecklist {
     checker?: { id: number; name: string } | null;
 }
 
+export interface PermitAsset {
+    id: number;
+    permit_id: number;
+    asset_id: number;
+    role?: string | null;
+    asset?: { id: number; asset_number: string; name: string };
+}
+
+export interface PermitWorker {
+    id: number;
+    permit_id: number;
+    employee_id: number;
+    role?: string | null;
+    employee?: { id: number; name: string; employee_no?: string | null };
+}
+
+/** Lightweight option shape for select/multi-select inputs */
+export interface SelectAsset {
+    id: number;
+    asset_number: string;
+    name: string;
+}
+
+export interface SelectEmployee {
+    id: number;
+    name: string;
+    employee_no?: string | null;
+}
+
 export interface Permit {
     id: number;
     permit_number: string;
@@ -255,6 +284,8 @@ export interface Permit {
     approver?: User | null;
     closer?: User | null;
     checklists?: PermitChecklist[];
+    permit_assets?: PermitAsset[];
+    permit_workers?: PermitWorker[];
 }
 
 export interface Company {

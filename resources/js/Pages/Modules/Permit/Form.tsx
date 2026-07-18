@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { PageProps, Permit, Site, Area, Department, Company, PermitType } from '@/types';
+import { PageProps, Permit, Site, Area, Department, Company, PermitType, SelectAsset, SelectEmployee } from '@/types';
+import SearchableMultiSelect from '@/Components/SearchableMultiSelect';
 import { FormEventHandler, useState } from 'react';
 
 interface FormProps extends PageProps {
@@ -11,6 +12,8 @@ interface FormProps extends PageProps {
     contractors: Company[];
     types: Record<string, string>;
     riskLevels: Record<string, string>;
+    assets: SelectAsset[];
+    employees: SelectEmployee[];
 }
 
 const checklistTemplates: Record<PermitType, string[]> = {
@@ -82,12 +85,24 @@ const checklistTemplates: Record<PermitType, string[]> = {
 const inputClass = 'w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500';
 const labelClass = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1';
 
-export default function Form({ auth, permit, sites, areas, departments, contractors, types, riskLevels }: FormProps) {
+export default function Form({ auth, permit, sites, areas, departments, contractors, types, riskLevels, assets, employees }: FormProps) {
     const isEdit = !!permit;
     const [type, setType] = useState<PermitType | ''>(permit?.type || '');
     const [checklist, setChecklist] = useState<string[]>(permit ? [] : []);
     const [startDt, setStartDt] = useState(permit?.start_datetime ? toLocalInput(permit.start_datetime) : '');
     const [endDt, setEndDt] = useState(permit?.end_datetime ? toLocalInput(permit.end_datetime) : '');
+    const [workerIds, setWorkerIds] = useState<string[]>(
+        (permit?.permit_workers ?? []).map((w) => String(w.employee_id)),
+    );
+    const [workerRoles, setWorkerRoles] = useState<Record<string, string>>(
+        Object.fromEntries((permit?.permit_workers ?? []).map((w) => [String(w.employee_id), w.role ?? ''])),
+    );
+    const [assetIds, setAssetIds] = useState<string[]>(
+        (permit?.permit_assets ?? []).map((a) => String(a.asset_id)),
+    );
+    const [assetRoles, setAssetRoles] = useState<Record<string, string>>(
+        Object.fromEntries((permit?.permit_assets ?? []).map((a) => [String(a.asset_id), a.role ?? ''])),
+    );
 
     const { data, setData, post, put, processing, errors } = useForm({
         type: permit?.type || '',
@@ -103,6 +118,10 @@ export default function Form({ auth, permit, sites, areas, departments, contract
         end_datetime: permit?.end_datetime || '',
         risk_level: permit?.risk_level || '',
         jsa_reference: permit?.jsa_reference || '',
+        worker_ids: workerIds,
+        worker_roles: workerRoles,
+        asset_ids: assetIds,
+        asset_roles: assetRoles,
     });
 
     function toLocalInput(dt: string): string {
@@ -116,6 +135,37 @@ export default function Form({ auth, permit, sites, areas, departments, contract
         setData('type', t);
         if (t) setChecklist(checklistTemplates[t] || []);
         else setChecklist([]);
+    }
+
+    function handleWorkers(next: string[]) {
+        setWorkerIds(next);
+        setData('worker_ids', next);
+        // drop roles for removed workers
+        const cleaned: Record<string, string> = {};
+        next.forEach((id) => { cleaned[id] = workerRoles[id] ?? ''; });
+        setWorkerRoles(cleaned);
+        setData('worker_roles', cleaned);
+    }
+
+    function handleWorkerRole(id: string, role: string) {
+        const next = { ...workerRoles, [id]: role };
+        setWorkerRoles(next);
+        setData('worker_roles', next);
+    }
+
+    function handleAssets(next: string[]) {
+        setAssetIds(next);
+        setData('asset_ids', next);
+        const cleaned: Record<string, string> = {};
+        next.forEach((id) => { cleaned[id] = assetRoles[id] ?? ''; });
+        setAssetRoles(cleaned);
+        setData('asset_roles', cleaned);
+    }
+
+    function handleAssetRole(id: string, role: string) {
+        const next = { ...assetRoles, [id]: role };
+        setAssetRoles(next);
+        setData('asset_roles', next);
     }
 
     function computedHours(): number | null {
@@ -233,6 +283,70 @@ export default function Form({ auth, permit, sites, areas, departments, contract
                                     <span className={labelClass}>Deskripsi Pekerjaan <span className="text-red-500">*</span></span>
                                     <textarea value={data.work_description} onChange={(e) => setData('work_description', e.target.value)} rows={3} className={`${inputClass} ${errors.work_description ? 'border-red-500' : ''}`} placeholder="Jelaskan detail pekerjaan yang akan dilakukan..." required />
                                     {errors.work_description && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.work_description}</p>}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Alat & Pekerja */}
+                        <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+                            <h3 className="mb-4 text-lg font-medium text-gray-900 dark:text-gray-100">ALAT & PEKERJA</h3>
+                            <div className="space-y-6 border-t border-gray-200 pt-4 dark:border-gray-700">
+                                <div>
+                                    <span className={labelClass}>Alat / Peralatan (opsional)</span>
+                                    <SearchableMultiSelect
+                                        options={assets.map((a) => ({ value: String(a.id), label: `${a.asset_number} — ${a.name}` }))}
+                                        value={assetIds}
+                                        onChange={handleAssets}
+                                        placeholder="Cari & pilih alat..."
+                                    />
+                                    {assetIds.length > 0 && (
+                                        <div className="mt-3 space-y-2">
+                                            {assetIds.map((id) => (
+                                                <div key={id} className="flex items-center gap-2">
+                                                    <span className="w-64 truncate text-sm text-gray-700 dark:text-gray-300">
+                                                        {assets.find((a) => String(a.id) === id)?.asset_number} — {assets.find((a) => String(a.id) === id)?.name}
+                                                    </span>
+                                                    <input
+                                                        type="text"
+                                                        value={assetRoles[id] ?? ''}
+                                                        onChange={(e) => handleAssetRole(id, e.target.value)}
+                                                        className={`${inputClass} flex-1`}
+                                                        placeholder="Peran alat (opsional)"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <span className={labelClass}>Pekerja <span className="text-red-500">*</span></span>
+                                    <SearchableMultiSelect
+                                        options={employees.map((e) => ({ value: String(e.id), label: e.employee_no ? `${e.employee_no} — ${e.name}` : e.name }))}
+                                        value={workerIds}
+                                        onChange={handleWorkers}
+                                        placeholder="Cari & pilih pekerja..."
+                                    />
+                                    {errors.worker_ids && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.worker_ids}</p>}
+                                    {workerIds.length > 0 && (
+                                        <div className="mt-3 space-y-2">
+                                            {workerIds.map((id) => (
+                                                <div key={id} className="flex items-center gap-2">
+                                                    <span className="w-64 truncate text-sm text-gray-700 dark:text-gray-300">
+                                                        {employees.find((e) => String(e.id) === id)?.employee_no} — {employees.find((e) => String(e.id) === id)?.name}
+                                                    </span>
+                                                    <input
+                                                        type="text"
+                                                        value={workerRoles[id] ?? ''}
+                                                        onChange={(e) => handleWorkerRole(id, e.target.value)}
+                                                        className={`${inputClass} flex-1`}
+                                                        placeholder="Peran (mis. operator, pengawas)"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Minimal 1 pekerja wajib dipilih.</p>
                                 </div>
                             </div>
                         </div>

@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import DeleteWithConfirm from '@/Components/UI/DeleteWithConfirm';
-import { PageProps, Permit, PermitChecklist, ValidityStatus } from '@/types';
+import { PageProps, Permit, PermitChecklist, PermitWorker, PermitAsset, ValidityStatus } from '@/types';
 import { FormEvent, useState } from 'react';
 import PermitTypeBadge from '@/Components/Permit/PermitTypeBadge';
 import StatusBadge from '@/Components/Permit/StatusBadge';
@@ -37,6 +37,8 @@ interface ChecklistProgress {
 interface ShowProps extends PageProps {
     permit: Permit & {
         checklists: PermitChecklist[];
+        permit_workers?: PermitWorker[];
+        permit_assets?: PermitAsset[];
     };
     workflow: {
         current_status: string | null;
@@ -189,6 +191,51 @@ export default function Show({ auth, permit, workflow, availableActions, checkli
                             ))}
                         </div>
                         <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">⚠ Semua checklist harus di-sign sebelum izin dapat diaktifkan.</p>
+                    </div>
+
+                    {/* Alat & Pekerja */}
+                    <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+                        <h3 className="mb-3 text-lg font-medium text-gray-900 dark:text-gray-100">ALAT & PEKERJA</h3>
+                        {(!permit.permit_workers || permit.permit_workers.length === 0) && (!permit.permit_assets || permit.permit_assets.length === 0) ? (
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Belum ada alat atau pekerja dicatat.</p>
+                        ) : (
+                            <div className="space-y-6 border-t border-gray-200 pt-4 dark:border-gray-700">
+                                <div>
+                                    <h4 className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Pekerja</h4>
+                                    {permit.permit_workers && permit.permit_workers.length > 0 ? (
+                                        <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                                            {permit.permit_workers.map((w) => (
+                                                <li key={w.id} className="flex items-center justify-between py-2">
+                                                    <span className="text-gray-800 dark:text-gray-200">
+                                                        {w.employee?.employee_no ? `${w.employee.employee_no} — ` : ''}{w.employee?.name}
+                                                    </span>
+                                                    {w.role && <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">{w.role}</span>}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">Tidak ada pekerja.</p>
+                                    )}
+                                </div>
+                                <div>
+                                    <h4 className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">Alat / Peralatan</h4>
+                                    {permit.permit_assets && permit.permit_assets.length > 0 ? (
+                                        <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                                            {permit.permit_assets.map((a) => (
+                                                <li key={a.id} className="flex items-center justify-between py-2">
+                                                    <span className="text-gray-800 dark:text-gray-200">
+                                                        {a.asset?.asset_number} — {a.asset?.name}
+                                                    </span>
+                                                    {a.role && <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">{a.role}</span>}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">Tidak ada alat.</p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Approval & Workflow */}

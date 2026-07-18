@@ -18,6 +18,10 @@ use App\Models\Core\MasterData\Department;
 use App\Models\Core\MasterData\Site;
 use App\Models\Modules\Permit\Permit;
 use App\Models\Modules\Permit\PermitChecklist;
+use App\Models\Modules\Permit\PermitAsset;
+use App\Models\Modules\Permit\PermitWorker;
+use App\Models\Modules\Asset\Asset;
+use App\Models\Core\Users\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
@@ -125,6 +129,8 @@ class PermitController extends Controller
             'contractors' => Company::where('type', 'contractor')->select('id', 'name')->orderBy('name')->get(),
             'types' => Permit::getTypes(),
             'riskLevels' => Permit::getRiskLevels(),
+            'assets' => Asset::select('id', 'asset_number', 'name')->orderBy('name')->get(),
+            'employees' => Employee::select('id', 'name', 'employee_no')->orderBy('name')->get(),
         ]);
     }
 
@@ -188,9 +194,42 @@ class PermitController extends Controller
             // Start workflow instance (status: draft)
             $this->workflowService->start('permit', $permit->id, $user);
 
+            // Sync workers (required, min 1) and assets (optional) with roles
+            $this->syncWorkersAndAssets($request, $permit);
+
             return redirect()->route('permit.work.show', $permit)
                 ->with('success', "Permit berhasil dibuat dengan nomor {$permit->permit_number}");
         });
+    }
+
+    /**
+     * Sync permit_workers and permit_assets pivot rows from the request.
+     * Worker IDs are required (min 1); asset IDs are optional. Each may carry a role.
+     */
+    protected function syncWorkersAndAssets(StorePermitRequest|UpdatePermitRequest $request, Permit $permit): void
+    {
+        $workerIds = (array) $request->input('worker_ids', []);
+        $workerRoles = (array) $request->input('worker_roles', []);
+        $assetIds = (array) $request->input('asset_ids', []);
+        $assetRoles = (array) $request->input('asset_roles', []);
+
+        $permit->permitWorkers()->delete();
+        foreach ($workerIds as $workerId) {
+            PermitWorker::create([
+                'permit_id' => $permit->id,
+                'employee_id' => $workerId,
+                'role' => $workerRoles[$workerId] ?? null,
+            ]);
+        }
+
+        $permit->permitAssets()->delete();
+        foreach ($assetIds as $assetId) {
+            PermitAsset::create([
+                'permit_id' => $permit->id,
+                'asset_id' => $assetId,
+                'role' => $assetRoles[$assetId] ?? null,
+            ]);
+        }
     }
 
     protected function getChecklistTemplateForType(string $type): array
@@ -264,6 +303,8 @@ class PermitController extends Controller
             'approver.employee',
             'closer.employee',
             'checklists.checker',
+            'permitWorkers.employee',
+            'permitAssets.asset',
         ]);
 
         $workflow = $this->workflowService->getWorkflow('permit', $permit->id);
@@ -296,6 +337,8 @@ class PermitController extends Controller
 
     public function edit(Permit $permit): InertiaResponse
     {
+        $permit->load(['permitWorkers.employee', 'permitAssets.asset']);
+
         return Inertia::render('Modules/Permit/Form', [
             'permit' => $permit,
             'sites' => Site::select('id', 'name')->orderBy('name')->get(),
@@ -304,6 +347,8 @@ class PermitController extends Controller
             'contractors' => Company::where('type', 'contractor')->select('id', 'name')->orderBy('name')->get(),
             'types' => Permit::getTypes(),
             'riskLevels' => Permit::getRiskLevels(),
+            'assets' => Asset::select('id', 'asset_number', 'name')->orderBy('name')->get(),
+            'employees' => Employee::select('id', 'name', 'employee_no')->orderBy('name')->get(),
         ]);
     }
 
@@ -321,6 +366,11 @@ class PermitController extends Controller
             }
 
             $permit->update($data);
+
+            // Sync workers and assets (only when provided)
+            if ($request->has('worker_ids') || $request->has('asset_ids')) {
+                $this->syncWorkersAndAssets($request, $permit);
+            }
 
             // Audit trail
             $this->auditService->log(

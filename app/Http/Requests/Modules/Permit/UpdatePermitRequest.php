@@ -27,6 +27,14 @@ class UpdatePermitRequest extends FormRequest
             'end_datetime' => ['sometimes', 'date', 'after:start_datetime'],
             'risk_level' => ['nullable', 'string', 'in:low,medium,high,critical'],
             'jsa_reference' => ['nullable', 'string', 'max:255'],
+            'worker_ids' => ['sometimes', 'required', 'array', 'min:1'],
+            'worker_ids.*' => ['required', 'integer', 'exists:employees,id'],
+            'worker_roles' => ['nullable', 'array'],
+            'worker_roles.*' => ['nullable', 'string', 'max:120'],
+            'asset_ids' => ['nullable', 'array'],
+            'asset_ids.*' => ['required', 'integer', 'exists:assets,id'],
+            'asset_roles' => ['nullable', 'array'],
+            'asset_roles.*' => ['nullable', 'string', 'max:120'],
         ];
     }
 
