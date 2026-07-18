@@ -66,9 +66,9 @@ it('creates permit with workers (min 1) and optional assets + roles', function (
         'end_datetime' => now()->addHours(9)->format('Y-m-d\TH:i'),
         'risk_level' => 'medium',
         'worker_ids' => [$e1->id, $e2->id],
-        'worker_roles' => [$e1->id => 'pengawas', $e2->id => 'operator'],
+        'worker_roles' => [$e1->id => ['pengawas', 'operator'], $e2->id => ['helper']],
         'asset_ids' => [$asset->id],
-        'asset_roles' => [$asset->id => 'alat berat'],
+        'asset_roles' => [$asset->id => ['alat berat']],
     ])->assertRedirect();
 
     $permit = Permit::where('title', 'Test PTW with workers')->firstOrFail();
@@ -76,9 +76,9 @@ it('creates permit with workers (min 1) and optional assets + roles', function (
     expect(PermitAsset::where('permit_id', $permit->id)->count())->toBe(1);
 
     $pw = PermitWorker::where('permit_id', $permit->id)->where('employee_id', $e1->id)->first();
-    expect($pw->role)->toBe('pengawas');
+    expect($pw->role)->toBe(['pengawas', 'operator']);
     $pa = PermitAsset::where('permit_id', $permit->id)->where('asset_id', $asset->id)->first();
-    expect($pa->role)->toBe('alat berat');
+    expect($pa->role)->toBe(['alat berat']);
 });
 
 it('allows permit creation without assets', function () {
@@ -128,11 +128,11 @@ it('updates pivot workers and assets when provided', function () {
         'start_datetime' => \Carbon\Carbon::parse($permit->start_datetime)->format('Y-m-d\TH:i'),
         'end_datetime' => \Carbon\Carbon::parse($permit->end_datetime)->format('Y-m-d\TH:i'),
         'worker_ids' => [$e1->id, $e2->id],
-        'worker_roles' => [$e1->id => 'pengawas'],
+        'worker_roles' => [$e1->id => ['pengawas', 'safety_watch']],
         'asset_ids' => [$asset->id],
     ])->assertRedirect();
 
     expect(PermitWorker::where('permit_id', $permit->id)->count())->toBe(2);
     expect(PermitAsset::where('permit_id', $permit->id)->count())->toBe(1);
-    expect(PermitWorker::where('permit_id', $permit->id)->where('employee_id', $e1->id)->first()->role)->toBe('pengawas');
+    expect(PermitWorker::where('permit_id', $permit->id)->where('employee_id', $e1->id)->first()->role)->toBe(['pengawas', 'safety_watch']);
 });

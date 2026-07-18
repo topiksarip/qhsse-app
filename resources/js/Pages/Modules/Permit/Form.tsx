@@ -94,15 +94,25 @@ export default function Form({ auth, permit, sites, areas, departments, contract
     const [workerIds, setWorkerIds] = useState<string[]>(
         (permit?.permit_workers ?? []).map((w) => String(w.employee_id)),
     );
-    const [workerRoles, setWorkerRoles] = useState<Record<string, string>>(
-        Object.fromEntries((permit?.permit_workers ?? []).map((w) => [String(w.employee_id), w.role ?? ''])),
+    const [workerRoles, setWorkerRoles] = useState<Record<string, string[]>>(
+        Object.fromEntries((permit?.permit_workers ?? []).map((w) => [String(w.employee_id), Array.isArray(w.role) ? w.role : (w.role ? [w.role] : [])])),
     );
     const [assetIds, setAssetIds] = useState<string[]>(
         (permit?.permit_assets ?? []).map((a) => String(a.asset_id)),
     );
     const [assetRoles, setAssetRoles] = useState<Record<string, string>>(
-        Object.fromEntries((permit?.permit_assets ?? []).map((a) => [String(a.asset_id), a.role ?? ''])),
+        Object.fromEntries((permit?.permit_assets ?? []).map((a) => [String(a.asset_id), Array.isArray(a.role) ? (a.role[0] ?? '') : (a.role ?? '')])),
     );
+
+    const WORKER_ROLES = [
+        { value: 'Operator', label: 'Operator' },
+        { value: 'Pengawas', label: 'Pengawas' },
+        { value: 'Rigger', label: 'Rigger' },
+        { value: 'Banksman', label: 'Banksman' },
+        { value: 'Helper', label: 'Helper' },
+        { value: 'Safety Watch', label: 'Safety Watch' },
+        { value: 'LOTO Officer', label: 'LOTO Officer' },
+    ];
 
     const { data, setData, post, put, processing, errors } = useForm({
         type: permit?.type || '',
@@ -141,14 +151,14 @@ export default function Form({ auth, permit, sites, areas, departments, contract
         setWorkerIds(next);
         setData('worker_ids', next);
         // drop roles for removed workers
-        const cleaned: Record<string, string> = {};
-        next.forEach((id) => { cleaned[id] = workerRoles[id] ?? ''; });
+        const cleaned: Record<string, string[]> = {};
+        next.forEach((id) => { cleaned[id] = workerRoles[id] ?? []; });
         setWorkerRoles(cleaned);
         setData('worker_roles', cleaned);
     }
 
-    function handleWorkerRole(id: string, role: string) {
-        const next = { ...workerRoles, [id]: role };
+    function handleWorkerRole(id: string, roles: string[]) {
+        const next = { ...workerRoles, [id]: roles };
         setWorkerRoles(next);
         setData('worker_roles', next);
     }
@@ -331,17 +341,18 @@ export default function Form({ auth, permit, sites, areas, departments, contract
                                     {workerIds.length > 0 && (
                                         <div className="mt-3 space-y-2">
                                             {workerIds.map((id) => (
-                                                <div key={id} className="flex items-center gap-2">
+                                                <div key={id} className="flex flex-col gap-1 md:flex-row md:items-center">
                                                     <span className="w-64 truncate text-sm text-gray-700 dark:text-gray-300">
                                                         {employees.find((e) => String(e.id) === id)?.employee_no} — {employees.find((e) => String(e.id) === id)?.name}
                                                     </span>
-                                                    <input
-                                                        type="text"
-                                                        value={workerRoles[id] ?? ''}
-                                                        onChange={(e) => handleWorkerRole(id, e.target.value)}
-                                                        className={`${inputClass} flex-1`}
-                                                        placeholder="Peran (mis. operator, pengawas)"
-                                                    />
+                                                    <div className="flex-1">
+                                                        <SearchableMultiSelect
+                                                            options={WORKER_ROLES}
+                                                            value={workerRoles[id] ?? []}
+                                                            onChange={(roles) => handleWorkerRole(id, roles)}
+                                                            placeholder="Pilih peran (bisa lebih dari satu)"
+                                                        />
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>

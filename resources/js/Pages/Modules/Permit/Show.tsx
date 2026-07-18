@@ -209,7 +209,15 @@ export default function Show({ auth, permit, workflow, availableActions, checkli
                                                     <span className="text-gray-800 dark:text-gray-200">
                                                         {w.employee?.employee_no ? `${w.employee.employee_no} — ` : ''}{w.employee?.name}
                                                     </span>
-                                                    {w.role && <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">{w.role}</span>}
+                                                    {Array.isArray(w.role) && w.role.length > 0 ? (
+                                                        <span className="flex flex-wrap gap-1">
+                                                            {w.role.map((r, i) => (
+                                                                <span key={i} className="rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">{r}</span>
+                                                            ))}
+                                                        </span>
+                                                    ) : w.role ? (
+                                                        <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">{String(w.role)}</span>
+                                                    ) : null}
                                                 </li>
                                             ))}
                                         </ul>
@@ -226,7 +234,15 @@ export default function Show({ auth, permit, workflow, availableActions, checkli
                                                     <span className="text-gray-800 dark:text-gray-200">
                                                         {a.asset?.asset_number} — {a.asset?.name}
                                                     </span>
-                                                    {a.role && <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">{a.role}</span>}
+                                                    {Array.isArray(a.role) && a.role.length > 0 ? (
+                                                        <span className="flex flex-wrap gap-1">
+                                                            {a.role.map((r, i) => (
+                                                                <span key={i} className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">{r}</span>
+                                                            ))}
+                                                        </span>
+                                                    ) : a.role ? (
+                                                        <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-300">{String(a.role)}</span>
+                                                    ) : null}
                                                 </li>
                                             ))}
                                         </ul>

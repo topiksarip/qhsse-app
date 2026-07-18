@@ -17,6 +17,10 @@ class PermitAsset extends Model
 
     protected $fillable = ['permit_id', 'asset_id', 'role'];
 
+    protected $casts = [
+        'role' => 'array',
+    ];
+
     /** @return BelongsTo<Permit, PermitAsset> */
     public function permit(): BelongsTo
     {

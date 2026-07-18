@@ -17,6 +17,10 @@ class PermitWorker extends Model
 
     protected $fillable = ['permit_id', 'employee_id', 'role'];
 
+    protected $casts = [
+        'role' => 'array',
+    ];
+
     /** @return BelongsTo<Permit, PermitWorker> */
     public function permit(): BelongsTo
     {

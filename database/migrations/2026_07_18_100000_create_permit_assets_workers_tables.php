@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('permit_id')->constrained('permits')->cascadeOnDelete();
             $table->foreignId('asset_id')->constrained('assets')->cascadeOnDelete();
-            $table->string('role')->nullable()->comment('Peran alat dalam izin kerja (opsional)');
+            $table->text('role')->nullable()->comment('Peran alat dalam izin kerja (JSON array, opsional)');
             $table->timestamps();
 
             $table->unique(['permit_id', 'asset_id']);
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('permit_id')->constrained('permits')->cascadeOnDelete();
             $table->foreignId('employee_id')->constrained('employees')->cascadeOnDelete();
-            $table->string('role')->nullable()->comment('Peran pekerja dalam izin kerja (mis. operator, pengawas)');
+            $table->text('role')->nullable()->comment('Peran pekerja dalam izin kerja (JSON array, mis. operator, pengawas)');
             $table->timestamps();
 
             $table->unique(['permit_id', 'employee_id']);

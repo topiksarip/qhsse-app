@@ -215,19 +215,29 @@ class PermitController extends Controller
 
         $permit->permitWorkers()->delete();
         foreach ($workerIds as $workerId) {
+            $roles = $workerRoles[$workerId] ?? null;
+            if (is_array($roles)) {
+                $roles = array_values(array_filter($roles, fn ($r) => filled($r)));
+                $roles = count($roles) ? $roles : null;
+            }
             PermitWorker::create([
                 'permit_id' => $permit->id,
                 'employee_id' => $workerId,
-                'role' => $workerRoles[$workerId] ?? null,
+                'role' => $roles,
             ]);
         }
 
         $permit->permitAssets()->delete();
         foreach ($assetIds as $assetId) {
+            $roles = $assetRoles[$assetId] ?? null;
+            if (is_array($roles)) {
+                $roles = array_values(array_filter($roles, fn ($r) => filled($r)));
+                $roles = count($roles) ? $roles : null;
+            }
             PermitAsset::create([
                 'permit_id' => $permit->id,
                 'asset_id' => $assetId,
-                'role' => $assetRoles[$assetId] ?? null,
+                'role' => $roles,
             ]);
         }
     }

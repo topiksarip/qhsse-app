@@ -225,7 +225,7 @@ export interface PermitAsset {
     id: number;
     permit_id: number;
     asset_id: number;
-    role?: string | null;
+    role?: string[] | string | null;
     asset?: { id: number; asset_number: string; name: string };
 }
 
@@ -233,7 +233,7 @@ export interface PermitWorker {
     id: number;
     permit_id: number;
     employee_id: number;
-    role?: string | null;
+    role?: string[] | string | null;
     employee?: { id: number; name: string; employee_no?: string | null };
 }
 

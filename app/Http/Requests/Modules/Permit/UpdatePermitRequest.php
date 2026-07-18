@@ -30,11 +30,13 @@ class UpdatePermitRequest extends FormRequest
             'worker_ids' => ['sometimes', 'required', 'array', 'min:1'],
             'worker_ids.*' => ['required', 'integer', 'exists:employees,id'],
             'worker_roles' => ['nullable', 'array'],
-            'worker_roles.*' => ['nullable', 'string', 'max:120'],
+            'worker_roles.*' => ['nullable', 'array'],
+            'worker_roles.*.*' => ['nullable', 'string', 'max:120'],
             'asset_ids' => ['nullable', 'array'],
             'asset_ids.*' => ['required', 'integer', 'exists:assets,id'],
             'asset_roles' => ['nullable', 'array'],
-            'asset_roles.*' => ['nullable', 'string', 'max:120'],
+            'asset_roles.*' => ['nullable', 'array'],
+            'asset_roles.*.*' => ['nullable', 'string', 'max:120'],
         ];
     }
 
