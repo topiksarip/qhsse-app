@@ -49,7 +49,7 @@
                         <button id="qa-close" aria-label="Tutup"
                             style="background:transparent;border:none;color:#fff;font-size:1.25rem;cursor:pointer;">&#10005;</button>
                     </div>
-                    <iframe src="https://chatbot.qhsse.my.id/" title="QHSSE Assistant"
+                    <iframe src="/chatbot/" title="QHSSE Assistant"
                         style="flex:1;border:none;width:100%;height:100%;"></iframe>
                 </div>
             </div>
